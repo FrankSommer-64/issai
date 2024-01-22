@@ -1,0 +1,70 @@
+Attributes and referred classes in Kiwi TCMS API.
+
+[Build]
+attributes: id, is_active, name, version, version__value
+references: version -> Version
+
+[Category]
+attributes: description, id, name, product
+references: product -> Product
+
+[Classification]
+attributes: id, name
+
+[Component]
+attributes: cases, description, id, initial_owner, initial_qa_contact, name, product
+references: cases -> TestCase, initial_owner -> User, initial_qa_contact -> User, product -> Product
+
+[PlanType]
+attributes: description, id, name
+
+[Priority]
+attributes: id, is_active, value
+
+[Product]
+attributes: classification, description, id, name
+references: classification -> Classification
+
+[Tag]
+attributes: bugs, case, id, name, plan, run
+references: bugs -> ?, case -> TestCase, plan -> TestPlan, run -> TestRun
+
+[TestCase]
+attributes: arguments, author, author__username, case_status, case_status__name, category, category__name,
+            create_date, default_tester, default_tester__username, expected_duration, extra_link, id,
+            is_automated, notes, priority, priority__value, requirement, reviewer, reviewer__username, script,
+            setup_duration, summary, testing_duration, text
+references: author -> User, case_status -> TestCaseStatus, category -> Category, component -> Component,
+            default_tester -> User, priority -> Priority, reviewer -> User
+
+[TestCaseStatus]
+attributes: description, id, is_confirmed, name
+
+[TestExecution]
+attributes: actual_duration, assignee, assignee__username, build, build__name, case, case__summary, case_text_version,
+            expected_duration, id, run, sortkey, status, status__name, start_date, stop_date, tested_by, tested_by__username
+references: assignee -> User, build -> Build, case -> TestCase, case_text_version -> ?,
+            run -> TestRun, sortkey -> ?, status -> TestExecutionStatus, tested_by -> User
+
+[TestExecutionStatus]
+attributes: color, icon, id, name, weight
+
+[TestPlan]
+attributes: author, author__username, create_date, extra_link, id, is_active, name, parent, product, product__name,
+            product_version, product_version__value, text, type, type__name
+references: author -> User, parent -> TestPlan, product -> Product, product_version -> Version, type -> PlanType
+
+[TestRun]
+attributes: build, build__name, default_tester, default_tester__username, id, manager, manager__username,
+            notes, plan, plan__name, plan__product_version, plan__product_version__value,
+            planned_start, planned_stop, start_date, stop_date, summary
+references: build -> Build, default_tester - > User, manager -> User, plan -> TestPlan,
+            plan__product -> Product, plan__product_version -> Version
+
+[User]
+attributes: email, first_name, id, is_active, is_staff, is_superuser, last_name, username
+
+[Version]
+attributes: id, product, product__name, value
+references: product -> Product
+

@@ -1,0 +1,671 @@
+# -*- coding: utf-8 -*-
+
+# -----------------------------------------------------------------------------------------------
+# issai - Framework to run tests specified in Kiwi Test Case Management System
+#
+# Copyright (c) 2024, Frank Sommer.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+#
+# * Neither the name of the copyright holder nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# -----------------------------------------------------------------------------------------------
+
+"""
+Localized message support.
+"""
+
+import os
+
+from issai.core import ENTITY_TYPE_CASE, ENTITY_TYPE_PLAN, ENTITY_TYPE_PLAN_RESULT
+from issai.core.util import platform_locale
+
+
+# ===============================================================================================
+# error message IDs
+# ===============================================================================================
+
+# configuration related messages
+E_CFG_READ_FILE_FAILED = 'e-cfg-read-file-failed'
+E_CFG_CUSTOM_CONFIG_ROOT_NOT_FOUND = 'e-cfg-custom-config-root-not-found'
+E_CFG_CUSTOM_MOD_INVALID = 'e-cfg-custom-mod-invalid'
+E_CFG_CUSTOM_MOD_NOT_DEFINED = 'e-cfg-custom-mod-not-defined'
+E_CFG_CUSTOM_MOD_NOT_FOUND = 'e-cfg-custom-mod-not-found'
+E_CFG_CUSTOM_RUNNER_FN_NOT_FOUND = 'e-cfg-custom-runner-fn-not-found'
+E_CFG_RUNNER_SPEC_INVALID = 'e-cfg-runner-spec-invalid'
+E_CFG_CUSTOM_SCRIPT_PATH_NOT_DEFINED = 'e-cfg-custom-script-path-not-defined'
+E_CFG_CUSTOM_SCRIPT_PATH_NOT_FOUND = 'e-cfg-custom-script-path-not-found'
+E_CFG_CUSTOM_SCRIPT_NOT_FOUND = 'e-cfg-custom-script-not-found'
+E_CFG_DEFAULT_CONFIG_ROOT_NOT_FOUND = 'e-cfg-default-config-root-not-found'
+E_CFG_PRODUCT_CONFIG_DIR_NOT_FOUND = 'e-cfg-product-config-dir-not-found'
+E_CFG_PRODUCT_CONFIG_FILE_NOT_FOUND = 'e-cfg-product-config-file-not-found'
+E_CFG_NO_PRODUCTS = 'e-cfg-no-products'
+E_CFG_PRODUCT_CONFIG_INVALID = 'e-cfg-product-config-invalid'
+E_CFG_INVALID_DATA_TYPE = 'e-cfg-invalid-data-type'
+E_CFG_VAR_NOT_DEFINED = 'e-cfg-var-not-defined'
+E_CFG_INVALID_EXECUTION_STATUS = 'e-cfg-invalid-execution-status'
+
+# General messages
+E_ATTACHMENT_MISSING = 'e-attachment-missing'
+E_BACKGROUND_TASK_ABORTED = 'e-background-task-aborted'
+E_BACKGROUND_TASK_FAILED = 'e-background-task-failed'
+E_CONTAINER_NOT_RUNNABLE = 'e-container-not-runnable'
+E_CREATE_DOWNLOAD_PATH_FAILED = 'e-create-download-path-failed'
+E_DIR_NOT_EMPTY = 'e-dir-not-empty'
+I_DOWNLOAD_ATTACHMENTS = 'i-download-attachments'
+E_DOWNLOAD_ATTACHMENT_FAILED = 'e-download-attachment-failed'
+E_INTERNAL_ERROR = 'e-internal-error'
+E_INVALID_ACTION = 'e-invalid-action'
+E_INVALID_ENTITY_TYPE = 'e-invalid-entity-type'
+E_LOAD_CONTAINER_FAILED = 'e-load-container-failed'
+E_PROD_MUST_BE_SPECIFIED = 'e-prod-must-be-specified'
+E_READ_FILE_FAILED = 'e-read-file-failed'
+E_WRITE_FILE_FAILED = 'e-write-file-failed'
+
+# export related
+I_EXP_FETCH_CASE = 'i-exp-fetch-case'
+I_EXP_FETCH_CASES = 'i-exp-fetch-cases'
+I_EXP_FETCH_ENVIRONMENTS = 'i-exp-fetch-environments'
+I_EXP_FETCH_EXECUTIONS = 'i-exp-fetch-executions'
+I_EXP_FETCH_MASTER_DATA = 'i-exp-fetch-master-data'
+I_EXP_FETCH_PLAN = 'i-exp-fetch-plan'
+I_EXP_FETCH_PLAN_CASES = 'i-exp-fetch-plan-cases'
+I_EXP_FETCH_PLANS = 'i-exp-fetch-plans'
+I_EXP_FETCH_PRODUCT = 'i-exp-fetch-product'
+I_EXP_WRITE_OUTPUT_FILE = 'i-exp-write-output-file'
+
+# import related
+E_DRY_RUN_IMP_CASE_RESULT_WILL_FAIL = 'e-dry-run-imp-case-result-will-fail'
+E_DRY_RUN_IMP_MD_NO_MATCH = 'e-dry-run-imp-md-no-match'
+E_DRY_RUN_IMP_PLAN_RESULT_WILL_FAIL = 'e-dry-run-imp-plan-result-will-fail'
+E_DRY_RUN_IMP_MD_ID_MISMATCH = 'e-dry-run-imp-md-id-mismatch'
+E_DRY_RUN_IMP_OBJECT_EXISTS = 'e-dry-run-imp-object-exists'
+E_DRY_RUN_IMP_OBJECT_MUST_EXIST = 'e-dry-run-imp-object-must-exist'
+E_DRY_RUN_IMP_TCMS_OBJECT_MISSING = 'e-dry-run-imp-tcms-object-missing'
+E_DRY_RUN_IMP_USER_NO_MATCH = 'e-dry-run-imp-user-no-match'
+E_DRY_RUN_IMP_USER_ID_MISMATCH = 'e-dry-run-imp-user-id-mismatch'
+E_IMP_ATTR_TYPE_INVALID = 'e-imp-attr-type-invalid'
+E_IMP_ATTR_VALUE_INVALID = 'e-imp-attr-value-invalid'
+E_IMP_ATTR_MISMATCH = 'e-imp-attr-mismatch'
+E_IMP_ATTR_MISSING = 'e-imp-attr-missing'
+E_IMP_ATTR_AMBIGUOUS = 'e-imp-attr-ambiguous'
+W_IMP_ATTR_NOT_SUPPORTED = 'w-imp-attr-not-supported'
+
+E_IMP_MD_ID_MISMATCH = 'e-imp-md-id-mismatch'
+E_IMP_MD_NO_MATCH = 'e-imp-md-no-match'
+E_IMP_OBJECT_EXISTS = 'e-imp-object-exists'
+E_IMP_OBJECT_MUST_EXIST = 'e-imp-object-must-exist'
+E_IMP_OWNING_OBJECT_MISMATCH = 'e-imp-owning-object-mismatch'
+E_IMP_TCMS_OBJECT_MISSING = 'e-imp-tcms-object-missing'
+E_IMP_CASE_RESULT_FAILED = 'e-imp-case-result-failed'
+E_IMP_PLAN_RESULT_FAILED = 'e-imp-plan-result-failed'
+E_IMP_USER_NO_MATCH = 'e-imp-user-no-match'
+E_IMP_USER_ID_MISMATCH = 'e-imp-user-id-mismatch'
+E_IMP_USER_NOT_FOUND = 'e-imp-user-not-found'
+
+# runner related
+E_RUN_CANNOT_CREATE_TEST_RUN = 'e-run-cannot-create-test-run'
+E_RUN_CASE_SCRIPT_MISSING = 'e-run-case-script-missing'
+E_RUN_RUNNER_MODULE_NOT_FOUND = 'e-run-runner-module-not-found'
+E_RUN_RUNNER_SCRIPT_NOT_FOUND = 'e-run-runner-script-not-found'
+E_RUN_SOURCE_PATH_MISSING = 'e-run-source-path-missing'
+E_RUN_SOURCE_PATH_INVALID = 'e-run-source-path-invalid'
+E_RUN_WORKING_PATH_MISSING = 'e-run-working-path-missing'
+E_RUN_WORKING_PATH_INVALID = 'e-run-working-path-invalid'
+I_RUN_CASE_NOT_AUTOMATED = 'i-run-case-not-automated'
+I_RUN_ENTITY_NOT_FOR_LOCAL_ARCH = 'i-run-entity-not-for-local-arch'
+I_RUN_ENTITY_NOT_FOR_LOCAL_OS = 'i-run-entity-not-for-local-os'
+I_RUN_ENTITY_SKIPPED = 'i-run-entity-skipped'
+I_RUN_PLAN_NOT_ACTIVE = 'i-run-plan-not-active'
+I_RUN_RUNNING_CASE = 'i-run-running-case'
+I_RUN_RUNNING_PLAN = 'i-run-running-plan'
+
+# entity related
+E_TOML_ATTRIBUTE_MISSING = 'e-toml-attribute-missing'
+E_TOML_ATTRIBUTE_WRONG_TYPE = 'e-toml-attribute-wrong-type'
+E_TOML_ENTITY_ATTR_IMMUTABLE = 'e-toml-entity-attr-immutable'
+E_TOML_ENTITY_ATTR_INVALID_TYPE = 'e-toml-entity-attr-invalid-type'
+E_TOML_ENTITY_ATTR_NAME_INVALID = 'e-toml-entity-attr-name-invalid'
+E_TOML_ENTITY_TYPE_MISSING = 'e-toml-entity-type-missing'
+E_TOML_ENTITY_TYPE_INVALID = 'e-toml-entity-type-invalid'
+E_TOML_ENTITY_TYPE_WRONG_TYPE = 'e-toml-entity-type-wrong-type'
+E_TOML_MASTER_DATA_ATTR_INVALID_NAME = 'e-toml-master-data-attr-invalid-name'
+E_TOML_MASTER_DATA_ATTR_INVALID_TYPE = 'e-toml-master-data-attr-invalid-type'
+E_TOML_MASTER_DATA_TYPE_INVALID = 'e-toml-master-data-type-invalid'
+E_TOML_MASTER_DATA_TYPE_NOT_ARRAY = 'e-toml-master-data-type-not-array'
+
+# TCMS related
+E_TCMS_AMBIGUOUS_RESULT = 'e-tcms-ambiguous-result'
+E_TCMS_CHECK_MASTER_DATA_STATUS_FAILED = 'e-tcms-check-master-data-status-failed'
+E_TCMS_CHECK_OBJECT_STATUS_FAILED = 'e-tcms-check-object-status-failed'
+E_TCMS_ERROR = 'e-tcms-error'
+E_TCMS_SUBORDINATE_OBJECT_NOT_FOUND = 'e-tcms-subordinate-object-not-found'
+E_TCMS_FIND_OBJECT_FAILED = 'e-tcms-find-object-failed'
+E_TCMS_UPDATE_OBJECT_FAILED = 'e-tcms-update-object-failed'
+E_TCMS_UPLOAD_ATTACHMENT_FAILED = 'e-tcms-upload-attachment-failed'
+
+E_INT_UNKNOWN_ENTITY_ATTR = 'e-int-unknown-entity-attr'
+E_INT_UNKNOWN_ENTITY_PART = 'e-int-unknown-entity-part'
+
+# OLD
+E_INTERNAL_UNKNOWN_TCMS_ENTITY = 'e-internal-unknown-tcms-entity'
+E_ISSAI_SCRIPT_ABORTED = 'e-issai-script-aborted'
+E_RUNTIME_CONFIG_ATTR_MISSING = 'e-runtime-config-attr-missing'
+E_RUNTIME_CONFIG_ATTR_INVALID = 'e-runtime-config-attr-invalid'
+E_BUILD_TOOL_NOT_FOUND = 'e-build-tool-not-found'
+E_BUILD_FAILED = 'e-build-failed'
+E_ISSAI_CONFIG_DIR_NOT_FOUND = 'e-issai-config-dir-not-found'
+E_SCRIPT_ARGS_DUP_OPT = 'e-script-args-dup-opt'
+E_SCRIPT_ARGS_INV_ACTION = 'e-script-args-inv-action'
+E_SCRIPT_ARGS_ACTION_MISSING = 'e-script-args-action-missing'
+E_SCRIPT_ARGS_UNEXPECTED_ARG = 'e-script-args-unexpected-arg'
+E_SCRIPT_ARGS_TEST_ENTITY_MISSING = 'e-script-args-test-entity-missing'
+E_SCRIPT_ARGS_PROD_EXPECTED = 'e-script-args-prod-expected'
+E_SCRIPT_ARGS_VERSION_EXPECTED = 'e-script-args-version-expected'
+E_SCRIPT_ARGS_BUILD_EXPECTED = 'e-script-args-build-expected'
+E_ISSAI_AMBIGUOUS_PROD = 'e-issai-ambiguous-prod'
+E_ISSAI_PROD_DESC_MISSING = 'e-issai-prod-desc-missing'
+E_ISSAI_PROD_UNKNOWN = 'e-issai-prod-unknown'
+E_READ_ATTACHMENT_FAILED = 'e-read-attachment-failed'
+E_TCMS_NO_PRODUCTS = 'e-tcms-no-products'
+E_TCMS_PLAN_UNKNOWN = 'e-tcms-plan-unknown'
+E_TCMS_INIT_FAILED = 'e-tcms-init-failed'
+E_INV_CASE_SCRIPT = 'e-inv-case-script'
+E_LOAD_CUSTOM_MODULE_FAILED = 'e-load-custom-module-failed'
+E_CFG_PROP_VALUE_MISMATCH = 'e-cfg-prop-value-mismatch'
+E_TCMS_TEST_CASE_UNKNOWN = 'e-tcms-test-case-unknown'
+E_TCMS_CREATE_OBJECT_FAILED = 'e-tcms-create-object-failed'
+E_TCMS_INVALID_CLASS_ID = 'e-tcms-invalid-class-id'
+E_TCMS_ATTACHMENTS_NOT_SUPPORTED = 'e-tcms-attachments-not-supported'
+
+# import script related messages
+E_IMP_FAILED = 'e-imp-failed'
+E_IMP_SPEC_INVALID = 'e-imp-spec-invalid'
+E_IMP_MANDATORY_ATTR_MISSING = 'e-imp-mandatory-attr-missing'
+E_IMP_ATTR_TYPE_NOT_STR = 'e-imp-attr-type-not-str'
+E_IMP_ATTR_TYPE_NOT_ARRAY = 'e-imp-attr-type-not-array'
+E_IMP_ATTR_TYPE_NOT_STR_ARRAY = 'e-imp-attr-type-not-str-array'
+E_IMP_ARRAY_ELEM_TYPE_NOT_TABLE = 'e-imp-array-elem-type-not-table'
+E_IMP_ARRAY_ELEM_MANDATORY_ATTR_MISSING = 'e-imp-array-elem-mandatory-attr-missing'
+E_IMP_DUP_STR_ARRAY_VALUE = 'e-imp-dup-str-array-value'
+E_IMP_ARRAY_ELEM_DUP_ID = 'e-imp-array-elem-dup-id'
+E_IMP_TEST_CASE_EXISTS = 'e-imp-test-case-exists'
+E_IMP_TEST_PLAN_EXISTS = 'e-imp-test-plan-exists'
+I_IMP_USAGE = 'i-imp-usage'
+I_IMP_NO_VERSIONS = 'i-imp-no-versions'
+I_IMP_NO_BUILDS = 'i-imp-no-builds'
+I_IMP_NO_CATEGORIES = 'i-imp-no-categories'
+I_IMP_NO_COMPONENTS = 'i-imp-no-components'
+I_IMP_NO_TEST_CASES = 'i-imp-no-test-cases'
+I_IMP_NO_TEST_PLANS = 'i-imp-no-test-plans'
+I_IMP_VERSION_CREATED = 'i-imp-version-created'
+I_IMP_VERSION_EXISTED = 'i-imp-version-existed'
+I_IMP_BUILD_CREATED = 'i-imp-build-created'
+I_IMP_BUILD_EXISTED = 'i-imp-build-existed'
+I_IMP_CATEGORY_CREATED = 'i-imp-category-created'
+I_IMP_CATEGORY_EXISTED = 'i-imp-category-existed'
+I_IMP_COMPONENT_CREATED = 'i-imp-component-created'
+I_IMP_COMPONENT_EXISTED = 'i-imp-component-existed'
+I_IMP_EXECUTION_CREATED = 'i-imp-execution-created'
+I_IMP_EXECUTION_SKIPPED = 'i-imp-execution-skipped'
+I_IMP_EXECUTION_UPDATED = 'i-imp-execution-updated'
+I_IMP_MD_REF_CHANGED = 'i-imp-md-ref-changed'
+I_IMP_OBJECT_CREATED = 'i-imp-object-created'
+I_IMP_OBJECT_SKIPPED = 'i-imp-object-skipped'
+I_IMP_RUN_CREATED = 'i-imp-run-created'
+I_IMP_RUN_SKIPPED = 'i-imp-run-skipped'
+I_IMP_RUN_UPDATED = 'i-imp-run-updated'
+I_IMP_TEST_CASE_CREATED = 'i-imp-test-case-created'
+I_IMP_TEST_CASE_EXISTED = 'i-imp-test-case-existed'
+I_IMP_TEST_PLAN_CREATED = 'i-imp-test-plan-created'
+I_IMP_TEST_PLAN_EXISTED = 'i-imp-test-plan-existed'
+I_IMP_TEST_RUN_CREATED = 'i-imp-test-run-created'
+I_IMP_TEST_RUN_EXISTED = 'i-imp-test-run-existed'
+I_IMP_USER_REPL_CURRENT = 'i-imp-user-repl-current'
+W_IMP_ARRAY_ELEM_UNKNOWN_ATTR = 'w-imp-array-elem-unknown-attr'
+W_IMP_UNKNOWN_ATTR = 'w-imp-unknown-attr'
+
+# ===============================================================================================
+# warning message IDs
+# ===============================================================================================
+
+# ===============================================================================================
+# informational message IDs
+# ===============================================================================================
+
+# informational message IDs
+I_CLEAR_EXPORT_ATTACHMENTS = 'i-clear-export-attachments'
+I_CLEAR_EXPORT_FILE = 'i-clear-export-file'
+I_CLEAR_EXPORT_OUTPUT = 'i-clear-export-output'
+I_NO_PRODUCTS = 'i-no-products'
+I_SCRIPT_DESC = 'i-script-desc'
+I_SCRIPT_USAGE = 'i-script-usage'
+I_CARGO_UT_SUMMARY = 'i-cargo-ut-summary'
+
+I_DRY_RUN_UPDATE_EXECUTION = 'i-dry-run-update-execution'
+I_DRY_RUN_UPDATE_RUN = 'i-dry-run-update-run'
+I_DRY_RUN_UPLOAD_ATTACHMENT = 'i-dry-run-upload-attachment'
+I_DRY_RUN_IMP_BSP_OBJECT_CREATED = 'i-dry-run-imp-bsp-object-created'
+I_DRY_RUN_IMP_BSP_OBJECT_SKIPPED = 'i-dry-run-imp-bsp-object-skipped'
+I_DRY_RUN_IMP_MD_EXACT_MATCH = 'i-dry-run-imp-md-exact-match'
+I_DRY_RUN_IMP_MD_NO_MATCH = 'i-dry-run-imp-md-no-match'
+I_DRY_RUN_IMP_MD_REF_CHANGED = 'i-dry-run-imp-md-ref-changed'
+I_DRY_RUN_IMP_NO_OBJ_EXISTS = 'i-dry-run-imp-no-obj-exists'
+I_DRY_RUN_IMP_OBJECT_CREATED = 'i-dry-run-imp-object-created'
+I_DRY_RUN_IMP_OBJECT_SKIPPED = 'i-dry-run-imp-object-skipped'
+I_DRY_RUN_IMP_OBJECT_UPDATED = 'i-dry-run-imp-object-updated'
+I_DRY_RUN_IMP_EXECUTION_CREATED = 'i-dry-run-imp-execution-created'
+I_DRY_RUN_IMP_EXECUTION_SKIPPED = 'i-dry-run-imp-execution-skipped'
+I_DRY_RUN_IMP_EXECUTION_UPDATED = 'i-dry-run-imp-execution-updated'
+I_DRY_RUN_IMP_RUN_CREATED = 'i-dry-run-imp-run-created'
+I_DRY_RUN_IMP_RUN_SKIPPED = 'i-dry-run-imp-run-skipped'
+I_DRY_RUN_IMP_USER_EXACT_MATCH = 'i-dry-run-imp-user-exact-match'
+I_DRY_RUN_IMP_USER_REPL_CURRENT = 'i-dry-run-imp-user-repl-current'
+I_DRY_RUN_IMP_USER_REPL_OTHER = 'i-dry-run-imp-user-repl-other'
+
+
+# dry run log messages
+L_GRP_SETUP_CALLED = 'l-grp-setup-called'
+L_GRP_CLEANUP_CALLED = 'l-grp-cleanup-called'
+L_EXEC_CASE = 'l-exec-case'
+L_EXEC_GROUP = 'l-exec-group'
+L_INV_CASE_SCRIPT = 'l-inv-case-script'
+
+# GUI
+L_AUTO_ADJUST_MASTER_DATA_REFS = 'l-auto-adjust-master-data-refs'
+L_AUTO_CREATE = 'l-auto-create'
+L_AUTO_CREATE_MASTER_DATA = 'l-auto-create-master-data'
+L_BUILD = 'l-build'
+L_CANCEL = 'l-cancel'
+L_CLOSE = 'l-close'
+L_DRY_RUN = 'l-dry-run'
+L_FILE = 'l-file'
+L_ENTITY = 'l-entity'
+L_EXPORT_ENTITY = 'l-export-entity'
+L_ID = 'l-id'
+L_IGNORE_RESULTS = 'l-ignore-results'
+L_IMPORT = 'l-import'
+L_IMPORT_USER_BEHAVIOUR = 'l-import-user-behaviour'
+L_IMPORT_USER_USE_ALWAYS = 'l-import-user-use-always'
+L_IMPORT_USER_USE_MISSING = 'l-import-user-use-missing'
+L_IMPORT_USER_USE_NEVER = 'l-import-user-use-never'
+
+L_INCLUDE_ATTACHMENTS = 'l-include-attachments'
+L_INCLUDE_ENVIRONMENTS = 'l-include-environments'
+L_INCLUDE_EXECUTIONS = 'l-include-executions'
+L_INCLUDE_HISTORY = 'l-include-history'
+L_INCLUDE_PLAN_TREE = 'l-include-plan-tree'
+L_INCLUDE_RUNS = 'l-include-runs'
+L_LABELING_SCHEME = 'l-labeling-scheme'
+L_NAME = 'l-name'
+L_OK = 'l-ok'
+L_OPTIONS = 'l-options'
+L_OUTPUT_PATH = 'l-output-path'
+L_PRODUCT = 'l-product'
+L_READ_ONLY_RUN = 'l-read-only-run'
+L_RECENT = 'l-recent'
+L_RUN = 'l-run'
+L_RUN_DESCENDANT_PLANS = 'l-run-descendant-plans'
+L_RUN_ENTITY = 'l-run-entity'
+L_SAVE = 'l-save'
+L_SELECT = 'l-select'
+L_STORE_RESULT = 'l-store-result'
+L_SUMMARY = 'l-summary'
+L_TEST_CASE = 'l-test-case'
+L_TEST_CASE_RESULT = 'l-test-case-result'
+L_TEST_PLAN = 'l-test-plan'
+L_TEST_PLAN_RESULT = 'l-test-plan-result'
+L_TYPE = 'l-type'
+L_COMBO_AVAILABLE_PRODUCTS = 'l-combo-available-products'
+L_DLG_TITLE_ABOUT = 'l-dlg-title-about'
+L_DLG_TITLE_EXPORT_CASE = 'l-dlg-title-export-case'
+L_DLG_TITLE_EXPORT_PLAN = 'l-dlg-title-export-plan'
+L_DLG_TITLE_EXPORT_PRODUCT = 'l-dlg-title-export-product'
+L_DLG_TITLE_IMPORT_FILE = 'l-dlg-title-import-file'
+L_DLG_TITLE_LRU_ENTITIES = 'l-dlg-title-lru-entities'
+L_DLG_TITLE_MASTER_CONFIG_EDITOR = 'l-dlg-title-master-config-editor'
+L_DLG_TITLE_PRODUCT_CONFIG_EDITOR = 'l-dlg-title-product-config-editor'
+L_DLG_TITLE_PRODUCT_SELECTION = 'l-dlg-title-product-selection'
+L_DLG_TITLE_RUN_CASE = 'l-dlg-title-run-case'
+L_DLG_TITLE_RUN_PLAN = 'l-dlg-title-run-plan'
+L_DLG_TITLE_SELECT_EXPORT_OUTPUT_PATH = 'l-dlg-title-select-export-output-path'
+L_DLG_TITLE_SELECT_IMPORT_FILE = 'l-dlg-title-select-import-file'
+L_DLG_TITLE_XML_RPC_EDITOR = 'l-dlg-title-xml-rpc-editor'
+L_ENV_COMBO = 'l-env-combo'
+L_PRODUCT_COMBO = 'l-product-combo'
+L_VERSION_COMBO = 'l-version-combo'
+L_BUILD_COMBO = 'l-build-combo'
+L_MAIN_WIN_DEFAULT_TITLE = 'l-main-win-default-title'
+L_MBOX_INFO_DISCARD_CHANGES = 'l-mbox-info-discard-changes'
+L_MBOX_INFO_RETRY = 'l-mbox-info-retry'
+L_MBOX_INFO_USE_DEFAULT_SETTINGS = 'l-mbox-info-use-default-settings'
+L_MBOX_TITLE_DATA_EDITED = 'l-mbox-title-data-edited'
+L_MBOX_TITLE_ERROR = 'l-mbox-title-error'
+L_MBOX_TITLE_INFO = 'l-mbox-title-info'
+L_MBOX_TITLE_OUTPUT_EXISTS = 'l-mbox-title-output-exists'
+L_MBOX_TITLE_WARNING = 'l-mbox-title-warning'
+L_ACTION_ITEM_EXIT = 'l-action-item-exit'
+L_ACTION_ITEM_EXPORT_CASE = 'l-action-item-export-case'
+L_ACTION_ITEM_EXPORT_PLAN = 'l-action-item-export-plan'
+L_ACTION_ITEM_EXPORT_PRODUCT = 'l-action-item-export-product'
+L_ACTION_ITEM_HELP_ABOUT = 'l-action-item-help-about'
+L_ACTION_ITEM_IMPORT = 'l-action-item-import'
+L_ACTION_ITEM_RUN_FILE = 'l-action-item-run-file'
+L_ACTION_ITEM_RUN_CASE = 'l-action-item-run-case'
+L_ACTION_ITEM_RUN_PLAN = 'l-action-item-run-plan'
+L_ACTION_ITEM_SETTINGS_DEFAULTS = 'l-action-item-settings-defaults'
+L_ACTION_ITEM_SETTINGS_PRODUCTS = 'l-action-item-settings-products'
+L_ACTION_ITEM_SETTINGS_XML_RPC = 'l-action-item-settings-xml-rpc'
+L_BUTTON_EXPORT_SELECTION = 'l-button-export-selection'
+L_BUTTON_RUN_SELECTION = 'l-button-run-selection'
+L_MENU_ITEM_SETTINGS = 'l-menu-item-settings'
+L_MENUBAR_ITEM_EXPORT = 'l-menubar-item-export'
+L_MENUBAR_ITEM_FILE = 'l-menubar-item-file'
+L_MENUBAR_ITEM_HELP = 'l-menubar-item-help'
+L_MENUBAR_ITEM_IMPORT = 'l-menubar-item-import'
+L_MENUBAR_ITEM_RUN = 'l-menubar-item-run'
+L_TYPE_LABEL_SCHEME_BUILD = 'l-type-label-scheme-build'
+L_TYPE_LABEL_SCHEME_NONE = 'l-type-label-scheme-none'
+L_TYPE_LABEL_SCHEME_VERSION = 'l-type-label-scheme-version'
+
+E_GUI_ID_NOT_NUMERIC = 'e-gui-id-not-numeric'
+E_GUI_SETTINGS_META_DEFINITION = 'e-gui-settings-meta-definition'
+E_GUI_NEITHER_PRODUCT_NOR_VERSION_SELECTED = 'e-gui-neither-product-nor-version-selected'
+E_GUI_NO_ID_SPECIFIED = 'e-gui-no-id-specified'
+E_GUI_NO_ENTITY_SELECTED = 'e-gui-no-entity-selected'
+E_GUI_NO_PRODUCT_SELECTED = 'e-gui-no-product-selected'
+E_GUI_NO_VERSION_SELECTED = 'e-gui-no-version-selected'
+E_GUI_OUTPUT_PATH_INVALID = 'e-gui-output-path-invalid'
+E_GUI_OUTPUT_PATH_NOT_EMPTY = 'e-gui-output-path-not-empty'
+E_GUI_WRITE_SETTINGS_FAILED = 'e-gui-write-settings-failed'
+E_GUI_IMPORT_CASE_FAILED = 'e-gui-import-case-failed'
+E_GUI_IMPORT_CASE_RESULT_FAILED = 'e-gui-import-case-result-failed'
+E_GUI_IMPORT_PLAN_FAILED = 'e-gui-import-plan-failed'
+E_GUI_IMPORT_PLAN_RESULT_FAILED = 'e-gui-import-plan-result-failed'
+E_GUI_IMPORT_PRODUCT_FAILED = 'e-gui-import-product-failed'
+I_GUI_NO_ENTITY_SELECTED = 'i-gui-no-entity-selected'
+I_GUI_NO_LRU_ENTITIES = 'i-gui-no-lru-entities'
+I_GUI_ABOUT_TEXT = 'i-gui-about-text'
+I_GUI_ABOUT_INFO_TEXT = 'i-gui-about-info-text'
+I_GUI_ABOUT_DETAIL_TEXT = 'i-gui-about-detail-text'
+I_GUI_CONFIG_PROBLEM = 'i-gui-config-problem'
+I_GUI_EXPORT_CASE_SUCCESSFUL = 'i-gui-export-case-successful'
+I_GUI_EXPORT_PLAN_SUCCESSFUL = 'i-gui-export-plan-successful'
+I_GUI_EXPORT_PRODUCT_SUCCESSFUL = 'i-gui-export-product-successful'
+I_GUI_IMPORT_CASE_SUCCESSFUL = 'i-gui-import-case-successful'
+I_GUI_IMPORT_CASE_RESULT_SUCCESSFUL = 'i-gui-import-case-result-successful'
+I_GUI_IMPORT_PLAN_SUCCESSFUL = 'i-gui-import-plan-successful'
+I_GUI_IMPORT_PLAN_RESULT_SUCCESSFUL = 'i-gui-import-plan-result-successful'
+I_GUI_IMPORT_PRODUCT_SUCCESSFUL = 'i-gui-import-product-successful'
+I_GUI_RUN_PLAN_SUCCESSFUL = 'i-gui-run-plan-successful'
+I_GUI_NOTHING_SELECTED = 'i-gui-nothing-selected'
+I_GUI_NO_BUILD_SELECTED = 'i-gui-no-build-selected'
+I_GUI_NO_VERSION_SELECTED = 'i-gui-no-version-selected'
+I_GUI_PROGRESS_CONTAINER_STATUS = 'i-gui-progress-container-status'
+I_GUI_PROGRESS_TASK_FAILED = 'i-gui-progress-task-failed'
+I_GUI_PROGRESS_TASK_FINISHED = 'i-gui-progress-task-finished'
+I_GUI_PROGRESS_TASK_RUNNING = 'i-gui-progress-task-running'
+I_GUI_PROGRESS_TASK_STARTED = 'i-gui-progress-task-started'
+I_GUI_PROGRESS_UPLOAD_FILE = 'i-gui-progress-upload-file'
+W_GUI_READ_SETTINGS_FAILED = 'w-gui-read-settings-failed'
+W_GUI_WRITE_GUI_CONFIGURATION_FAILED = 'w-gui-write-gui-configuration-failed'
+
+# CLI
+I_CLI_ISSAI_VERSION = 'i-cli-issai-version'
+L_CLI_ARG_BUILD_HELP = 'l-cli-arg-build-help'
+L_CLI_ARG_CREATE_MASTER_DATA_HELP = 'l-cli-arg-create-master-data-help'
+L_CLI_ARG_DRY_RUN_HELP = 'l-cli-arg-dry-run-help'
+L_CLI_ARG_ENTITY_REF_HELP = 'l-cli-arg-entity-ref-help'
+L_CLI_ARG_ENVIRONMENT_HELP = 'l-cli-arg-environment-help'
+L_CLI_ARG_EXPORT_ENTITY_SPEC_HELP = 'l-cli-arg-export-entity-spec-help'
+L_CLI_ARG_FILE_HELP = 'l-cli-arg-file-help'
+L_CLI_ARG_INCLUDE_ATTACHMENTS_HELP = 'l-cli-arg-include-attachments-help'
+L_CLI_ARG_INCLUDE_DESCENDANTS_HELP = 'l-cli-arg-include-descendants-help'
+L_CLI_ARG_INCLUDE_ENVIRONMENTS_HELP = 'l-cli-arg-include-environments-help'
+L_CLI_ARG_INCLUDE_EXECUTIONS_HELP = 'l-cli-arg-include-executions-help'
+L_CLI_ARG_INCLUDE_HISTORY_HELP = 'l-cli-arg-include-history-help'
+L_CLI_ARG_INCLUDE_RUNS_HELP = 'l-cli-arg-include-runs-help'
+L_CLI_ARG_INPUT_FILE_HELP = 'l-cli-arg-input-file-help'
+L_CLI_ARG_OUTPUT_PATH_HELP = 'l-cli-arg-output-path-help'
+L_CLI_ARG_PRODUCT_HELP = 'l-cli-arg-product-help'
+L_CLI_ARG_PRODUCT_ID_HELP = 'l-cli-arg-product-id-help'
+L_CLI_ARG_PRODUCT_VERSION_HELP = 'l-cli-arg-product-version-help'
+L_CLI_ARG_RUN_ENTITY_SPEC_HELP = 'l-cli-arg-run-entity-spec-help'
+L_CLI_ARG_STORE_RESULT_HELP = 'l-cli-arg-store-result-help'
+L_CLI_ARG_TEST_CASE_HELP = 'l-cli-arg-test-case-help'
+L_CLI_ARG_TEST_CASE_ID_HELP = 'l-cli-arg-test-case-id-help'
+L_CLI_ARG_TEST_PLAN_HELP = 'l-cli-arg-test-plan-help'
+L_CLI_ARG_TEST_PLAN_ID_HELP = 'l-cli-arg-test-plan-id-help'
+L_CLI_EXPORT_DESCRIPTION = 'l-cli-export-description'
+L_CLI_IMPORT_DESCRIPTION = 'l-cli-import-description'
+L_CLI_RUN_DESCRIPTION = 'l-cli-run-description'
+
+E_CLI_AMBIGUOUS_BUILD_IN_FILE = 'e-cli-ambiguous-build-in-file'
+E_CLI_AMBIGUOUS_RUN_ENTITY_REF = 'e-cli-ambiguous-entity-ref'
+E_CLI_BUILD_REQUIRED = 'e-cli-build-required'
+E_CLI_CASE_ID_REQUIRED = 'e-cli-case-id-required'
+E_CLI_ENTITY_SPECIFIER_MISSING = 'e-cli-entity-specifier-missing'
+E_CLI_INVALID_ENTITY_REF_KIND = 'e-cli-invalid-entity-ref-kind'
+E_CLI_INVALID_FILE_ENTITY = 'e-cli-invalid-file-entity'
+E_CLI_MISSING_BUILD_IN_FILE = 'e-cli-missing-build-in-file'
+E_CLI_MISSING_ENV_IN_FILE = 'e-cli-missing-env-in-file'
+E_CLI_NO_BUILDS_FOUND = 'e-cli-no-builds-found'
+E_CLI_NO_BUILDS_IN_FILE = 'e-cli-no-builds-in-file'
+E_CLI_NO_PRODUCTS_FOUND = 'e-cli-no-products-found'
+E_CLI_NO_RUN_ENTITY_REF = 'e-cli-no-entity-ref'
+E_CLI_NO_VERSIONS_FOUND = 'e-cli-no-versions-found'
+E_CLI_PLAN_ID_REQUIRED = 'e-cli-plan-id-required'
+E_CLI_PLAN_NOT_FOUND = 'e-cli-plan-not-found'
+E_CLI_PRODUCT_CASE_NOT_FOUND = 'e-cli-product-case-not-found'
+E_CLI_PRODUCT_PLAN_NOT_FOUND = 'e-cli-product-plan-not-found'
+E_CLI_PRODUCT_REQUIRED = 'e-cli-product-required'
+E_CLI_TCMS_OBJECT_NOT_FOUND = 'e-cli-tcms-object-not-found'
+E_CLI_TCMS_OBJECT_ID_NOT_FOUND = 'e-cli-tcms-object-id-not-found'
+E_CLI_VERSION_PLAN_NOT_FOUND = 'e-cli-version-plan-not-found'
+E_CLI_VERSION_REQUIRED = 'e-cli-version-required'
+
+# Tooltips
+T_OPT_AUTO_CREATE_MASTER_DATA = 't-opt-auto-create-master-data'
+T_OPT_DRY_RUN = 't-opt-dry-run'
+T_OPT_EXP_ATTACHMENTS = 't-opt-exp-attachments'
+T_OPT_EXP_ENVIRONMENTS = 't-opt-exp-environments'
+T_OPT_EXP_EXECUTIONS = 't-opt-exp-executions'
+T_OPT_EXP_PLAN_TREE = 't-opt-exp-plan-tree'
+T_OPT_EXP_RUNS = 't-opt-exp-runs'
+T_OPT_IMP_ATTACHMENTS = 't-opt-imp-attachments'
+T_OPT_IMP_ENVIRONMENTS = 't-opt-imp-environments'
+T_OPT_RUN_DESCENDANT_PLANS = 't-opt-run-descendant-plans'
+T_OPT_STORE_RESULT = 't-opt-store-result'
+T_OPT_USER_IMPORT = 't-opt-user-import'
+
+# internal
+_MSG_FILE_NAME_FMT = 'messages_%s.txt'
+_DEFAULT_LOCALE = 'en'
+_EMSG_FW_CORRUPT = 'Framework installation is corrupt: %s.'
+_EMSG_NO_MSG_FILE_FOUND = 'Could not find localized message definition files'
+_EMSG_READ_MSG_FILE_FAILED = 'Could not read localized message definition file %s (%s)'
+
+
+def localized_message(msg_id, *args):
+    """
+    Returns the localized message for given message ID and optional arguments.
+    The number of optional arguments must match the number of placeholders used in the message's format string.
+    Returns the message ID, if this table doesn't contain an appropriate message or there is a mismatch between
+    optional arguments and format string.
+    :param str msg_id: the message ID
+    :param args: the optional additional arguments
+    :returns: the localized message
+    :rtype: str
+    """
+    global _MESSAGE_TABLE
+    return _MESSAGE_TABLE.message_for(msg_id, *args)
+
+
+def localized_label(label_id):
+    """
+    Returns the localized text for given label ID.
+    :param str label_id: the label ID
+    :rtype: str
+    """
+    global _MESSAGE_TABLE
+    return _MESSAGE_TABLE.label_for(label_id)
+
+
+def entity_type_name(entity_type):
+    """
+    :param int entity_type: the entity type ID
+    :returns: localized lower case name of specified test entity
+    :rtype: str
+    """
+    if entity_type == ENTITY_TYPE_PLAN:
+        return localized_label(L_TEST_PLAN)
+    elif entity_type == ENTITY_TYPE_CASE:
+        return localized_label(L_TEST_CASE)
+    elif entity_type == ENTITY_TYPE_PLAN_RESULT:
+        return localized_label(L_TEST_PLAN_RESULT)
+    else:
+        return localized_label(L_PRODUCT)
+
+
+def lower_case_entity_type_name(entity_type):
+    """
+    :param int entity_type: the entity type ID
+    :returns: localized lower case name of specified test entity
+    :rtype: str
+    """
+    return entity_type_name(entity_type).lower()
+
+
+class MessageTable(dict):
+    def __init__(self, locale, messages):
+        """
+        Initializes the message table for the specified localized messages.
+        Every message must be specified in a line starting with message ID followed by a space character and then
+        the format string associated with the message ID. A backslash at the end of a line may be used as
+        continuation. Lines starting with a hash mark or not complying with this format are ignored.
+        :param str locale: the locale
+        :param str messages: the localized messages
+        """
+        super().__init__()
+        self.__locale = locale
+        msg_id = None
+        msg_text = ''
+        msg_list = messages.split(os.linesep)
+        for line in msg_list:
+            line = line.strip()
+            if len(line) == 0 or line.startswith('#'):
+                if msg_id is not None:
+                    self.update({msg_id: msg_text})
+                    msg_id = None
+                    msg_text = ''
+                continue
+            if line.endswith('\\'):
+                if msg_id is not None:
+                    msg_text = '%s%s' % (msg_text, line[:-1])
+                else:
+                    space_pos = line.index(' ')
+                    msg_id = line[:space_pos]
+                    msg_text = line[space_pos + 1:-1]
+                continue
+            if msg_id is not None:
+                msg_text = '%s%s' % (msg_text, line)
+            else:
+                space_pos = line.index(' ')
+                msg_id = line[:space_pos]
+                msg_text = line[space_pos + 1:]
+            self.update({msg_id: msg_text})
+            msg_id = None
+            msg_text = ''
+
+    def message_for(self, msg_id, *args):
+        """
+        Returns the localized message for given message ID and optional arguments.
+        The number of optional arguments must match the number of placeholders used in the message's format string.
+        Returns the message ID, if this table doesn't contain an appropriate message or there is a mismatch between
+        optional arguments and format string.
+        :param str msg_id: the message ID
+        :param args: the optional additional arguments
+        :returns: the localized message
+        :rtype: str
+        """
+        _fmt_str = self.get(msg_id)
+        if _fmt_str is None:
+            return msg_id
+        _fmt_str = _fmt_str.replace(r'\n', os.linesep)
+        # noinspection PyBroadException
+        try:
+            return _fmt_str.format(*args)
+        except Exception:
+            return msg_id
+
+    def label_for(self, label_id):
+        """
+        Returns the localized label for given ID.
+        :param str label_id: the label ID
+        :rtype: str
+        """
+        _label = self.get(label_id)
+        if _label is None:
+            return label_id
+        return _label
+
+    def locale(self):
+        """
+        Returns the locale of this message table.
+        Used for testing purposes.
+        :returns: the locale
+        :rtype: str
+        """
+        return self.__locale
+
+    @staticmethod
+    def for_locale(locale):
+        """
+        Creates a message table for the specified locale.
+        Uses default locale, if locale is not supported.
+        :param str locale: the locale
+        :returns: message table for specified locale
+        :rtype: MessageTable
+        :raises RuntimeError: if no message definition files exist, i.e. framework has been corrupted
+        """
+        _locale = _DEFAULT_LOCALE if locale is None else locale
+        _msgs_file_name = _MSG_FILE_NAME_FMT % _locale
+        _current_dir = os.path.dirname(os.path.abspath(__file__))
+        _msgs_file_path = os.path.join(_current_dir, _msgs_file_name)
+        if not os.path.isfile(_msgs_file_path):
+            _locale = _DEFAULT_LOCALE
+            _msgs_file_path = os.path.join(_current_dir, _MSG_FILE_NAME_FMT % _locale)
+        if not os.path.isfile(_msgs_file_path):
+            raise RuntimeError(_EMSG_FW_CORRUPT % _EMSG_NO_MSG_FILE_FOUND)
+        try:
+            with open(_msgs_file_path, 'r') as f:
+                _msgs = f.read()
+            return MessageTable(_locale, _msgs)
+        except Exception as e:
+            _cause = _EMSG_READ_MSG_FILE_FAILED % (_msgs_file_path, str(e))
+            raise RuntimeError(_EMSG_FW_CORRUPT % _cause)
+
+
+# All localized messages, eventually containing placeholders
+_MESSAGE_TABLE = MessageTable.for_locale(platform_locale())

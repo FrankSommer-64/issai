@@ -1,0 +1,12 @@
+certifi
+chardet
+idna
+pip
+PySide6
+requests
+setuptools
+tcms-api
+tomlkit
+urllib3
+wheel
+
