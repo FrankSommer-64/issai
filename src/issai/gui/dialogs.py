@@ -72,7 +72,7 @@ class AboutDialog(QDialog):
         self.__issai_image.setPixmap(_pixmap)
         _dlg_layout.addWidget(self.__issai_image, 0, 0, 4, 1)
         _dlg_layout.addWidget(QLabel(localized_message(I_GUI_ABOUT_TEXT)), 0, 1, Qt.AlignHCenter | Qt.AlignBottom)
-        _dlg_layout.addWidget(QLabel(localized_message(I_GUI_ABOUT_DETAIL_TEXT, ISSAI_VERSION, qVersion())),
+        _dlg_layout.addWidget(QLabel(localized_message(I_GUI_ABOUT_DETAIL_TEXT, VERSION, qVersion())),
                               1, 1, Qt.AlignCenter)
         _dlg_layout.addWidget(QLabel(localized_message(I_GUI_ABOUT_INFO_TEXT)), 2, 1, Qt.AlignHCenter | Qt.AlignTop)
         _ok_button = QPushButton(localized_label(L_OK))

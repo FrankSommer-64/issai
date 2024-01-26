@@ -1,74 +1,98 @@
-# Ariadne
+[![Contributors][contributors-shield]][contributors-url]
+[![Issues][issues-shield]][issues-url]
+[![MIT License][license-shield]][license-url]
 
-[![Test Status](https://github.com/rust-random/rand/workflows/Tests/badge.svg?event=push)](https://github.com/rust-random/rand/actions)
-[![Crate](https://img.shields.io/crates/v/rand.svg)](https://crates.io/crates/rand)
-[![Book](https://img.shields.io/badge/book-master-yellow.svg)](https://rust-random.github.io/book/)
-[![API](https://img.shields.io/badge/api-master-yellow.svg)](https://rust-random.github.io/rand/rand)
-[![API](https://docs.rs/rand/badge.svg)](https://docs.rs/rand)
-[![Minimum rustc version](https://img.shields.io/badge/rustc-1.36+-lightgray.svg)](https://github.com/rust-random/rand#rust-version-requirements)
+<br />
+<div align="center">
+  <a href="https://github.com/FrankSommer-64/issai">
+    <img src="images/issai.png" alt="Logo" width="128" height="128">
+  </a>
 
-A Rust library for logging and tracing.
-There are various libraries for that purpose around, but especially in situations where direct debugging
-isn't possible or spurious errors must be tracked down, Ariadne can be worth a try
-due to some unique features:
+<h3 align="center">Issai</h3>
+  <p align="center">
+    Run, export and import tests managed by Kiwi TCMS
+    <br />
+    <a href="https://github.com/FrankSommer-64/issai"><strong>Documentation</strong></a>
+    <br />
+    <br />
+    <a href="https://github.com/FrankSommer-64/issai/issues">Report Bug</a>
+    ·
+    <a href="https://github.com/FrankSommer-64/issai/issues">Request Feature</a>
+  </p>
+</div>
 
-- Event based output mode for log and trace messages. Output mode means filtering of messages according to their
-  associated level (e.g. error or warning). Usually, the output mode is defined once upon application start and on a
-  per-module basis. In Ariadne, the default output mode is set upon application start and may change whenever
-  configurable events like a certain function call or structure instantiation occur.
-- Configurable formatting of log and trace messages
-- Support for output resource types file, memory mapped file, console and network
-- File based resources may be level-, thread-, process- or application speficic
-- Built-in rollover of file resources based either on file size or time
 
-Documentation:
+## About The Project
 
--   [The Rust Rand Book](https://rust-random.github.io/book)
--   [API reference (master branch)](https://rust-ariadne.github.io/ariadne)
--   [API reference (docs.rs)](https://docs.rs/ariadne)
+Issai is a customizable framework to run test plans specified in Kiwi test case management system (TCMS).<br/>
+The name issai was chosen, because it denotes a small sort of kiwi fruit.<br/>
+Kiwi TCMS offers attributes to specify automated test plans and test cases,
+however, it does not provide the functionality to do so.<br/>
+The framework also implements export and import functionality, which is not contained in Kiwi TCMS either.<br/>
+Exports are useful for backing up test specifications and running tests offline without connection to Kiwi TCMS.<br/>
+Imports can be used to restore test specifications and allows to create test specifications
+in another tool or a document.<br/>
+
+
+## Getting Started
+
+### Prerequisites
+
+Since Issai doesn't offer test management functionality, you need access to a Kiwi TCMS instance.
+Issai needs Python 3.
+
+
+### Installation
+
+1. pip install issai
+2. Enter URL and credentials in file .tcms.conf in your home directory to access Kiwi TCMS using XML-RPC
+3. Configure issai according to your needs in directory .config/issai under your home directory.
+
 
 
 ## Usage
 
-Add this to your `Cargo.toml`:
+Issai offers a GUI for local configuration and development on test automation. Start the GUI with <pre>issai_gui</pre>.
 
-```toml
-[dependencies]
-ariadne = "0.9.0"
-```
-
-To get started using Ariadne, view the sample configuration file in the doc folder.
-
-
-## Versions
-
-Ariadne is still under construction.
-
-Current Ariadne versions are:
-
--   Version 0.9 is feature complete, but still widely untested.
-
-A detailed [changelog](CHANGELOG.md) is available for releases.
+For automated tasks, Issai's command line interface can be used:
+<ul>
+  <li>Run a test plan: <pre>issai_run --plan mytestplan --product-version "v0.8" --product-build "240120"</pre></li>
+  <li>Export a product: <pre> issai_export --product myproduct /tmp/issai-export</pre></li>
+  <li>Import a test result: <pre> issai_import /tmp/myproduct/plan_24_result.toml</pre></li>
+</ul>
 
 
-### Rust version requirements
 
-Ariadne complies to the 2021 Rust standard and requires **Rustc version 1.36 or greater**.
+## Roadmap
 
-## Crate Features
+- [ ] v0.7 full functionality to run tests
+- [ ] v0.8 GUI settings
+- [ ] v0.9 complete system test
 
-Ariadne is built with this features enabled by default:
+See the [open issues](https://github.com/FrankSommer-64/issai/issues) for a full list of proposed features (and known issues).
 
--   `core` enables functionality without network support
 
-Optional, the following feature can be added:
+## Contributing
 
--   `net` enables network functionality including a dedicated log and trace server, implied by `all`
+Any contributions you make are **greatly appreciated**.
 
-# License
 
-Ariadne is distributed under the terms of both the MIT license and the
-Apache License (Version 2.0).
 
-See [LICENSE-APACHE](LICENSE-APACHE) and [LICENSE-MIT](LICENSE-MIT), and
-[COPYRIGHT](COPYRIGHT) for details.
+## License
+
+Distributed under the MIT License. See [LICENSE][license-url] for more information.
+
+
+
+## Contact
+
+Frank Sommer - Frank.Sommer@sherpa-software.de
+
+Project Link: [https://github.com/FrankSommer-64/issai](https://github.com/FrankSommer-64/issai)
+
+[contributors-shield]: https://img.shields.io/github/contributors/FrankSommer-64/coaly.svg?style=for-the-badge
+[contributors-url]: https://github.com/FrankSommer-64/coaly/graphs/contributors
+[issues-shield]: https://img.shields.io/github/issues/FrankSommer-64/coaly.svg?style=for-the-badge
+[issues-url]: https://github.com/FrankSommer-64/coaly/issues
+[license-shield]: https://img.shields.io/github/license/FrankSommer-64/coaly.svg?style=for-the-badge
+[license-url]: https://github.com/FrankSommer-64/coaly/blob/master/LICENSE

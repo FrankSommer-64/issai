@@ -33,20 +33,78 @@
 # -----------------------------------------------------------------------------------------------
 
 """
-Issai command line interface to run test plans.
+Issai command line interface.
 """
 import os
 import sys
 
 from issai.core import *
-from common import (CLI_ACTION_RUN, CLI_ENTITY_REF_KIND_FILE,
-                    detail_action_for_run, options_for, parse_arguments_for_action)
+from issai.cli.common import (CLI_ACTION_EXPORT, CLI_ACTION_IMPORT, CLI_ACTION_RUN, CLI_ENTITY_REF_KIND_FILE,
+                              detail_action_for_export, detail_action_for_import, detail_action_for_run,
+                              options_for, parse_arguments_for_action)
 from issai.core.config import master_config, product_config
+from issai.core.exporter import export_case, export_plan, export_product
+from issai.core.importer import import_file
 from issai.core.runner import run_offline_plan, run_tcms_plan
 from issai.core.task import TaskMonitor
 
 
-if __name__ == '__main__':
+def export_main():
+    """
+    Export a test entity from TCMS to file.
+    """
+    try:
+        _args = parse_arguments_for_action(sys.argv[1:], CLI_ACTION_EXPORT)
+        _action = detail_action_for_export(_args)
+        _options = options_for(_args, _action)
+        _options[OPTION_VERSION] = _action.version()
+        _options[OPTION_BUILD] = _action.build()
+        _master_cfg = master_config()
+        _task_monitor = TaskMonitor()
+        _entity_type = _action.entity_type()
+        _ref_kind = _action.entity_ref_kind()
+        _output_path = os.path.abspath(_args.output_path)
+        _local_config = product_config(_action.product_name(), _master_cfg)
+        if _entity_type == ENTITY_TYPE_PRODUCT:
+            _result = export_product(_action.product_name(), _options, _local_config, _output_path, _task_monitor)
+        elif _entity_type == ENTITY_TYPE_PLAN:
+            _result = export_plan(_action.entity(), _options, _local_config, _output_path, _task_monitor)
+        else:
+            _result = export_case(_action.entity(), _options, _local_config, _output_path, _task_monitor)
+    except Exception as e:
+        print()
+        print(e)
+        sys.exit(1)
+
+
+def import_main():
+    """
+    Import a test entity from file to TCMS.
+    """
+    try:
+        _args = parse_arguments_for_action(sys.argv[1:], CLI_ACTION_IMPORT)
+        _action = detail_action_for_import(_args)
+        _options = options_for(_args, _action)
+        _options[OPTION_VERSION] = _action.version()
+        _options[OPTION_BUILD] = _action.build()
+        _master_cfg = master_config()
+        _task_monitor = TaskMonitor()
+        _entity_type = _action.entity_type()
+        _ref_kind = _action.entity_ref_kind()
+        _input_file_path = os.path.abspath(_args.input_file)
+        _output_path = os.path.abspath(_args.output_path)
+        _local_config = product_config(_action.product_name(), _master_cfg)
+        _result = import_file(_action.entity(), _options, _local_config, _input_file_path, _task_monitor)
+    except Exception as e:
+        print()
+        print(e)
+        sys.exit(1)
+
+
+def run_main():
+    """
+    Run a test plan.
+    """
     try:
         _args = parse_arguments_for_action(sys.argv[1:], CLI_ACTION_RUN)
         _action = detail_action_for_run(_args)

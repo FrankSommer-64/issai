@@ -226,7 +226,7 @@ def parse_arguments_for_action(cmdline_args, base_action):
     :rtype: argparse.Namespace
     """
     _arg_parser = argparse.ArgumentParser(description=localized_label(_ARG_DESCRIPTION[base_action]))
-    _issai_version = localized_message(I_CLI_ISSAI_VERSION, ISSAI_VERSION)
+    _issai_version = localized_message(I_CLI_ISSAI_VERSION, VERSION)
     _arg_parser.add_argument(f'--{CLI_ARG_VERSION}', action=CLI_ARG_VERSION, version=_issai_version)
     for _arg_name in _POS_ARGS[base_action]:
         _arg_help, _, _arg_choices, _ = _ARG_DESCRIPTOR[_arg_name]

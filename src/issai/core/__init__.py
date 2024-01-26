@@ -35,7 +35,7 @@ Package with core functions
 """
 
 # Package version
-ISSAI_VERSION = '0.5'
+VERSION = '0.5'
 
 ATTACHMENTS_CASE_DIR = 'case'
 ATTACHMENTS_ENTITY_DIR = 'entity'

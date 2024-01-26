@@ -1,0 +1,261 @@
+# default test data set for unit tests
+entity-type = "product"
+entity-name = "cli_test"
+entity-id = 1
+
+[master-data]
+product-versions = [
+    {id = 101, value = "unspecified", product = 1},
+    {id = 102, value = "mb_version", product = 1},
+    {id = 1101, value = "unspecified", product = 1001},
+    {id = 1102, value = "sb_version", product = 1001},
+    {id = 2101, value = "unspecified", product = 2001},
+    {id = 3101, value = "unique_version", product = 3001},
+]
+execution-statuses = [
+    {id = 1, name = "IDLE", weight = 0, icon = "fa fa-question-circle-o", color = "#72767b"},
+    {id = 4, name = "PASSED", weight = 20, icon = "fa fa-check-circle-o", color = "#92d400"},
+    {id = 5, name = "FAILED", weight = -30, icon = "fa fa-times-circle-o", color = "#cc0000"},
+    {id = 6, name = "BLOCKED", weight = -10, icon = "fa fa-stop-circle-o", color = "#cc0000"},
+    {id = 7, name = "ERROR", weight = -20, icon = "fa fa-minus-circle-o", color = "#cc0000"},
+]
+product-classifications = [
+    {id = 1, name = "Framework"},
+]
+case-categories = [
+    {id = 301, name = "--default--", product = 1, description = ""},
+    {id = 1301, name = "--default--", product = 1001, description = ""},
+    {id = 2301, name = "--default--", product = 2001, description = ""},
+    {id = 3301, name = "--default--", product = 2001, description = ""},
+]
+plan-types = [
+    {id = 2, name = "Acceptance", description = ""},
+]
+case-statuses = [
+    {id = 1, name = "PROPOSED", description = "", is_confirmed = false},
+    {id = 2, name = "CONFIRMED", description = "", is_confirmed = true},
+]
+case-priorities = [
+    {id = 1, value = "critical", is_active = true},
+    {id = 2, value = "high", is_active = true},
+    {id = 3, value = "medium", is_active = true},
+]
+tcms-users = [
+    {email = "issai@issai.local", first_name = "Dummy", id = 1, is_active = true, is_staff = true, is_superuser = true, last_name = "Tester", username = "tester"},
+]
+product-builds = [
+    {id = 201, name = "unspecified", version = 101, is_active = true},
+    {id = 202, name = "unspecified", version = 102, is_active = true},
+    {id = 203, name = "build1", version = 101, is_active = true},
+    {id = 204, name = "build2", version = 102, is_active = true},
+    {id = 1201, name = "unspecified", version = 1101, is_active = true},
+    {id = 1202, name = "unspecified", version = 1102, is_active = true},
+    {id = 2201, name = "unspecified", version = 2101, is_active = true},
+    {id = 2202, name = "build1", version = 2101, is_active = true},
+    {id = 2203, name = "build2", version = 2101, is_active = true},
+    {id = 3201, name = "unique_build", version = 3101, is_active = true},
+]
+
+[[environments]]
+id = 1
+name = "IssaiUnitTestAll"
+description = "Matrix to test all locale and operating system combinations"
+properties = [{LANG = "[en_US]"}, {LANGUAGE = "en_US.UTF-8"}, {"platform.os" = "[Linux]"}]
+
+[[products]]
+id = 1
+name = "IssaiMvMb"
+description = "Product with multiple versions and builds"
+classification = 1
+
+[[products]]
+id = 1001
+name = "IssaiMvSb"
+description = "Product with multiple versions, each with single build only"
+classification = 1
+
+[[products]]
+id = 2001
+name = "IssaiSvMb"
+description = "Product with single version and multiple builds"
+classification = 1
+
+[[products]]
+id = 3001
+name = "IssaiSvSb"
+description = "Product with single version and build, both unique in dataset"
+classification = 1
+
+[[test-plans]]
+id = 401
+name = "DefaultPlan"
+text = "Default test plan for unit tests"
+is_active = true
+product_version = 101
+product = 1
+author = 1
+type = 2
+attachments = []
+tags = []
+cases = [601]
+runs = [501]
+
+[[test-plans]]
+id = 491
+name = "DatasetAmbiguousProductUniquePlan"
+text = "Test plan name exists in two products, but within product with unique version and build"
+is_active = true
+product_version = 101
+product = 1
+author = 1
+type = 2
+attachments = []
+tags = []
+cases = []
+runs = []
+
+[[test-plans]]
+id = 1401
+name = "DatasetUniquePlan"
+text = "Test plan name exists in one product with unique version and build only"
+is_active = true
+product_version = 1101
+product = 1001
+author = 1
+type = 2
+attachments = []
+tags = []
+cases = []
+runs = []
+
+[[test-plans]]
+id = 1402
+name = "VersionUniquePlan"
+text = "Test plan with one version only"
+is_active = true
+product_version = 1101
+product = 1001
+author = 1
+type = 2
+attachments = []
+tags = []
+cases = []
+runs = []
+
+[[test-plans]]
+id = 1491
+name = "DatasetAmbiguousPlan"
+text = "Second test plan with same name in both products"
+is_active = true
+product_version = 1101
+product = 1001
+author = 1
+type = 2
+attachments = []
+tags = []
+cases = []
+runs = []
+
+[[test-plans]]
+id = 492
+name = "VersionAmbiguousPlan"
+text = "First test plan with same name, product and version"
+is_active = true
+product_version = 101
+product = 1
+author = 1
+type = 2
+attachments = []
+tags = []
+cases = []
+runs = []
+
+[[test-plans]]
+id = 493
+name = "VersionAmbiguousPlan"
+text = "Second test plan with same name, product and version"
+is_active = true
+product_version = 101
+product = 1
+author = 1
+type = 2
+attachments = []
+tags = []
+cases = []
+runs = []
+
+[[test-plans]]
+id = 494
+name = "ProductAmbiguousPlan"
+text = "First test plan with same name and product, but different version"
+is_active = true
+product_version = 101
+product = 1
+author = 1
+type = 2
+attachments = []
+tags = []
+cases = []
+runs = []
+
+[[test-plans]]
+id = 495
+name = "ProductAmbiguousPlan"
+text = "Second test plan with same name and product, but different version"
+is_active = true
+product_version = 102
+product = 1
+author = 1
+type = 2
+attachments = []
+tags = []
+cases = []
+runs = []
+
+[[test-runs]]
+id = 501
+summary = "DefaultPlan"
+notes = ""
+plan = 401
+build = 101
+manager = 1
+default_tester = 1
+properties = []
+tags = []
+executions = [701]
+
+[[test-cases]]
+id = 601
+is_automated = true
+script = "unit_test"
+arguments = "all"
+summary = "DefaultCase"
+notes = ""
+text = "Blablabla"
+case_status = 2
+category = 301
+priority = 2
+author = 1
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [701]
+
+[[test-executions]]
+id = 701
+assignee = 1
+run = 501
+case = 601
+build = 201
+status = 4
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+

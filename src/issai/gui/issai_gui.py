@@ -50,7 +50,7 @@ from issai.gui.mainwindow import MainWindow
 _IMAGES_DIR = 'images'
 
 
-if __name__ == '__main__':
+def gui_main():
     try:
         _images_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), _IMAGES_DIR)
         QDir.addSearchPath(_IMAGES_DIR, _images_path)
