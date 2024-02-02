@@ -361,7 +361,7 @@ def _run_case(plan_entity, case_id, executable_table, local_config, runtime_env,
         return _case_result
     _script = _case[ATTR_SCRIPT]
     if len(_script) == 0:
-        _case_result[ATTR_STATUS] = RESULT_STATUS_ID_ERROR
+        _case_result[ATTR_STATUS] = RESULT_STATUS_ERROR
         _case_result[ATTR_COMMENT] = localized_message(E_RUN_CASE_SCRIPT_MISSING, _case[ATTR_SUMMARY])
         _case_result.mark_end()
         task_monitor.log(False, E_RUN_CASE_SCRIPT_MISSING, _case[ATTR_SUMMARY])
