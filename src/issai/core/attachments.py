@@ -124,7 +124,7 @@ def upload_attachment(root_path, file_name, file_entity_id, tcms_class_id, tcms_
         with open(_file_path, 'rb') as _f:
             _contents = _f.read()
     except Exception as _e:
-        raise IssaiException(E_READ_ATTACHMENT_FAILED, str(_e))
+        raise IssaiException(E_READ_ATTACHMENT_FAILED, _file_path, str(_e))
     _file_contents = b64encode(_contents).decode('utf-8')
     upload_entity_attachment(tcms_class_id, tcms_entity_id, file_name, _file_contents)
 
@@ -143,7 +143,7 @@ def upload_attachment_file(file_path, tcms_file_name, tcms_class_id, tcms_entity
         with open(file_path, 'rb') as _f:
             _contents = _f.read()
     except Exception as _e:
-        raise IssaiException(E_READ_ATTACHMENT_FAILED, str(_e))
+        raise IssaiException(E_READ_ATTACHMENT_FAILED, file_path, str(_e))
     _contents = _contents.replace(b'AssertionError', b'AssertionFailed')
     _file_contents = b64encode(_contents).decode('utf-8')
     upload_entity_attachment(tcms_class_id, tcms_entity_id, tcms_file_name, _file_contents)

@@ -567,8 +567,10 @@ def _skip_entity_on_local_machine(entity_type, runnable_flag, entity_tags, resul
     _entity_name = entity_type_name(entity_type)
     if not runnable_flag:
         result[ATTR_SUMMARY] = localized_message(I_RUN_ENTITY_SKIPPED, _entity_name)
-        _note_id = I_RUN_PLAN_NOT_ACTIVE if entity_type == ENTITY_TYPE_PLAN else I_RUN_CASE_NOT_AUTOMATED
-        result[ATTR_NOTES] = localized_message(_note_id)
+        if entity_type == ENTITY_TYPE_PLAN:
+            result[ATTR_NOTES] = localized_message(I_RUN_PLAN_NOT_ACTIVE)
+        else:
+            result[ATTR_NOTES] = localized_message(I_RUN_CASE_NOT_AUTOMATED)
         return True
     if _tags_exclude_platform_os(entity_tags):
         result[ATTR_SUMMARY] = localized_message(I_RUN_ENTITY_SKIPPED, _entity_name)

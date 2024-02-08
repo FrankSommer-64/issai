@@ -151,4 +151,5 @@ class Worker(QRunnable):
             return Worker(run_tcms_plan, entity, options, local_cfg)
         elif action == ACTION_RUN_OFFLINE_PLAN:
             return Worker(run_offline_plan, entity, options, local_cfg, file_or_working_path)
-        raise IssaiException(E_INTERNAL_ERROR, localized_message(E_INVALID_ACTION, action))
+        _emsg = localized_message(E_INVALID_ACTION, action)
+        raise IssaiException(E_INTERNAL_ERROR, _emsg)

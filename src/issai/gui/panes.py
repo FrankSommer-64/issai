@@ -508,6 +508,8 @@ class TcmsActionPane(QGroupBox):
             self.__product_combo.addItem(_p[ATTR_NAME], _p)
         if len(products) == 1:
             self.__product_combo.setCurrentIndex(0)
+            if self.__entity_type == ENTITY_TYPE_PRODUCT:
+                self.__selected_entity = products[0]
             self._fill_version_combo(products[0])
         else:
             self.__product_combo.setCurrentIndex(-1)
@@ -609,16 +611,18 @@ class TcmsActionPane(QGroupBox):
         # product and version are always required
         _product = self.__product_combo.currentData()
         _version = self.__version_combo.currentData()
-        _emsg_id = None
         if _product is None and _version is None:
-            _emsg_id = E_GUI_NEITHER_PRODUCT_NOR_VERSION_SELECTED
-        elif _product is None:
-            _emsg_id = E_GUI_NO_PRODUCT_SELECTED
-        elif _version is None:
-            _emsg_id = E_GUI_NO_VERSION_SELECTED
-        if _emsg_id is not None:
             QMessageBox.critical(self, localized_label(L_MBOX_TITLE_ERROR),
-                                 localized_message(_emsg_id), QMessageBox.StandardButton.Ok)
+                                 localized_message(E_GUI_NEITHER_PRODUCT_NOR_VERSION_SELECTED),
+                                  QMessageBox.StandardButton.Ok)
+            return
+        if _product is None:
+            QMessageBox.critical(self, localized_label(L_MBOX_TITLE_ERROR),
+                                 localized_message(E_GUI_NO_PRODUCT_SELECTED), QMessageBox.StandardButton.Ok)
+            return
+        if _version is None:
+            QMessageBox.critical(self, localized_label(L_MBOX_TITLE_ERROR),
+                                 localized_message(E_GUI_NO_VERSION_SELECTED), QMessageBox.StandardButton.Ok)
             return
         _pattern = self.__name_text.text().strip()
         _filter = {ATTR_PRODUCT_VERSION: _version[ATTR_ID]}

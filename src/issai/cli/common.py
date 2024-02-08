@@ -691,7 +691,8 @@ def load_entity_environment(entity, env_arg, file_path):
     raise IssaiException(E_CLI_MISSING_ENV_IN_FILE, env_arg, file_path)
 
 
-_ARG_DESCRIPTION = {CLI_ACTION_EXPORT: L_CLI_EXPORT_DESCRIPTION, CLI_ACTION_IMPORT: L_CLI_IMPORT_DESCRIPTION,
+_ARG_DESCRIPTION = {CLI_ACTION_EXPORT: L_CLI_EXPORT_DESCRIPTION,
+                    CLI_ACTION_IMPORT: L_CLI_IMPORT_DESCRIPTION,
                     CLI_ACTION_RUN: L_CLI_RUN_DESCRIPTION}
 
 # positional arguments

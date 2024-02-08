@@ -33,7 +33,17 @@
 # -----------------------------------------------------------------------------------------------
 
 """
-Checks localized messages consistency.
+Checks localized messages consistency for a specific locale.
+The locale must be defined in environment variable LANG.
+The Issai root directory for source files must be defined in environment variable ISSAI_SOURCE_PATH.
+In detail, performs the following checks:
+- all message codes defined in messages.py must have a localized definition in messages_<LANG>.txt
+- all localized message codes defined in messages_<LANG>.txt must have a definition in messages.py
+- all message codes defined in messages.py must be referenced in a source file
+- all usages of message codes must supply the needed parameters of the localized text in messages_<LANG>.txt
+
+Exit code is 0 for success, 1 for failed and -1 for error.
+Information and error messages are printed to console.
 """
 
 import glob
@@ -47,10 +57,13 @@ DUP_ID_VALUE = 'duplicate-id-value'
 DUP_LOC_ID_VALUE = 'duplicate-localized-id-value'
 LOC_ID_MISSING = 'localized-id-missing'
 LOC_ID_UNDEFINED = 'localized-id-undefined'
-MSG_ID_DEF_PATTERN = r"^([EILW]_\w+)\s*=\s*'(.*)'"
-LOC_TEXT_PATTERN = r"^([a-z0-9\-]*?)\s+(.*)$"
-MSG_ID_PATTERN = r"\b([EILW]\_\w+)\b"
+MSG_SEVS = ('E', 'I', 'L', 'T', 'W')
+IGNORE_FILES = ['issai_exception.py', 'messages.py']
+MSG_ID_DEF_PATTERN = r"^([EILTW]_\w+)\s*=\s*'(.*)'"
+LOC_TEXT_PATTERN = r"^([eiltw]\-[a-z0-9\-]*?)\s+(.*)$"
+MSG_ID_PATTERN = r"\b([EILTW]\_\w+)\b"
 LOC_MSG_PATTERN = r"localized_message\((.*)\)"
+LOC_LBL_PATTERN = r"localized_label\((.*)\)"
 RAISE_PATTERN = r"raise\s+IssaiException\((.*)\)"
 
 
@@ -74,30 +87,39 @@ def check_localized_messages(messages, loc_messages):
     return _missing, _undefined
 
 
-def find_message_issues(directories):
+def find_message_issues(source_path):
     """
     Checks all Python source files using localized messages for correct number of message parameters.
-    :param tuple directories: the full path of all directories to scan
+    :param str source_path: the root directory to scan
+    :returns: message codes referenced in source code, function calls with message codes for each source file
+    :rtype: tuple(set, dict)
     """
     _used_ids = set()
     _issues = {}
-    _file_name_pattern = '*.py'
-    for _dir in directories:
-        _source_files = glob.glob(os.path.join(_dir, _file_name_pattern))
-        for _file_path in _source_files:
-            _file_name = os.path.basename(_file_path)
-            if _file_name == 'messages.py':
+    for path, subdirs, files in os.walk(source_path):
+        for _file_name in files:
+            if _file_name in IGNORE_FILES or not _file_name.endswith('.py'):
                 continue
+            _file_path = os.path.join(path, _file_name)
             _issues[_file_name] = []
             _raise_pattern = re.compile(RAISE_PATTERN)
             _loc_msg_pattern = re.compile(LOC_MSG_PATTERN)
+            _loc_lbl_pattern = re.compile(LOC_LBL_PATTERN)
             _msg_id_pattern = re.compile(MSG_ID_PATTERN)
             with open(_file_path, 'r') as _f:
                 _line_nr = 0
+                _issue_line_nr = 0
                 _line = _f.readline()
                 while _line:
                     _line_nr += 1
                     _line = _line.strip()
+                    if _issue_line_nr > 0:
+                        _msg_args.extend(_line.split(','))
+                        if _line.endswith(','):
+                            _line = _f.readline()
+                            continue
+                        _issues[_file_name].append((_issue_line_nr, _msg_id, _msg_args))
+                        _issue_line_nr = 0
                     if len(_line) == 0 or _line.startswith('#'):
                         _line = _f.readline()
                         continue
@@ -107,33 +129,51 @@ def find_message_issues(directories):
                         _msg_id = _exception_args[0].rstrip(')')
                         _used_ids.add(_msg_id)
                         _msg_args = [] if len(_exception_args) == 1 else _exception_args[1:]
-                        _issues[_file_name].append((_line_nr, _msg_id, _msg_args))
+                        if _line.endswith(','):
+                            _issue_line_nr = _line_nr
+                        else:
+                            _issues[_file_name].append((_line_nr, _msg_id, _msg_args))
                         _line = _f.readline()
                         continue
                     _match = _loc_msg_pattern.search(_line)
                     if _match:
-                        _exception_args = _match.group(1).split(',')
-                        _msg_id = _exception_args[0].rstrip(')')
-                        _used_ids.add(_msg_id)
-                        _msg_args = [] if len(_exception_args) == 1 else _exception_args[1:]
-                        _issues[_file_name].append((_line_nr, _msg_id, _msg_args))
+                        _msg_args = _match.group(1).split(',')
+                        _msg_id = _msg_args[0].rstrip(')')
+                        if _msg_id[0] in MSG_SEVS and _msg_id[1] != '_':
+                            _used_ids.add(_msg_id)
+                            _msg_args = [] if len(_msg_args) == 1 else _msg_args[1:]
+                            if _line.endswith(','):
+                                _issue_line_nr = _line_nr
+                            else:
+                                _issues[_file_name].append((_line_nr, _msg_id, _msg_args))
                         _line = _f.readline()
                         continue
-                    _match = _msg_id_pattern.search(_line)
+                    _match = _loc_lbl_pattern.search(_line)
                     if _match:
-                        _msg_id = _match.group(1).strip()
+                        _msg_args = _match.group(1).split(',')
+                        _msg_id = _msg_args[0].rstrip(')')
+                        if _msg_id[0] in MSG_SEVS and _msg_id[1] != '_':
+                            _used_ids.add(_msg_id)
+                            _msg_args = [] if len(_msg_args) == 1 else _msg_args[1:]
+                            if _line.endswith(','):
+                                _issue_line_nr = _line_nr
+                            else:
+                                _issues[_file_name].append((_line_nr, _msg_id, _msg_args))
+                        _line = _f.readline()
+                        continue
+                    for _match in _msg_id_pattern.findall(_line):
+                        _msg_id = _match.strip()
                         _used_ids.add(_msg_id)
                     _line = _f.readline()
     return _used_ids, _issues
 
 
-def read_localized_messages(file_path, locale_code, problems):
+def read_localized_messages(file_path, problems):
     """
     Reads all localized messages defined in specified file.
     :param str file_path: the file name including full path
-    :param str locale_code: the two-character locale code
     :param dict problems: the data structure where problems are collected
-    :return: all localized messages found; id string as key, localized message text as value
+    :return: all localized messages found; message code as key, localized message text as value
     :rtype: dict
     """
     _messages = {}
@@ -157,16 +197,16 @@ def read_localized_messages(file_path, locale_code, problems):
                 else:
                     _messages[_msg_id] = _msg_text
             _line = _f.readline()
-    problems[DUP_LOC_ID_VALUE][locale_code] = _locale_problems
+    problems[DUP_LOC_ID_VALUE] = _locale_problems
     return _messages
 
 
-def read_message_ids(file_path, problems):
+def read_message_codes(file_path, problems):
     """
-    Reads all message ID's defined in specified file.
+    Reads all message codes defined in specified file.
     :param str file_path: the file name including full path
     :param dict problems: the data structure where problems are collected
-    :return: all message ID's found; symbolic constant as key, string as value
+    :return: all message codes found; symbolic constant as key, string as value
     :rtype: dict
     """
     _msg_ids = {}
@@ -196,36 +236,59 @@ def read_message_ids(file_path, problems):
 
 
 if __name__ == '__main__':
+    _rc = 0
     try:
-        project_root_path = sys.argv[1]
-        source_path = os.path.join(project_root_path, 'issai')
-        core_package_path = os.path.join(source_path, 'core')
-        gui_package_path = os.path.join(source_path, 'gui')
-        message_file_path = os.path.join(core_package_path, 'messages.py')
-        locale_files_pattern = 'messages_*.txt'
-        locale_files = glob.glob(os.path.join(core_package_path, locale_files_pattern))
+        # read mandatory parameters from OS environment
+        _lang = os.environ.get('LANG')
+        if _lang is None:
+            raise RuntimeError('Environment variable LANG not set')
+        _locale = _lang[:2].lower()
+        _source_path = os.environ.get('ISSAI_SOURCE_PATH')
+        if _source_path is None:
+            raise RuntimeError('Environment variable ISSAI_SOURCE_PATH not set')
+        _core_package_path = os.path.join(_source_path, 'issai', 'core')
+        _message_file_path = os.path.join(_core_package_path, 'messages.py')
+        _localized_message_file_path = os.path.join(_core_package_path, f'messages_{_locale}.txt')
         _problems = {DUP_ID_SYM: [], DUP_ID_VALUE: [], DUP_LOC_ID_VALUE: {}, LOC_ID_MISSING: {}, LOC_ID_UNDEFINED: {}}
-        message_ids = read_message_ids(message_file_path, _problems)
-        localized_messages = {}
-        for locale_file in locale_files:
-            locale = os.path.basename(locale_file)[-6:-4]
-            localized_messages[locale] = read_localized_messages(locale_file, locale, _problems)
-            ids_not_in_locale, undefined_ids = check_localized_messages(message_ids, localized_messages[locale])
-            if len(ids_not_in_locale) > 0:
-                print('Message IDs not defined in localized message file %s:' % os.path.basename(locale_file))
-                print('  %s' % ','.join(ids_not_in_locale))
-            if len(undefined_ids) > 0:
-                print('Non-existing message IDs used in localized message file %s:' % os.path.basename(locale_file))
-                print('  %s' % ','.join(undefined_ids))
-        used_ids, msg_issues = find_message_issues((core_package_path, gui_package_path))
-        for msg_id in message_ids.keys():
+        # read all message codes from python source file
+        _message_codes = read_message_codes(_message_file_path, _problems)
+        # read localized message texts from text file
+        _localized_messages = read_localized_messages(_localized_message_file_path, _problems)
+        # check whether all message codes have a matching text and vice versa
+        _codes_not_in_locale, _undefined_codes = check_localized_messages(_message_codes, _localized_messages)
+        if len(_codes_not_in_locale) > 0:
+            _rc = 1
+            _fn = os.path.basename(_localized_message_file_path)
+            print(f'Message codes not defined in localized message file{_fn}:')
+            print('  %s' % ','.join(_codes_not_in_locale))
+        if len(_undefined_codes) > 0:
+            _rc = 1
+            _fn = os.path.basename(_localized_message_file_path)
+            print('Non-existing message codes used in localized message file {_fn}:')
+            print('  %s' % ','.join(_undefined_codes))
+        # check whether all message codes are referenced in source code
+        used_ids, msg_issues = find_message_issues(_source_path)
+        for msg_id in _message_codes.keys():
             if msg_id not in used_ids:
                 _dry_run_index = msg_id.find('_DRY_RUN')
                 if _dry_run_index > 0:
                     _pure_msg_id = msg_id[:2] + msg_id[10:]
                     if _pure_msg_id in used_ids:
                         continue
+                _rc = 1
                 print(f'Message ID {msg_id} is not used')
+        # check whether all usages supply correct number of parameters
+        for _file_name, _calls in msg_issues.items():
+            for _line_nr, _msg_sym, _msg_args in _calls:
+                _msg_code = _message_codes.get(_msg_sym)
+                _loc_msg = _localized_messages.get(_msg_code)
+                _expected_arg_count = len(re.findall(r'\{\d+\}', _loc_msg))
+                _actual_arg_count = len(_msg_args)
+                if _expected_arg_count != _actual_arg_count:
+                    _rc = 1
+                    print(f'{_file_name}:{_line_nr} {_msg_sym} expects {_expected_arg_count} arguments, '
+                          'passed are {_actual_arg_count}')
     except Exception as e:
         print(e)
-        sys.exit(1)
+        sys.exit(-1)
+    sys.exit(_rc)

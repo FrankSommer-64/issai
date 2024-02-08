@@ -31,7 +31,7 @@ e-cfg-product-config-invalid Product {0} is not properly configured.
 e-cfg-invalid-data-type Local configuration parameter '{0}' must have data type {1}.
 e-cfg-invalid-execution-status Invalid execution status '{0}'.
 e-cfg-runner-spec-invalid Runner script specification '{0}' is not valid.
-e-cfg-var-not-defined Variable '{0}' referenced in group '{1}' has not been defined in local configuration.
+e-cfg-var-not-defined Variable '{0}' has not been defined in local configuration.
 
 # export
 i-exp-fetch-case Fetching TestCase '{0}' from TCMS.
@@ -262,25 +262,17 @@ i-run-case-not-automated Test case '{0}' skipped, not automated.
 i-download-attachments Downloading attachments for '{0}'.
 
 # dry run
-i-dry-run-update-execution Will update test execution {0} for test case '{1}' with values {2}.
-i-dry-run-update-run Will update test run {0} for test plan '{1}' with values {2}.
 i-dry-run-upload-attachment Will upload {0} attachment file {1}.
-i-dry-run-imp-bsp-object-created Will create {0} with name '{1}' for build ID {2}
-i-dry-run-imp-bsp-object-skipped Will use existing {0} with name '{1}' for build ID {2}
 i-dry-run-imp-md-exact-match {0} '{1}' exists with same ID {2} in TCMS.
-i-dry-run-imp-md-no-match Will try to create {0} object '{1}', it doesn't exist in TCMS.
 i-dry-run-imp-md-ref-changed Will use different ID {0} for {1} '{2}' instead of ID {3}.
-i-dry-run-imp-no-obj-exists {0} with name '{1}' doesn't exist in TCMS and can be imported.
 i-dry-run-imp-execution-created Will create TestExecution for TestCase '{0}' and TestRun ID {1}.
 i-dry-run-imp-execution-skipped Will not import TestExecution for TestCase '{0}' and TestRun ID {1}, using existing TestExecution with ID {2}.
 i-dry-run-imp-object-created Will create {0} with name '{1}'.
 i-dry-run-imp-object-skipped Will not import {0} '{1}', using existing object with ID {2}.
-i-dry-run-imp-object-updated Will update {0} with name '{1}' from imported data.
 i-dry-run-imp-run-created Will create TestRun for TestPlan '{0}' and Build ID {1}.
 i-dry-run-imp-run-skipped Will not import TestRun for TestPlan '{0}' and Build ID {1}, using existing TestRun with ID {2}.
 i-dry-run-imp-user-exact-match User '{0}' exists with same ID {1} in TCMS.
 i-dry-run-imp-user-repl-current Will use current user '{0}' for username '{1}'.
-i-dry-run-imp-user-repl-other Will use different ID {0} for username '{1}' instead of ID {2}.
 
 e-attachment-missing Error: Attachment file {0} does not exist.
 e-dry-run-imp-case-result-will-fail Error: Import of result for test case {0} will fail: {1}

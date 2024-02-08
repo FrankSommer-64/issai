@@ -294,7 +294,7 @@ class LocalConfig(dict):
         if isinstance(_value, str):
             _value = [_value]
         elif not isinstance(_value, list):
-            raise IssaiException(E_CFG_INVALID_DATA_TYPE, dotted_key, 'list, str')
+            raise IssaiException(E_CFG_INVALID_DATA_TYPE, dotted_key, 'list or str')
         for i in range(0, len(_value)):
             _elem = _value[i]
             _literal_elem = self.literal_value(_elem)
@@ -361,7 +361,7 @@ class LocalConfig(dict):
         _value = self.get(_var_name)
         if _value is not None:
             return _value
-        raise IssaiException(E_CFG_VAR_NOT_DEFINED, variable, group)
+        raise IssaiException(E_CFG_VAR_NOT_DEFINED, f'{group}.{_var_name}')
 
 
 def load_runtime_configs():
