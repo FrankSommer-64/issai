@@ -72,3 +72,7 @@ def gui_main():
         print()
         print(e)
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    gui_main()

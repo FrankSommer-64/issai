@@ -1,5 +1,6 @@
 certifi
 chardet
+debugpy
 idna
 pip
 PySide6

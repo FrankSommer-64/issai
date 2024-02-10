@@ -386,7 +386,12 @@ def _run_case(plan_entity, case_id, executable_table, local_config, runtime_env,
         _output_file.write(_stdout)
         _output_file.write(_stderr)
         _output_file.close()
-    _result_status = RESULT_STATUS_PASSED if _rc == 0 else RESULT_STATUS_FAILED
+    if _rc == 0:
+        _result_status = RESULT_STATUS_PASSED
+    elif _rc == 1:
+        _result_status = RESULT_STATUS_FAILED
+    else:
+         _result_status = RESULT_STATUS_ERROR
     _case_result.mark_end()
     _case_result.set_attr_value(ATTR_STATUS, _result_status)
     _case_result.set_attr_value(ATTR_TESTER_NAME, runtime_env[ENVA_ISSAI_USERNAME])
@@ -465,7 +470,8 @@ def initial_env_vars(local_config, options):
                 _enva_value = local_config.get_str_value(_cfg_par_name)
                 if _enva_value is None:
                     continue
-            _runtime_env[_enva_name] = _enva_value
+            _issai_enva_name = f'{ENVA_PREFIX_ISSAI}{_enva_name.upper().replace("-", "_")}'
+            _runtime_env[_issai_enva_name] = _enva_value
     _source_path = local_config.get_str_value(CFG_PAR_PRODUCT_SOURCE_PATH)
     if _source_path is None:
         raise IssaiException(E_RUN_SOURCE_PATH_MISSING, CFG_PAR_PRODUCT_SOURCE_PATH)
@@ -476,6 +482,7 @@ def initial_env_vars(local_config, options):
         _runtime_env[ENVA_PYTHON_PATH] = _source_path
     else:
         _runtime_env[ENVA_PYTHON_PATH] = f'{_source_path}:{_py_path}'
+    # TODO Environment handling for test matrix
     _environment = options.get(OPTION_ENVIRONMENT)
     if _environment is not None:
         _env_props = read_environment_properties(_environment)

@@ -111,7 +111,10 @@ class FileActionPane(QGroupBox):
         _pane_layout.addWidget(self._entity_info_box())
         _pane_layout.addWidget(self._options_box())
 
-        _do_button_label = localized_label(L_IMPORT) if action == ACTION_IMPORT else localized_label(L_RUN)
+        if action == ACTION_IMPORT:
+            _do_button_label = localized_label(L_IMPORT)
+        else:
+            _do_button_label = localized_label(L_RUN)
         _do_button = QPushButton(_do_button_label)
         _do_button.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
         _do_button.setStyleSheet(_OPEN_BUTTON_STYLE)
