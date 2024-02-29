@@ -42,8 +42,9 @@ import sys
 from PySide6.QtCore import QDir
 from PySide6.QtWidgets import QApplication, QMessageBox
 
-from issai.core.messages import localized_label, localized_message, I_GUI_CONFIG_PROBLEM, L_MBOX_TITLE_INFO
-from issai.core.config import load_runtime_configs
+from issai.core.messages import (localized_label, localized_message, I_GUI_CONFIG_PROBLEM, I_GUI_CONFIG_WARNING,
+                                 L_MBOX_TITLE_INFO, L_MBOX_TITLE_WARNING)
+from issai.core.config import load_runtime_configs, master_config
 from issai.gui.mainwindow import MainWindow
 
 
@@ -55,16 +56,29 @@ def gui_main():
         _images_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), _IMAGES_DIR)
         QDir.addSearchPath(_IMAGES_DIR, _images_path)
         app = QApplication(sys.argv)
-        product_configs, problems = load_runtime_configs()
-        if len(problems) > 0:
+        _master_config = master_config()
+        if _master_config is not None:
+            os.environ.update(_master_config.environment_variables())
+        _product_configs, _problems, _warnings = load_runtime_configs()
+        if len(_problems) > 0 or len(_warnings) > 0:
+            if len(_problems) > 0:
+                _icon = QMessageBox.Icon.Warning
+                _title_id = L_MBOX_TITLE_WARNING
+                _info_text_id = I_GUI_CONFIG_PROBLEM
+                _text = '%s%s%s%s' % (os.linesep.join(_problems), os.linesep, os.linesep, os.linesep.join(_warnings))
+            else:
+                _icon = QMessageBox.Icon.Information
+                _title_id = L_MBOX_TITLE_INFO
+                _info_text_id = I_GUI_CONFIG_WARNING
+                _text = os.linesep.join(_warnings)
             mbox = QMessageBox()
-            mbox.setIcon(QMessageBox.Icon.Information)
-            mbox.setWindowTitle(localized_label(L_MBOX_TITLE_INFO))
-            mbox.setText(localized_message(I_GUI_CONFIG_PROBLEM))
-            mbox.setInformativeText(os.linesep.join(problems))
+            mbox.setIcon(_icon)
+            mbox.setWindowTitle(localized_label(_title_id))
+            mbox.setText(localized_message(_info_text_id))
+            mbox.setInformativeText(_text)
             mbox.setStandardButtons(QMessageBox.StandardButton.Ok)
             mbox.exec()
-        main_win = MainWindow(product_configs)
+        main_win = MainWindow(_product_configs)
         main_win.show()
         app.aboutToQuit.connect(main_win.save_settings)
         sys.exit(app.exec())

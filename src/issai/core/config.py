@@ -45,10 +45,12 @@ or test cases.
 
 import importlib
 import importlib.util
+import os.path
 import re
 import sys
 
 import tomlkit
+import tomlkit.items
 
 from issai.core import *
 from issai.core.issai_exception import IssaiException
@@ -111,6 +113,15 @@ class LocalConfig(dict):
         :rtype: list[str]
         """
         return [_k for _k, _v in self.items() if isinstance(_v, tomlkit.items.Table)]
+
+    def environment_variables(self):
+        """
+        :returns: all environment variables defined in the configuration
+        :rtype: dict
+        """
+        _env_grp = self.get(CFG_GROUP_ENV)
+        _env_vars = {} if _env_grp is None else _env_grp.unwrap()
+        return _env_vars
 
     def localized_label_scheme(self):
         """
@@ -245,15 +256,18 @@ class LocalConfig(dict):
         Stores warnings in local object.
         :raises IssaiException: if configuration contains errors
         """
+        _file_name = os.path.basename(self.__file_path)
+        if self.__is_product_config:
+            _file_name = os.path.join(os.path.basename(os.path.dirname(self.__file_path)), _file_name)
         if self.__is_product_config and self[CFG_VAR_CONFIG_ROOT] == os.path.dirname(self.__file_path):
             # product configuration must be located in a subdirectory
-            raise IssaiException(E_CFG_INVALID_DIR_STRUCTURE, self.__file_path)
+            raise IssaiException(E_CFG_INVALID_DIR_STRUCTURE, _file_name)
         # check whether mandatory attribute is missing
         if self.__is_product_config:
             _defined_attrs = self.attribute_names()
             for _mk in mandatory_attrs():
                 if _mk not in _defined_attrs:
-                    raise IssaiException(E_CFG_MANDATORY_PAR_MISSING, _mk, self.__file_path)
+                    raise IssaiException(E_CFG_MANDATORY_PAR_MISSING, _mk, _file_name)
         self.resolve_references()
 
     def resolve_references(self):
@@ -271,30 +285,29 @@ class LocalConfig(dict):
         """
         Replaces references to variables with their actual values.
         :param str group_name: the name of the TOML group to process, empty string for root
-        :param tomlkit.items.Table group: the TOML group to process
+        :param LocalConfig | tomlkit.items.Table group: the TOML group to process
         Stores warnings in local object.
         :raises IssaiException: if cycles or undefined references are detected
         """
         for _k, _v in group.items():
             if isinstance(_v, str):
                 _qualified_attr_name = LocalConfig.qualified_attr_name_for(group_name, _k)
-                group[_k] = self.literal_value_of(group_name, _k, _v, {_k, _qualified_attr_name})
+                group[_k] = self.literal_value_of(group_name, _v, {_k, _qualified_attr_name})
                 continue
             if isinstance(_v, tomlkit.items.Array):
                 for i in range(0, len(_v)):
-                    _v[i] = self.literal_value_of(group_name, None, _v[i], set())
+                    _v[i] = self.literal_value_of(group_name, _v[i], set())
                 continue
             if isinstance(_v, tomlkit.items.InlineTable):
                 for _tk, _tv in _v.items():
-                    _v[_tk] = self.literal_value_of(group_name, None, _tv, set())
+                    _v[_tk] = self.literal_value_of(group_name, _tv, set())
 
-    def literal_value_of(self, group_name, attr_name, attr_value, referenced_vars):
+    def literal_value_of(self, group_name, attr_value, referenced_vars):
         """
         Returns literal value of an attribute. Replaces any existing variable references in string values by the
         actual variable values.
         Stores warnings in local object.
         :param str group_name: the TOML group where the attribute resides, empty string for root
-        :param str attr_name: the attribute name. May be plain or qualified; None for array or inline table items
         :param attr_value: the attribute value
         :param set referenced_vars: all variable names replaced up to now; needed to detect cycles
         :returns: literal attribute value
@@ -305,7 +318,6 @@ class LocalConfig(dict):
         _ref_exists = attr_value.find('${') >= 0 or attr_value.find('$env[') >= 0
         if not _ref_exists:
             return attr_value
-        _qualified_attr_name = LocalConfig.qualified_attr_name_for(group_name, attr_name)
         _literal_value = attr_value
         while _ref_exists:
             _toml_refs = set(TOML_VAR_PATTERN.findall(_literal_value))
@@ -335,7 +347,7 @@ class LocalConfig(dict):
         """
         Returns value of a variable.
         :param str var_name: the variable name
-        :param tomlkit.items.Table referencing_group: the TOML group referencing the variable
+        :param str group_name: the TOML group name referencing the variable
         :returns: value of referenced variable, may itself contain references. None, if variable is not defined.
         """
         if var_name.find('.') > 0:
@@ -410,8 +422,8 @@ class LocalConfig(dict):
     def get_value(self, dotted_key, default_value=None):
         """
         Returns the value associated with the specified key. Dotted keys are automatically converted to tree.
-        :param str p_dotted_key: the dotted key
-        :param p_default_value: the value to return, if key is not defined
+        :param str dotted_key: the dotted key
+        :param default_value: the value to return, if key is not defined
         :returns: value associated with key; None, if key is not defined
         :rtype: str|bool|dict|list
         """
@@ -426,7 +438,6 @@ class LocalConfig(dict):
             _node = _node[_key_part]
         return _node.unwrap()
 
-    # TODO remove
     def get_list_value(self, dotted_key, default_value=None):
         """
         Returns the value associated with the specified key. Dotted keys are automatically converted to tree.
@@ -442,30 +453,29 @@ class LocalConfig(dict):
             _value = [_value]
         elif not isinstance(_value, list):
             raise IssaiException(E_CFG_INVALID_DATA_TYPE, dotted_key, 'list or str')
-        for i in range(0, len(_value)):
-            _elem = _value[i]
-            _literal_elem = self.literal_value(_elem)
-            _value[i] = _literal_elem
         return _value
 
 
 def load_runtime_configs():
     """
     Loads issai runtime configurations for all locally supported products.
-    :returns: local runtime configurations, problems
+    :returns: local runtime configurations, problems, warnings
     :rtype: tuple
     :raises IssaiException: if no products available
     """
-    _problems = []
     _configs = []
+    _problems = []
+    _warnings = []
     _products = issai_products()
     _master_cfg = master_config()
     for _p in _products:
         try:
-            _configs.append(product_config(_p, _master_cfg))
+            _product_cfg = product_config(_p, _master_cfg)
+            _warnings.extend(_product_cfg.warnings())
+            _configs.append(_product_cfg)
         except IssaiException as _e:
             _problems.append(str(_e))
-    return _configs, _problems
+    return _configs, _problems, _warnings
 
 
 def issai_products():
@@ -484,7 +494,7 @@ def issai_products():
     return _prods
 
 
-def master_config(file_name = MASTER_CFG_FILE_NAME):
+def master_config(file_name=MASTER_CFG_FILE_NAME):
     """
     :returns: Issai master configuration from file, if it exists, otherwise None.
     :rtype: LocalConfig
@@ -515,6 +525,7 @@ def product_config(product_name, master_cfg):
     _prod_config = LocalConfig.from_file(_file_path, True)
     if master_cfg is not None:
         _prod_config.merge(master_cfg)
+    _prod_config.validate()
     return _prod_config
 
 
@@ -543,15 +554,20 @@ def config_root_path():
 
 def validate_config_structure(data, file_path, is_product_config):
     """
-    Checks specified local Issai configuration.
+    Checks structure of specified local Issai configuration.
     :param tomlkit.TOMLDocument data: the configuration TOML data
-    :param LocalConfig master_config: the master configuration; None, if data to be checked is master configuration
+    :param str file_path: the full file name of the configuration
+    :param bool is_product_config: indicates whether a product configuration shall be read (True) or
+                                   a master configuration (False)
     :returns: localized warning messages
     :rtype: list[str]
     :raises IssaiException: if configuration is not valid
     """
     _warnings = []
     _unsupported_items = []
+    _file_name = os.path.basename(file_path)
+    if is_product_config:
+        _file_name = os.path.join(os.path.basename(os.path.dirname(file_path)), _file_name)
     for _k, _v in data.items():
         if _k not in _ATTRS and _k not in _ATTRS['']:
             # unsupported group or root level attribute
@@ -561,7 +577,7 @@ def validate_config_structure(data, file_path, is_product_config):
                 _warn_code = W_CFG_GRP_IGNORED
             else:
                 _warn_code = W_CFG_PAR_IGNORED
-            _warnings.append(localized_message(_warn_code, _k, file_path))
+            _warnings.append(localized_message(_warn_code, _k, _file_name))
             _unsupported_items.append(_k)
             continue
         if _k in _ATTRS['']:
@@ -569,25 +585,25 @@ def validate_config_structure(data, file_path, is_product_config):
             _attr_desc = _ATTRS[''][_k]
             if not isinstance(_v, _attr_desc[1]):
                 # wrong data type for attribute
-                raise IssaiException(E_CFG_INVALID_PAR_VALUE, _k, _attr_desc[1].__name__, file_path)
+                raise IssaiException(E_CFG_INVALID_PAR_VALUE, _k, _attr_desc[1].__name__, _file_name)
             continue
         # root level group
         if not isinstance(_v, tomlkit.items.Table):
-            raise IssaiException(E_CFG_GRP_NOT_TABLE, _v, file_path)
+            raise IssaiException(E_CFG_GRP_NOT_TABLE, _v, _file_name)
         if _k == CFG_GROUP_ENV:
             # environment variables
             for _ek, _ev in _v.items():
                 # environment variable names must start with an uppercase letter and contain uppercase letters,
                 # digits or underscores only
                 if not ENV_VAR_NAME_PATTERN.match(_ek):
-                    raise IssaiException(E_CFG_INVALID_ENV_VAR_NAME, _ek, file_path)
+                    raise IssaiException(E_CFG_INVALID_ENV_VAR_NAME, _ek, _file_name)
                 # environment variable values must have type str
                 if not isinstance(_ev, str):
-                    raise IssaiException(E_CFG_INVALID_ENV_VAR_VALUE, _ek, file_path)
+                    raise IssaiException(E_CFG_INVALID_ENV_VAR_VALUE, _ek, _file_name)
             continue
         if _k == CFG_GROUP_PRODUCT and not is_product_config:
             # group 'product' in master configuration is ignored
-            _warnings.append(localized_message(W_CFG_GRP_PRODUCT_IGNORED, file_path))
+            _warnings.append(localized_message(W_CFG_GRP_PRODUCT_IGNORED, _file_name))
             _unsupported_items.append(_k)
             continue
         # check all attributes in group
@@ -595,11 +611,11 @@ def validate_config_structure(data, file_path, is_product_config):
             _qualified_ak = f'{_k}.{_ak}'
             _attr_desc = _ATTRS[_k].get(_qualified_ak)
             if _attr_desc is None:
-                _warnings.append(localized_message(W_CFG_PAR_IGNORED, _qualified_ak, file_path))
+                _warnings.append(localized_message(W_CFG_PAR_IGNORED, _qualified_ak, _file_name))
                 _unsupported_items.append(_qualified_ak)
                 continue
             if not isinstance(_av, _attr_desc[1]):
-                raise IssaiException(E_CFG_INVALID_PAR_VALUE, _qualified_ak, _attr_desc[1].__name__, file_path)
+                raise IssaiException(E_CFG_INVALID_PAR_VALUE, _qualified_ak, _attr_desc[1].__name__, _file_name)
     # remove unsupported attributes and groups, if any
     for _item in _unsupported_items:
         _dot_pos = _item.find('.')
@@ -626,32 +642,32 @@ def mandatory_attrs():
 
 
 _ATTRS = {
-'': {CFG_PAR_READ_ONLY_PATH: (False, str),
-     CFG_PAR_TESTING_ROOT_PATH: (False, str)
-     },
-CFG_GROUP_CUSTOM: {},
-CFG_GROUP_ENV: {},
-CFG_GROUP_PRODUCT: {CFG_PAR_PRODUCT_NAME: (True, str),
-                    CFG_PAR_PRODUCT_REPOSITORY_PATH: (True, str),
-                    CFG_PAR_PRODUCT_SOURCE_PATH: (False, str),
-                    CFG_PAR_PRODUCT_TEST_PATH: (False, str),
-                    CFG_PAR_PRODUCT_TEST_DATA_PATH: (False, str)
-                    },
-CFG_GROUP_RUNNER: {CFG_PAR_RUNNER_CASE_ASSISTANT: (False, str),
-                   CFG_PAR_RUNNER_CUSTOM_MODULE_PATH: (False, str),
-                   CFG_PAR_RUNNER_CUSTOM_SCRIPT_PATH: (False, str),
-                   CFG_PAR_RUNNER_ENTITY_ASSISTANT: (False, str),
-                   CFG_PAR_RUNNER_OUTPUT_LOG: (False, str),
-                   CFG_PAR_RUNNER_PLAN_ASSISTANT: (False, str),
-                   CFG_PAR_RUNNER_PYTHON_VENV_PATH: (False, str),
-                   CFG_PAR_RUNNER_TEST_DRIVER_EXE: (False, str),
-                   CFG_PAR_RUNNER_WORKING_PATH: (False, str)
-                   },
-CFG_GROUP_TCMS: {CFG_PAR_TCMS_LABEL_SCHEME: (False, str),
-                 CFG_PAR_TCMS_EXECUTION_STATES: (False, tomlkit.items.InlineTable),
-                 CFG_PAR_TCMS_RESULT_ATTACHMENTS: (False, tomlkit.items.Array),
-                 CFG_PAR_TCMS_SPEC_ATTACHMENTS: (False, tomlkit.items.Array)
-                 }
+    '': {CFG_PAR_READ_ONLY_PATH: (False, str),
+         CFG_PAR_TESTING_ROOT_PATH: (False, str)
+         },
+    CFG_GROUP_CUSTOM: {},
+    CFG_GROUP_ENV: {},
+    CFG_GROUP_PRODUCT: {CFG_PAR_PRODUCT_NAME: (True, str),
+                        CFG_PAR_PRODUCT_REPOSITORY_PATH: (True, str),
+                        CFG_PAR_PRODUCT_SOURCE_PATH: (False, str),
+                        CFG_PAR_PRODUCT_TEST_PATH: (False, str),
+                        CFG_PAR_PRODUCT_TEST_DATA_PATH: (False, str)
+                        },
+    CFG_GROUP_RUNNER: {CFG_PAR_RUNNER_CASE_ASSISTANT: (False, str),
+                       CFG_PAR_RUNNER_CUSTOM_MODULE_PATH: (False, str),
+                       CFG_PAR_RUNNER_CUSTOM_SCRIPT_PATH: (False, str),
+                       CFG_PAR_RUNNER_ENTITY_ASSISTANT: (False, str),
+                       CFG_PAR_RUNNER_OUTPUT_LOG: (False, str),
+                       CFG_PAR_RUNNER_PLAN_ASSISTANT: (False, str),
+                       CFG_PAR_RUNNER_PYTHON_VENV_PATH: (False, str),
+                       CFG_PAR_RUNNER_TEST_DRIVER_EXE: (False, str),
+                       CFG_PAR_RUNNER_WORKING_PATH: (False, str)
+                       },
+    CFG_GROUP_TCMS: {CFG_PAR_TCMS_LABEL_SCHEME: (False, str),
+                     CFG_PAR_TCMS_EXECUTION_STATES: (False, tomlkit.items.InlineTable),
+                     CFG_PAR_TCMS_RESULT_ATTACHMENTS: (False, tomlkit.items.Array),
+                     CFG_PAR_TCMS_SPEC_ATTACHMENTS: (False, tomlkit.items.Array)
+                     }
 }
 
 ENV_VAR_PATTERN = re.compile(r'\$env\[([A-Z0-9_]+)]')

@@ -43,13 +43,12 @@ In detail, performs the following checks:
 - all usages of message codes must supply the needed parameters of the localized text in messages_<LANG>.txt
 
 Message code is the name of the Python constant, e.g. E_INTERNAL_ERROR.
-Message ID is the string value of the Python contant, e.g. 'e-internal-error'.
+Message ID is the string value of the Python constant, e.g. 'e-internal-error'.
 Exit code is 0 for success, 1 for failed and 2 for error.
 Information and error messages are printed to console.
 """
 
 import ast
-import glob
 import os.path
 import re
 import sys
@@ -250,7 +249,7 @@ def check_message_code_references(source_path, messages, localized_messages, rc)
                 _line_nr, _msg_code, _actual_arg_count = _call
                 _msg_id = messages.get(_msg_code)
                 _loc_msg = localized_messages.get(_msg_id)
-                _expected_arg_count = len(re.findall(r'\{\d+\}', _loc_msg)) + 1
+                _expected_arg_count = len(re.findall(r'\{\d+}', _loc_msg)) + 1
                 if _expected_arg_count != _actual_arg_count:
                     rc = 1
                     print(f'{_file_name}:{_line_nr} {_msg_code} expects {_expected_arg_count} arguments, '

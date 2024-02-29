@@ -67,7 +67,7 @@ class Executable:
         :param str url: the executable URL, as defined in test case
         :param int executable_type: the executable type, Python function or script
         :param str | function executable_addr: the function pointer or script name
-        :param str venv_path: the optional path of virtual Python ennvironment to use
+        :param str venv_path: the optional path of virtual Python environment to use
         :param str driver: the optional driver program to use for execution, for scripts only
         :rtype: Executable
         """
@@ -392,7 +392,7 @@ def _run_case(plan_entity, case_id, executable_table, local_config, runtime_env,
     elif _rc == 1:
         _result_status = RESULT_STATUS_FAILED
     else:
-         _result_status = RESULT_STATUS_ERROR
+        _result_status = RESULT_STATUS_ERROR
     _case_result.mark_end()
     _case_result.set_attr_value(ATTR_STATUS, _result_status)
     _case_result.set_attr_value(ATTR_TESTER_NAME, runtime_env[ENVA_ISSAI_USERNAME])
@@ -439,8 +439,7 @@ def plan_entity_from_tcms(plan, options, local_config, task_monitor):
                 break
         if _run_exists:
             continue
-        _label_scheme = local_config.get_value(CFG_PAR_TCMS_LABEL_SCHEME)
-        if _label_scheme == CFG_VALUE_TCMS_LABEL_SCHEME_NONE:
+        if not options.get(OPTION_STORE_RESULT):
             raise IssaiException(E_RUN_CANNOT_CREATE_TEST_RUN, _plan_member[ATTR_NAME])
         _run = create_run_from_plan(_plan_member, _build)
         _created_runs.append(_run)

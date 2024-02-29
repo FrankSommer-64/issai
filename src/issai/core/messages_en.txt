@@ -29,7 +29,6 @@ e-cfg-invalid-env-var-name Environment variable name '{0}' in configuration file
 e-cfg-invalid-env-var-value Value of environment variable '{0}' in configuration file {1} must have type 'string'.
 e-cfg-invalid-execution-status Invalid execution status '{0}'.
 e-cfg-invalid-par-value Value of parameter '{0}' in configuration file {2} must have type '{1}'.
-e-cfg-invalid-var-value Value of variable '{0}' must have type 'str'.
 e-cfg-mandatory-par-missing Mandatory parameter '{0}' missing in configuration file {1}.
 e-cfg-no-products No products found in configuration root directory {0}.
 e-cfg-product-config-dir-not-found Subdirectory for product {0} not found in configuration root directory {1}.
@@ -222,6 +221,7 @@ i-gui-about-detail-text Version {0}\nQt version {1}
 i-gui-about-info-text Copyright (c) 2024 Frank Sommer
 i-gui-about-text Issai - Framework to run automated tests managed in Kiwi Test case management system
 i-gui-config-problem Problems in Issai configuration detected:
+i-gui-config-warning Warnings in Issai configuration detected:
 i-gui-export-case-successful Test case {0} successfully exported.
 i-gui-export-plan-successful Test plan {0} successfully exported.
 i-gui-export-product-successful Product {0} successfully exported.

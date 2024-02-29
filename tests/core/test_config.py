@@ -167,20 +167,19 @@ class TestConfig(unittest.TestCase):
         _home = os.environ["HOME"]
         _user = os.environ["USER"]
         _cfg = LocalConfig.from_str(PLAIN_VALUES_CFG, DUMMY_FILE_PATH, False)
-        self.assertEqual("/tmp", _cfg.literal_value_of('', 'testing-root-path',
+        self.assertEqual("/tmp", _cfg.literal_value_of('',
                          _cfg['testing-root-path'], {'testing-root-path'}))
         _cfg = LocalConfig.from_str(SINGLE_ENV_VALUES_CFG, DUMMY_FILE_PATH, False)
-        self.assertEqual(f'{_home}/issai', _cfg.literal_value_of('', 'testing-root-path',
+        self.assertEqual(f'{_home}/issai', _cfg.literal_value_of('',
                          _cfg['testing-root-path'], {'testing-root-path'}))
         _cfg = LocalConfig.from_str(MULTI_ENV_VALUES_CFG, DUMMY_FILE_PATH, False)
-        self.assertEqual(f'/var/{_user}/issai/{_user}', _cfg.literal_value_of('', 'testing-root-path',
+        self.assertEqual(f'/var/{_user}/issai/{_user}', _cfg.literal_value_of('',
                          _cfg['testing-root-path'], {'testing-root-path'}))
         _cfg = LocalConfig.from_str(ROOT_SIMPLE_REF_CFG, DUMMY_FILE_PATH, False)
-        self.assertEqual(f'{_home}/issai/ro', _cfg.literal_value_of('', 'read-only-path',
+        self.assertEqual(f'{_home}/issai/ro', _cfg.literal_value_of('',
                          _cfg['read-only-path'], {'read-only-path'}))
         _cfg = LocalConfig.from_str(DIRECT_CYCLE_CFG, DUMMY_FILE_PATH, False)
-        self.assertRaises(IssaiException, _cfg.literal_value_of, '', 'testing-root-path',
-                          _cfg['testing-root-path'], {'testing-root-path'})
+        self.assertRaises(IssaiException, _cfg.literal_value_of, '', _cfg['testing-root-path'], {'testing-root-path'})
 
     @staticmethod
     def unittest_configuration():
