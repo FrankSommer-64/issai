@@ -2,6 +2,7 @@
 e-background-task-aborted Background task aborted.
 e-background-task-failed Background task failed. {0}.
 e-container-not-runnable File {0} must contain a test plan or test case.
+e-dir-not-empty Directory {0} must be empty.
 e-download-attachment-failed Error: Could not download attachment {0}. {1}.
 e-internal-error Internal Error: {0}
 e-invalid-action Cannot process action {0}.
@@ -11,8 +12,7 @@ e-read-file-failed Could not read file {0}. {1}.
 e-write-file-failed Could not write file {0}. {1}.
 
 # config
-e-cfg-read-file-failed Error: Could not read configuration file {0} ({1}).
-e-cfg-custom-config-root-not-found Error: Custom Issai configuration directory {0} referenced by environment variable {1} does not exist.
+e-cfg-custom-config-root-not-found Custom Issai configuration directory {0} referenced by environment variable {1} does not exist.
 e-cfg-custom-mod-invalid Could not load custom module {0} due to Python error {1}.
 e-cfg-custom-mod-not-defined Custom module for test execution is not defined.
 e-cfg-custom-mod-not-found Could not find custom module {0}.
@@ -20,14 +20,29 @@ e-cfg-custom-runner-fn-not-found Could not find custom function {0}.
 e-cfg-custom-script-not-found Custom test execution script {0} not found.
 e-cfg-custom-script-path-not-defined Path for custom test execution scripts is not defined.
 e-cfg-custom-script-path-not-found Path for custom test execution scripts {0} does not exist.
-e-cfg-default-config-root-not-found Error: Issai configuration directory {0} does not exist.
-e-cfg-product-config-dir-not-found Error: Subdirectory for product {0} not found in configuration root directory {1}.
-e-cfg-product-config-file-not-found Error: Product configuration file {0} not found.
-e-cfg-no-products Error: No products found in configuration root directory {0}.
+e-cfg-default-config-root-not-found Issai configuration directory {0} does not exist.
+e-cfg-env-var-not-defined Environment variable '{0}' used in local configuration is not defined.
+e-cfg-group-not-table Group {0} in configuration file {1} must be specified as TOML table.
 e-cfg-invalid-data-type Local configuration parameter '{0}' must have data type {1}.
+e-cfg-invalid-dir-structure Product configuration file {0} must be located in a subdirectory.
+e-cfg-invalid-env-var-name Environment variable name '{0}' in configuration file {1} contains invalid characters.
+e-cfg-invalid-env-var-value Value of environment variable '{0}' in configuration file {1} must have type 'string'.
 e-cfg-invalid-execution-status Invalid execution status '{0}'.
+e-cfg-invalid-par-value Value of parameter '{0}' in configuration file {2} must have type '{1}'.
+e-cfg-invalid-var-value Value of variable '{0}' must have type 'str'.
+e-cfg-mandatory-par-missing Mandatory parameter '{0}' missing in configuration file {1}.
+e-cfg-no-products No products found in configuration root directory {0}.
+e-cfg-product-config-dir-not-found Subdirectory for product {0} not found in configuration root directory {1}.
+e-cfg-product-config-file-not-found Product configuration file {0} not found.
+e-cfg-product-config-invalid Invalid configuration file for product '{0}'.
+e-cfg-read-file-failed Could not read configuration file {0} ({1}).
 e-cfg-runner-spec-invalid Runner script specification '{0}' is not valid.
 e-cfg-var-not-defined Variable '{0}' has not been defined in local configuration.
+e-cfg-var-reference-cycle Reference cycle for variable '{0}' in local configuration.
+w-cfg-grp-ignored Unsupported group '{0}' ignored in configuration file {1}.
+w-cfg-grp-product-ignored Group 'product' ignored in master configuration file {0}.
+w-cfg-par-ignored Unsupported parameter '{0}' ignored in configuration file {1}.
+w-cfg-par-reserved Reserved parameter '{0}' ignored in configuration file {1}.
 
 # export
 i-exp-fetch-case Fetching TestCase '{0}' from TCMS.
@@ -104,6 +119,7 @@ l-entity Entity
 l-export-entity Export {0}
 l-file File
 l-id ID
+l-import Import
 l-import-user-behaviour Apply current user
 l-import-user-use-always for all user references
 l-import-user-use-missing for references to non-existing users
@@ -120,6 +136,7 @@ l-options Options
 l-output-path Output path
 l-product Product
 l-recent Recent
+l-run Run
 l-run-descendant-plans Run descendant test plans
 l-run-entity Run {0}
 l-save Save
@@ -191,9 +208,11 @@ t-opt-user-import Select how to deal with references to users that don't exist i
 e-gui-write-settings-failed Could not write settings to file {0}. {1}.
 e-gui-no-id-specified No ID entered.
 e-gui-id-not-numeric The entered ID '{0}' is not numeric.
+e-gui-neither-product-nor-version-selected Neither product nor version selected.
 e-gui-no-entity-selected No entity selected.
 e-gui-no-product-selected No product selected.
 e-gui-no-version-selected No product version selected.
+e-gui-output-path-invalid Invalid output path {0}.
 e-gui-settings-meta-definition Invalid metadata for settings attribute {0}.
 e-gui-import-case-failed Import Test case '{0}' failed.
 e-gui-import-plan-failed Import Test plan '{0}' failed.
@@ -224,6 +243,7 @@ w-gui-write-gui-configuration-failed Could not write GUI configuration to file {
 
 e-run-case-script-missing No script defined for test case '{0}'.
 i-download-attachments Downloading attachments for '{0}'.
+i-no-products No products configured locally.
 
 # dry run
 i-dry-run-upload-attachment Will upload {0} attachment file {1}.

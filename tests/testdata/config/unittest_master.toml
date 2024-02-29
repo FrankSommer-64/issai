@@ -1,0 +1,5 @@
+read-only-path = "/var/readonly"
+testing-root-path = "/var/testing"
+
+[env]
+SSL_CERT_FILE = "/usr/local/share/ca-certificates/myCA.crt"

@@ -140,7 +140,7 @@ class ExecutableTable(dict):
         """
         super().__init__()
         self.__local_config = local_config
-        self.__venv_path = local_config.get_str_value(CFG_PAR_RUNNER_PY_VENV_PATH)
+        self.__venv_path = local_config.get_value(CFG_PAR_RUNNER_PYTHON_VENV_PATH)
         self.__lock = threading.Lock()
 
     def executable_for(self, url):
@@ -204,7 +204,7 @@ def run_tcms_plan(plan, options, local_config, task_monitor):
     :returns: execution result
     :rtype: TaskResult
     """
-    _working_path = local_config.get_str_value(CFG_PAR_RUNNER_WORKING_PATH)
+    _working_path = local_config.get_value(CFG_PAR_RUNNER_WORKING_PATH)
     if _working_path is None or not os.path.isdir(_working_path):
         raise IssaiException(E_RUN_WORKING_PATH_MISSING, CFG_PAR_RUNNER_WORKING_PATH)
     if not os.path.isdir(_working_path):
@@ -220,6 +220,7 @@ def run_tcms_plan(plan, options, local_config, task_monitor):
     # download attachments, if applicable
     _attachments = _plan_entity.attachments()
     if len(_attachments) > 0:
+        # TODO  download_patterns_match
         _att_patterns = local_config.get_list_value(CFG_PAR_TCMS_SPEC_ATTACHMENTS)
         if _att_patterns is not None:
             download_attachments(_plan_entity, _working_path, task_monitor, _att_patterns)
@@ -252,7 +253,7 @@ def run_offline_plan(plan_entity, options, local_config, attachment_path, task_m
     :returns: execution result
     :rtype: TaskResult
     """
-    _working_path = local_config.get_str_value(CFG_PAR_RUNNER_WORKING_PATH)
+    _working_path = local_config.get_value(CFG_PAR_RUNNER_WORKING_PATH)
     if _working_path is None or not os.path.isdir(_working_path):
         raise IssaiException(E_RUN_WORKING_PATH_MISSING, CFG_PAR_RUNNER_WORKING_PATH)
     if not os.path.isdir(_working_path):
@@ -378,7 +379,7 @@ def _run_case(plan_entity, case_id, executable_table, local_config, runtime_env,
     _rc, _stdout, _stderr = _executable.run(runtime_env, _args)
     # save output to file
     _case = plan_entity.get_part(ATTR_TEST_CASES, case_id)
-    _output_path = os.path.join(local_config.get_str_value(CFG_PAR_RUNNER_WORKING_PATH),
+    _output_path = os.path.join(local_config.get_value(CFG_PAR_RUNNER_WORKING_PATH),
                                 ATTACHMENTS_ROOT_DIR, ATTACHMENTS_EXECUTION_DIR, str(_case[ATTR_EXECUTION]))
     os.makedirs(_output_path, exist_ok=True)
     _output_file_path = os.path.join(_output_path, local_config.output_log())
@@ -438,8 +439,8 @@ def plan_entity_from_tcms(plan, options, local_config, task_monitor):
                 break
         if _run_exists:
             continue
-        _spec_mgmt = local_config.get_str_value(CFG_PAR_TCMS_SPEC_MANAGEMENT)
-        if _spec_mgmt is None or _spec_mgmt != 'auto':
+        _label_scheme = local_config.get_value(CFG_PAR_TCMS_LABEL_SCHEME)
+        if _label_scheme == CFG_VALUE_TCMS_LABEL_SCHEME_NONE:
             raise IssaiException(E_RUN_CANNOT_CREATE_TEST_RUN, _plan_member[ATTR_NAME])
         _run = create_run_from_plan(_plan_member, _build)
         _created_runs.append(_run)
@@ -467,12 +468,12 @@ def initial_env_vars(local_config, options):
         for _enva_name, _enva_value in _enva_mapping.items():
             if _enva_value.startswith('{'):
                 _cfg_par_name = _enva_value[1:-1]
-                _enva_value = local_config.get_str_value(_cfg_par_name)
+                _enva_value = local_config.get_value(_cfg_par_name)
                 if _enva_value is None:
                     continue
             _issai_enva_name = f'{ENVA_PREFIX_ISSAI}{_enva_name.upper().replace("-", "_")}'
             _runtime_env[_issai_enva_name] = _enva_value
-    _source_path = local_config.get_str_value(CFG_PAR_PRODUCT_SOURCE_PATH)
+    _source_path = local_config.get_value(CFG_PAR_PRODUCT_SOURCE_PATH)
     if _source_path is None:
         raise IssaiException(E_RUN_SOURCE_PATH_MISSING, CFG_PAR_PRODUCT_SOURCE_PATH)
     if not os.path.isdir(_source_path):

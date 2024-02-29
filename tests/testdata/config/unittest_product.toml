@@ -1,0 +1,29 @@
+[product]
+name = "Issai"
+repository-path = "$env[HOME]/GITROOT/sw/projects/issai"
+source-path = "${repository-path}/src"
+test-path = "${repository-path}/tests"
+test-data-path = "${test-path}/testdata"
+
+[tcms]
+label-scheme = "none"
+execution-states = {IDLE="IDLE", PASSED="PASSED", FAILED="FAILED", ERROR="ERROR"}
+result-attachments = ["console.log"]
+spec-attachments = ["issai.toml"]
+
+[runner]
+working-path = "${testing-root-path}/issai"
+test-driver-executable = "python"
+python-venv-path = "${product.repository-path}/venv"
+custom-module-path = "${config-root}/${product.name}/runner/testfunctions.py"
+custom-script-path = "${config-root}/${product.name}/runner"
+entity-assistant = "function:maintain_test_env"
+plan-assistant = "function:maintain_plan_env"
+case-assistant = "function:maintain_case_env"
+output-log = "console.log"
+
+[env]
+ISSAI_REPOSITORY_PATH = "${product.repository-path}"
+ISSAI_SOURCE_PATH = "${product.source-path}"
+ISSAI_TEST_DATA_PATH = "${product.test-data-path}"
+
