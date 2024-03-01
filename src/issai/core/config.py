@@ -590,6 +590,8 @@ def validate_config_structure(data, file_path, is_product_config):
         # root level group
         if not isinstance(_v, tomlkit.items.Table):
             raise IssaiException(E_CFG_GRP_NOT_TABLE, _v, _file_name)
+        if _k == CFG_GROUP_CUSTOM:
+            continue
         if _k == CFG_GROUP_ENV:
             # environment variables
             for _ek, _ev in _v.items():

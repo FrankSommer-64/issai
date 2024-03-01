@@ -45,6 +45,19 @@ from issai.core.config import *
 DUMMY_FILE_PATH = '/tmp/config.toml'
 DUMMY_PATH = '/tmp'
 
+DL_PATTERN1 = []
+DL_PATTERN2 = ['issai\\\\.toml']
+DL_PATTERN3 = ['issai\\\\.toml', '.*\\\\.cfg']
+DL_PATTERN4 = ['mytest.*']
+DL_ATT_FILE1 = 'issai\\\\.toml'
+DL_ATT_FILE2 = 'mytest_23\\\\.cfg'
+UL_PATTERN1 = []
+UL_PATTERN2 = ['console\\\\.log']
+UL_PATTERN3 = ['console\\\\.log', 'mytest.*']
+UL_PATTERN4 = ['.*\\\\.log']
+UL_ATT_FILE1 = 'console\\\\.log'
+UL_ATT_FILE2 = 'mytest_23\\\\.txt'
+
 EMPTY_CFG = ''
 MINIMAL_CFG = f'[product]{os.linesep}name="Issai"{os.linesep}repository-path="{DUMMY_PATH}"'
 UNSUPPORTED_GRP_CFG = f'[xyz]{os.linesep}name="Issai"{os.linesep}repository-path="{DUMMY_PATH}"'
@@ -66,8 +79,19 @@ ENVA_VALUE_NOT_STR_CFG = f'[env]{os.linesep}TEST_TYPE=3'
 PLAIN_VALUES_CFG = f'testing-root-path = "/tmp"'
 SINGLE_ENV_VALUES_CFG = 'testing-root-path = "$env[HOME]/issai"'
 MULTI_ENV_VALUES_CFG = 'testing-root-path = "/var/$env[USER]/issai/$env[USER]"'
-ROOT_SIMPLE_REF_CFG = f'testing-root-path = "$env[HOME]/issai"{os.linesep}read-only-path = "${{testing-root-path}}/ro"'
+SIMPLE_REF_CFG = f'testing-root-path = "$env[HOME]/issai"{os.linesep}read-only-path = "${{testing-root-path}}/ro"'
+DOUBLE_REF_CFG = f'testing-root-path="/test"{os.linesep}read-only-path="${{testing-root-path}}${{testing-root-path}}"'
+INDIRECT_REF_CFG = f'[custom]{os.linesep}a="${{b}}"{os.linesep}b="prefix-${{c}}-suffix"{os.linesep}c="xyz"'
+ROOT_REF_CFG = f'testing-root-path="/test"{os.linesep}[custom]{os.linesep}a="${{testing-root-path}}"'
+DUP_ATTR1_CFG = f'testing-root-path="/test"{os.linesep}[custom]{os.linesep}testing-root-path="myroot"{os.linesep}'\
+                f'a="${{testing-root-path}}"'
+DUP_ATTR2_CFG = f'testing-root-path="/test"{os.linesep}[custom]{os.linesep}testing-root-path="myroot"{os.linesep}'\
+                f'a="${{custom.testing-root-path}}"'
 DIRECT_CYCLE_CFG = f'testing-root-path = "/tmp/${{testing-root-path}}"'
+INDIRECT_CYCLE1_CFG = f'[custom]{os.linesep}a="${{b}}"{os.linesep}b="${{c}}"{os.linesep}c="${{a}}"'
+INDIRECT_CYCLE2_CFG = f'[custom]{os.linesep}a="${{custom.b}}"{os.linesep}b="${{custom.c}}"{os.linesep}c="${{custom.a}}"'
+INDIRECT_CYCLE3_CFG = f'[custom]{os.linesep}a="${{b}}"{os.linesep}b="${{c}}"{os.linesep}c="${{b}}"'
+INDIRECT_CYCLE4_CFG = f'[custom]{os.linesep}a="${{b}}"{os.linesep}b="${{c}}"{os.linesep}c="${{custom.b}}"'
 
 
 class TestConfig(unittest.TestCase):
@@ -134,6 +158,43 @@ class TestConfig(unittest.TestCase):
         self._check_product_config_structure(ENVA_NAME_INV_CHAR_CFG, EMPTY_CFG, -1, MINIMAL_CFG)
         self._check_product_config_structure(ENVA_VALUE_NOT_STR_CFG, EMPTY_CFG, -1, MINIMAL_CFG)
 
+    def test_literal_value_of(self):
+        _home = os.environ["HOME"]
+        _user = os.environ["USER"]
+        _cfg = LocalConfig.from_str(PLAIN_VALUES_CFG, DUMMY_FILE_PATH, False)
+        self.assertEqual("/tmp", _cfg.literal_value_of('',
+                         _cfg['testing-root-path'], {'testing-root-path'}))
+        _cfg = LocalConfig.from_str(SINGLE_ENV_VALUES_CFG, DUMMY_FILE_PATH, False)
+        self.assertEqual(f'{_home}/issai', _cfg.literal_value_of('',
+                         _cfg['testing-root-path'], {'testing-root-path'}))
+        _cfg = LocalConfig.from_str(MULTI_ENV_VALUES_CFG, DUMMY_FILE_PATH, False)
+        self.assertEqual(f'/var/{_user}/issai/{_user}', _cfg.literal_value_of('',
+                         _cfg['testing-root-path'], {'testing-root-path'}))
+        _cfg = LocalConfig.from_str(SIMPLE_REF_CFG, DUMMY_FILE_PATH, False)
+        self.assertEqual(f'{_home}/issai/ro', _cfg.literal_value_of('',
+                                                                    _cfg['read-only-path'], {'read-only-path'}))
+        _cfg = LocalConfig.from_str(DOUBLE_REF_CFG, DUMMY_FILE_PATH, False)
+        self.assertEqual('/test/test', _cfg.literal_value_of('',
+                                                             _cfg['read-only-path'], {'read-only-path'}))
+        _cfg = LocalConfig.from_str(INDIRECT_REF_CFG, DUMMY_FILE_PATH, False)
+        self.assertEqual('prefix-xyz-suffix', _cfg.literal_value_of('custom', _cfg['custom']['a'], {'a', 'custom.a'}))
+        _cfg = LocalConfig.from_str(ROOT_REF_CFG, DUMMY_FILE_PATH, False)
+        self.assertEqual('/test', _cfg.literal_value_of('custom', _cfg['custom']['a'], {'a', 'custom.a'}))
+        _cfg = LocalConfig.from_str(DUP_ATTR1_CFG, DUMMY_FILE_PATH, False)
+        self.assertEqual('myroot', _cfg.literal_value_of('custom', _cfg['custom']['a'], {'a', 'custom.a'}))
+        _cfg = LocalConfig.from_str(DUP_ATTR2_CFG, DUMMY_FILE_PATH, False)
+        self.assertEqual('myroot', _cfg.literal_value_of('custom', _cfg['custom']['a'], {'a', 'custom.a'}))
+        _cfg = LocalConfig.from_str(DIRECT_CYCLE_CFG, DUMMY_FILE_PATH, False)
+        self.assertRaises(IssaiException, _cfg.literal_value_of, '', _cfg['testing-root-path'], {'testing-root-path'})
+        _cfg = LocalConfig.from_str(INDIRECT_CYCLE1_CFG, DUMMY_FILE_PATH, False)
+        self.assertRaises(IssaiException, _cfg.literal_value_of, 'custom', _cfg['custom']['a'], {'a', 'custom.a'})
+        _cfg = LocalConfig.from_str(INDIRECT_CYCLE2_CFG, DUMMY_FILE_PATH, False)
+        self.assertRaises(IssaiException, _cfg.literal_value_of, 'custom', _cfg['custom']['a'], {'a', 'custom.a'})
+        _cfg = LocalConfig.from_str(INDIRECT_CYCLE3_CFG, DUMMY_FILE_PATH, False)
+        self.assertRaises(IssaiException, _cfg.literal_value_of, 'custom', _cfg['custom']['a'], {'a', 'custom.a'})
+        _cfg = LocalConfig.from_str(INDIRECT_CYCLE4_CFG, DUMMY_FILE_PATH, False)
+        self.assertRaises(IssaiException, _cfg.literal_value_of, 'custom', _cfg['custom']['a'], {'a', 'custom.a'})
+
     def test_unittest_config(self):
         _cfg = TestConfig.unittest_configuration()
         _repo_path = _cfg.get_value('product.repository-path')
@@ -143,6 +204,33 @@ class TestConfig(unittest.TestCase):
         self.assertEqual('/usr/local/share/ca-certificates/myCA.crt', _cfg.get_value('env.SSL_CERT_FILE'))
         self.assertEqual(_repo_path, _cfg.get_value('env.ISSAI_REPOSITORY_PATH'))
         self.assertEqual(_src_path, _cfg.get_value('env.ISSAI_SOURCE_PATH'))
+
+    def test_attachment_matching(self):
+        """
+        Test attachment file name pattern matching.
+        """
+        # check download patterns
+        self._check_dl_pattern_match(None, DL_ATT_FILE1, False)
+        self._check_dl_pattern_match(None, DL_ATT_FILE2, False)
+        self._check_dl_pattern_match(DL_PATTERN1, DL_ATT_FILE1, False)
+        self._check_dl_pattern_match(DL_PATTERN1, DL_ATT_FILE2, False)
+        self._check_dl_pattern_match(DL_PATTERN2, DL_ATT_FILE1, True)
+        self._check_dl_pattern_match(DL_PATTERN2, DL_ATT_FILE2, False)
+        self._check_dl_pattern_match(DL_PATTERN3, DL_ATT_FILE1, True)
+        self._check_dl_pattern_match(DL_PATTERN3, DL_ATT_FILE2, True)
+        self._check_dl_pattern_match(DL_PATTERN4, DL_ATT_FILE1, False)
+        self._check_dl_pattern_match(DL_PATTERN4, DL_ATT_FILE2, True)
+        # check upload patterns
+        self._check_ul_pattern_match(None, UL_ATT_FILE1, False)
+        self._check_ul_pattern_match(None, UL_ATT_FILE2, False)
+        self._check_ul_pattern_match(UL_PATTERN1, UL_ATT_FILE1, False)
+        self._check_ul_pattern_match(UL_PATTERN1, UL_ATT_FILE2, False)
+        self._check_ul_pattern_match(UL_PATTERN2, UL_ATT_FILE1, True)
+        self._check_ul_pattern_match(UL_PATTERN2, UL_ATT_FILE2, False)
+        self._check_ul_pattern_match(UL_PATTERN3, UL_ATT_FILE1, True)
+        self._check_ul_pattern_match(UL_PATTERN3, UL_ATT_FILE2, True)
+        self._check_ul_pattern_match(UL_PATTERN4, UL_ATT_FILE1, True)
+        self._check_ul_pattern_match(UL_PATTERN4, UL_ATT_FILE2, False)
 
     def _check_master_config_structure(self, master_data, expected_result):
         _cfg = tomlkit.loads(master_data)
@@ -163,23 +251,21 @@ class TestConfig(unittest.TestCase):
         except IssaiException:
             self.assertTrue(expected_result < 0)
 
-    def test_literal_value_of(self):
-        _home = os.environ["HOME"]
-        _user = os.environ["USER"]
-        _cfg = LocalConfig.from_str(PLAIN_VALUES_CFG, DUMMY_FILE_PATH, False)
-        self.assertEqual("/tmp", _cfg.literal_value_of('',
-                         _cfg['testing-root-path'], {'testing-root-path'}))
-        _cfg = LocalConfig.from_str(SINGLE_ENV_VALUES_CFG, DUMMY_FILE_PATH, False)
-        self.assertEqual(f'{_home}/issai', _cfg.literal_value_of('',
-                         _cfg['testing-root-path'], {'testing-root-path'}))
-        _cfg = LocalConfig.from_str(MULTI_ENV_VALUES_CFG, DUMMY_FILE_PATH, False)
-        self.assertEqual(f'/var/{_user}/issai/{_user}', _cfg.literal_value_of('',
-                         _cfg['testing-root-path'], {'testing-root-path'}))
-        _cfg = LocalConfig.from_str(ROOT_SIMPLE_REF_CFG, DUMMY_FILE_PATH, False)
-        self.assertEqual(f'{_home}/issai/ro', _cfg.literal_value_of('',
-                         _cfg['read-only-path'], {'read-only-path'}))
-        _cfg = LocalConfig.from_str(DIRECT_CYCLE_CFG, DUMMY_FILE_PATH, False)
-        self.assertRaises(IssaiException, _cfg.literal_value_of, '', _cfg['testing-root-path'], {'testing-root-path'})
+    def _check_dl_pattern_match(self, pattern, file_name, expected_result):
+        _cfg = TestConfig.att_pattern_configuration(CFG_PAR_TCMS_SPEC_ATTACHMENTS, pattern)
+        self.assertEqual(expected_result, _cfg.download_patterns_match(file_name))
+
+    def _check_ul_pattern_match(self, pattern, file_name, expected_result):
+        _cfg = TestConfig.att_pattern_configuration(CFG_PAR_TCMS_RESULT_ATTACHMENTS, pattern)
+        self.assertEqual(expected_result, _cfg.upload_patterns_match(file_name))
+
+    @staticmethod
+    def att_pattern_configuration(qualified_attr_name, patterns):
+        _attr_name = qualified_attr_name.split('.')[1]
+        _cfg_data = MINIMAL_CFG
+        if patterns is not None:
+            _cfg_data = f'{MINIMAL_CFG}{os.linesep}[tcms]{os.linesep}{_attr_name}={str(patterns)}{os.linesep}'
+        return LocalConfig.from_str(_cfg_data, DUMMY_FILE_PATH, True)
 
     @staticmethod
     def unittest_configuration():

@@ -464,14 +464,7 @@ def initial_env_vars(local_config, options):
     _runtime_env = os.environ.copy()
     _enva_mapping = local_config.get_value(CFG_GROUP_ENV)
     if _enva_mapping is not None:
-        for _enva_name, _enva_value in _enva_mapping.items():
-            if _enva_value.startswith('{'):
-                _cfg_par_name = _enva_value[1:-1]
-                _enva_value = local_config.get_value(_cfg_par_name)
-                if _enva_value is None:
-                    continue
-            _issai_enva_name = f'{ENVA_PREFIX_ISSAI}{_enva_name.upper().replace("-", "_")}'
-            _runtime_env[_issai_enva_name] = _enva_value
+        _runtime_env.update(_enva_mapping)
     _source_path = local_config.get_value(CFG_PAR_PRODUCT_SOURCE_PATH)
     if _source_path is None:
         raise IssaiException(E_RUN_SOURCE_PATH_MISSING, CFG_PAR_PRODUCT_SOURCE_PATH)
