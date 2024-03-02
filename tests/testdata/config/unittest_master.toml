@@ -1,4 +1,3 @@
-read-only-path = "/var/readonly"
 testing-root-path = "/var/testing"
 
 [env]

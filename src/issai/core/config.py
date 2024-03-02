@@ -278,7 +278,7 @@ class LocalConfig(dict):
         """
         self.resolve_references_in_group('', self)
         for _k, _v in self.items():
-            if isinstance(_v, tomlkit.items.Table) and _k in _ATTRS:
+            if isinstance(_v, tomlkit.items.Table) and _k in _META_CFG:
                 self.resolve_references_in_group(_k, _v)
 
     def resolve_references_in_group(self, group_name, group):
@@ -291,7 +291,7 @@ class LocalConfig(dict):
         """
         for _k, _v in group.items():
             if isinstance(_v, str):
-                _qualified_attr_name = LocalConfig.qualified_attr_name_for(group_name, _k)
+                _qualified_attr_name = qualified_attr_name_for(group_name, _k)
                 group[_k] = self.literal_value_of(group_name, _v, {_k, _qualified_attr_name})
                 continue
             if isinstance(_v, tomlkit.items.Array):
@@ -354,21 +354,9 @@ class LocalConfig(dict):
             # qualified variable name
             return self.get_value(var_name)
         # plain variable name
-        _qualified_var_name = LocalConfig.qualified_attr_name_for(group_name, var_name)
+        _qualified_var_name = qualified_attr_name_for(group_name, var_name)
         _group_value = self.get_value(_qualified_var_name)
         return self.get_value(var_name) if _group_value is None else _group_value
-
-    @staticmethod
-    def qualified_attr_name_for(group_name, attr_name):
-        """
-        :param str group_name: name of TOML group the attribute belongs to, '' for root
-        :param str attr_name: attribute name
-        :returns: qualified attribute name
-        :rtype: str
-        """
-        if len(group_name) == 0 or attr_name.find('.') >= 0:
-            return attr_name
-        return f'{group_name}.{attr_name}'
 
     @staticmethod
     def from_file(file_path, is_product_config):
@@ -569,55 +557,44 @@ def validate_config_structure(data, file_path, is_product_config):
     if is_product_config:
         _file_name = os.path.join(os.path.basename(os.path.dirname(file_path)), _file_name)
     for _k, _v in data.items():
-        if _k not in _ATTRS and _k not in _ATTRS['']:
-            # unsupported group or root level attribute
+        if not isinstance(_v, tomlkit.items.Table):
+            # root level attribute
+            if _k in _META_CFG:
+                raise IssaiException(E_CFG_GRP_NOT_TABLE, _k, _file_name)
             if _k == CFG_VAR_CONFIG_ROOT:
-                _warn_code = W_CFG_PAR_RESERVED
-            elif isinstance(_v, tomlkit.items.Table):
-                _warn_code = W_CFG_GRP_IGNORED
-            else:
-                _warn_code = W_CFG_PAR_IGNORED
-            _warnings.append(localized_message(_warn_code, _k, _file_name))
+                _warnings.append(localized_message(W_CFG_PAR_RESERVED, _k, _file_name))
+                _unsupported_items.append(_k)
+                continue
+            if not check_attr('', _k, _v, _file_name):
+                _warnings.append(localized_message(W_CFG_PAR_IGNORED, _k, _file_name))
+                _unsupported_items.append(_k)
+                continue
+            continue
+        # TOML group
+        _group_desc = _META_CFG.get(_k)
+        if _group_desc is None:
+            # unsupported group
+            _warnings.append(localized_message(W_CFG_GRP_IGNORED, _k, _file_name))
             _unsupported_items.append(_k)
             continue
-        if _k in _ATTRS['']:
-            # root level attribute
-            _attr_desc = _ATTRS[''][_k]
-            if not isinstance(_v, _attr_desc[1]):
-                # wrong data type for attribute
-                raise IssaiException(E_CFG_INVALID_PAR_VALUE, _k, _attr_desc[1].__name__, _file_name)
-            continue
-        # root level group
-        if not isinstance(_v, tomlkit.items.Table):
-            raise IssaiException(E_CFG_GRP_NOT_TABLE, _v, _file_name)
-        if _k == CFG_GROUP_CUSTOM:
-            continue
-        if _k == CFG_GROUP_ENV:
-            # environment variables
-            for _ek, _ev in _v.items():
-                # environment variable names must start with an uppercase letter and contain uppercase letters,
-                # digits or underscores only
-                if not ENV_VAR_NAME_PATTERN.match(_ek):
-                    raise IssaiException(E_CFG_INVALID_ENV_VAR_NAME, _ek, _file_name)
-                # environment variable values must have type str
-                if not isinstance(_ev, str):
-                    raise IssaiException(E_CFG_INVALID_ENV_VAR_VALUE, _ek, _file_name)
-            continue
-        if _k == CFG_GROUP_PRODUCT and not is_product_config:
-            # group 'product' in master configuration is ignored
-            _warnings.append(localized_message(W_CFG_GRP_PRODUCT_IGNORED, _file_name))
+        if not _group_desc[META_KEY_ALLOWED_IN_MASTER] and not is_product_config:
+            _warnings.append(localized_message(W_CFG_GRP_IGNORED_IN_MASTER, _k, _file_name))
             _unsupported_items.append(_k)
             continue
         # check all attributes in group
         for _ak, _av in _v.items():
             _qualified_ak = f'{_k}.{_ak}'
-            _attr_desc = _ATTRS[_k].get(_qualified_ak)
-            if _attr_desc is None:
+            _value_type = _group_desc[META_KEY_VALUE_TYPE]
+            if _value_type is not None:
+                if not isinstance(_av, _value_type):
+                    raise IssaiException(E_CFG_INVALID_PAR_VALUE, _ak, _value_type.__name__, _file_name)
+            _name_pattern = _group_desc[META_KEY_NAME_PATTERN]
+            if _name_pattern is not None and not _name_pattern.match(_ak):
+                raise IssaiException(E_CFG_INVALID_PAR_NAME, _ak, _file_name)
+            if not check_attr(_k, _ak, _av, _file_name):
                 _warnings.append(localized_message(W_CFG_PAR_IGNORED, _qualified_ak, _file_name))
-                _unsupported_items.append(_qualified_ak)
+                _unsupported_items.append(_k)
                 continue
-            if not isinstance(_av, _attr_desc[1]):
-                raise IssaiException(E_CFG_INVALID_PAR_VALUE, _qualified_ak, _attr_desc[1].__name__, _file_name)
     # remove unsupported attributes and groups, if any
     for _item in _unsupported_items:
         _dot_pos = _item.find('.')
@@ -636,42 +613,262 @@ def mandatory_attrs():
     :rtype: list[str]
     """
     _attrs = []
-    for _gv in _ATTRS.values():
-        for _ak, _av in _gv.items():
-            if _av[0]:
-                _attrs.append(_ak)
+    for _gv in _META_CFG.values():
+        for _attrs_meta in _gv[META_KEY_ATTRS]:
+            if not _attrs_meta[META_KEY_OPT]:
+                _attrs.append(_attrs_meta[META_KEY_ATTR_QUALIFIED_NAME])
     return _attrs
 
 
-_ATTRS = {
-    '': {CFG_PAR_READ_ONLY_PATH: (False, str),
-         CFG_PAR_TESTING_ROOT_PATH: (False, str)
-         },
-    CFG_GROUP_CUSTOM: {},
-    CFG_GROUP_ENV: {},
-    CFG_GROUP_PRODUCT: {CFG_PAR_PRODUCT_NAME: (True, str),
-                        CFG_PAR_PRODUCT_REPOSITORY_PATH: (True, str),
-                        CFG_PAR_PRODUCT_SOURCE_PATH: (False, str),
-                        CFG_PAR_PRODUCT_TEST_PATH: (False, str),
-                        CFG_PAR_PRODUCT_TEST_DATA_PATH: (False, str)
-                        },
-    CFG_GROUP_RUNNER: {CFG_PAR_RUNNER_CASE_ASSISTANT: (False, str),
-                       CFG_PAR_RUNNER_CUSTOM_MODULE_PATH: (False, str),
-                       CFG_PAR_RUNNER_CUSTOM_SCRIPT_PATH: (False, str),
-                       CFG_PAR_RUNNER_ENTITY_ASSISTANT: (False, str),
-                       CFG_PAR_RUNNER_OUTPUT_LOG: (False, str),
-                       CFG_PAR_RUNNER_PLAN_ASSISTANT: (False, str),
-                       CFG_PAR_RUNNER_PYTHON_VENV_PATH: (False, str),
-                       CFG_PAR_RUNNER_TEST_DRIVER_EXE: (False, str),
-                       CFG_PAR_RUNNER_WORKING_PATH: (False, str)
-                       },
-    CFG_GROUP_TCMS: {CFG_PAR_TCMS_LABEL_SCHEME: (False, str),
-                     CFG_PAR_TCMS_EXECUTION_STATES: (False, tomlkit.items.InlineTable),
-                     CFG_PAR_TCMS_RESULT_ATTACHMENTS: (False, tomlkit.items.Array),
-                     CFG_PAR_TCMS_SPEC_ATTACHMENTS: (False, tomlkit.items.Array)
-                     }
-}
+def check_attr(group_name, attr_name, attr_value, file_name):
+    if len(_META_CFG[group_name][META_KEY_ATTRS]) == 0:
+        # group where arbitrary attributes are allowed
+        return True
+    _attr_desc = attr_desc_for(group_name, attr_name)
+    if _attr_desc is None:
+        # unsupported attribute
+        return False
+    _expected_type = _attr_desc[META_KEY_ATTR_TOML_TYPE]
+    if not isinstance(attr_value, _expected_type):
+        _qualified_attr_name = qualified_attr_name_for(group_name, attr_name)
+        raise IssaiException(E_CFG_INVALID_PAR_VALUE, _qualified_attr_name, _expected_type.__name__, file_name)
+    return True
+
+
+def attr_desc_for(group_name, attr_name):
+    for _attr_desc in _META_CFG[group_name][META_KEY_ATTRS]:
+        if _attr_desc[META_KEY_ATTR_NAME] == attr_name:
+            return _attr_desc
+    return None
+
+
+def qualified_attr_name_for(group_name, attr_name):
+    """
+    :param str group_name: name of TOML group the attribute belongs to, '' for root
+    :param str attr_name: attribute name
+    :returns: qualified attribute name
+    :rtype: str
+    """
+    if len(group_name) == 0 or attr_name.find('.') >= 0:
+        return attr_name
+    return f'{group_name}.{attr_name}'
+
 
 ENV_VAR_PATTERN = re.compile(r'\$env\[([A-Z0-9_]+)]')
 ENV_VAR_NAME_PATTERN = re.compile(r'^[A-Z][A-Z0-9_]*$')
 TOML_VAR_PATTERN = re.compile(r'\$\{(.*?)}')
+
+META_KEY_ALLOWED_IN_MASTER = 'allowed-in-master'
+META_KEY_ATTR_DEFAULT_VALUE = 'default'
+META_KEY_ATTR_NAME = 'name'
+META_KEY_ATTR_QUALIFIED_NAME = 'qualified-name'
+META_KEY_ATTR_TOML_TYPE = 'toml-type'
+META_KEY_ATTR_TYPE = 'type'
+META_KEY_ATTRS = 'attributes'
+META_KEY_COMMENT = 'comment'
+META_KEY_NAME_PATTERN = 'name-pattern'
+META_KEY_OPT = 'is-optional'
+META_KEY_VALUE_TYPE = 'value-type'
+
+META_TYPE_BOOLEAN = 'b'
+META_TYPE_ENUM = 'e'
+META_TYPE_INT = 'i'
+META_TYPE_LABEL_SCHEME = f'e:{CFG_VALUE_TCMS_LABEL_SCHEME_NONE},{CFG_VALUE_TCMS_LABEL_SCHEME_VERSION},'\
+                         f'{CFG_VALUE_TCMS_LABEL_SCHEME_BUILD}'
+META_TYPE_LIST = 'l'
+META_TYPE_LIST_OF_INT = 'l:i'
+META_TYPE_LIST_OF_STR = 'l:s'
+META_TYPE_MAPPING = 'm'
+META_TYPE_MAPPING_OF_EXECUTION_STATES = 'm:IDLE,PASSED,FAILED,ERROR'
+META_TYPE_STR_DIR_PATH = 's:d'
+META_TYPE_STR_FILE_PATH = 's:f'
+META_TYPE_STR_NORMAL = 's:n'
+META_TYPE_STR_PASSWORD = 's:p'
+
+# description for group custom
+_META_CUSTOM = {META_KEY_ALLOWED_IN_MASTER: True,
+                META_KEY_NAME_PATTERN: None,
+                META_KEY_OPT: True,
+                META_KEY_VALUE_TYPE: None,
+                META_KEY_ATTRS: [],
+                }
+
+# description for group env
+_META_ENV = {META_KEY_ALLOWED_IN_MASTER: True,
+             META_KEY_NAME_PATTERN: ENV_VAR_NAME_PATTERN,
+             META_KEY_OPT: True,
+             META_KEY_VALUE_TYPE: str,
+             META_KEY_ATTRS: []
+             }
+
+# description for group product
+_META_PRODUCT = {META_KEY_ALLOWED_IN_MASTER: False,
+                 META_KEY_NAME_PATTERN: None,
+                 META_KEY_OPT: False,
+                 META_KEY_VALUE_TYPE: None,
+                 META_KEY_ATTRS: [
+                      {META_KEY_ATTR_DEFAULT_VALUE: '',
+                       META_KEY_ATTR_NAME: CFG_PAR_PRODUCT_NAME[len(CFG_GROUP_PRODUCT)+1:],
+                       META_KEY_ATTR_QUALIFIED_NAME: CFG_PAR_PRODUCT_NAME,
+                       META_KEY_ATTR_TOML_TYPE: str,
+                       META_KEY_ATTR_TYPE: META_TYPE_STR_NORMAL,
+                       META_KEY_COMMENT: L_CFG_PAR_PRODUCT_NAME,
+                       META_KEY_OPT: False},
+                      {META_KEY_ATTR_DEFAULT_VALUE: '',
+                       META_KEY_ATTR_NAME: CFG_PAR_PRODUCT_REPOSITORY_PATH[len(CFG_GROUP_PRODUCT)+1:],
+                       META_KEY_ATTR_QUALIFIED_NAME: CFG_PAR_PRODUCT_REPOSITORY_PATH,
+                       META_KEY_ATTR_TOML_TYPE: str,
+                       META_KEY_ATTR_TYPE: META_TYPE_STR_DIR_PATH,
+                       META_KEY_COMMENT: L_CFG_PAR_PRODUCT_REPOSITORY_PATH,
+                       META_KEY_OPT: False},
+                      {META_KEY_ATTR_DEFAULT_VALUE: '',
+                       META_KEY_ATTR_NAME: CFG_PAR_PRODUCT_SOURCE_PATH[len(CFG_GROUP_PRODUCT)+1:],
+                       META_KEY_ATTR_QUALIFIED_NAME: CFG_PAR_PRODUCT_SOURCE_PATH,
+                       META_KEY_ATTR_TOML_TYPE: str,
+                       META_KEY_ATTR_TYPE: META_TYPE_STR_DIR_PATH,
+                       META_KEY_COMMENT: L_CFG_PAR_PRODUCT_SOURCE_PATH,
+                       META_KEY_OPT: True},
+                      {META_KEY_ATTR_DEFAULT_VALUE: '',
+                       META_KEY_ATTR_NAME: CFG_PAR_PRODUCT_TEST_PATH[len(CFG_GROUP_PRODUCT)+1:],
+                       META_KEY_ATTR_QUALIFIED_NAME: CFG_PAR_PRODUCT_TEST_PATH,
+                       META_KEY_ATTR_TOML_TYPE: str,
+                       META_KEY_ATTR_TYPE: META_TYPE_STR_DIR_PATH,
+                       META_KEY_COMMENT: L_CFG_PAR_PRODUCT_TEST_PATH,
+                       META_KEY_OPT: True},
+                      {META_KEY_ATTR_DEFAULT_VALUE: '',
+                       META_KEY_ATTR_NAME: CFG_PAR_PRODUCT_TEST_DATA_PATH[len(CFG_GROUP_PRODUCT)+1:],
+                       META_KEY_ATTR_QUALIFIED_NAME: CFG_PAR_PRODUCT_TEST_DATA_PATH,
+                       META_KEY_ATTR_TOML_TYPE: str,
+                       META_KEY_ATTR_TYPE: META_TYPE_STR_DIR_PATH,
+                       META_KEY_COMMENT: L_CFG_PAR_PRODUCT_TEST_DATA_PATH,
+                       META_KEY_OPT: True}
+                  ]
+                 }
+
+# description for root group
+_META_ROOT = {META_KEY_ALLOWED_IN_MASTER: True,
+              META_KEY_NAME_PATTERN: None,
+              META_KEY_OPT: True,
+              META_KEY_VALUE_TYPE: None,
+              META_KEY_ATTRS: [
+                     {META_KEY_ATTR_DEFAULT_VALUE: '',
+                      META_KEY_ATTR_NAME: CFG_PAR_TESTING_ROOT_PATH,
+                      META_KEY_ATTR_QUALIFIED_NAME: CFG_PAR_TESTING_ROOT_PATH,
+                      META_KEY_ATTR_TOML_TYPE: str,
+                      META_KEY_ATTR_TYPE: META_TYPE_STR_DIR_PATH,
+                      META_KEY_COMMENT: L_CFG_PAR_TESTING_ROOT_PATH,
+                      META_KEY_OPT: True}
+                 ]
+              }
+
+# description for group runner
+_META_RUNNER = {META_KEY_ALLOWED_IN_MASTER: True,
+                META_KEY_NAME_PATTERN: None,
+                META_KEY_OPT: False,
+                META_KEY_VALUE_TYPE: None,
+                META_KEY_ATTRS: [
+                    {META_KEY_ATTR_DEFAULT_VALUE: '',
+                     META_KEY_ATTR_NAME: CFG_PAR_RUNNER_CASE_ASSISTANT[len(CFG_GROUP_RUNNER)+1:],
+                     META_KEY_ATTR_QUALIFIED_NAME: CFG_PAR_RUNNER_CASE_ASSISTANT,
+                     META_KEY_ATTR_TOML_TYPE: str,
+                     META_KEY_ATTR_TYPE: META_TYPE_STR_NORMAL,
+                     META_KEY_COMMENT: L_CFG_PAR_RUNNER_CASE_ASSISTANT,
+                     META_KEY_OPT: False},
+                    {META_KEY_ATTR_DEFAULT_VALUE: '',
+                     META_KEY_ATTR_NAME: CFG_PAR_RUNNER_CUSTOM_MODULE_PATH[len(CFG_GROUP_RUNNER)+1:],
+                     META_KEY_ATTR_QUALIFIED_NAME: CFG_PAR_RUNNER_CUSTOM_MODULE_PATH,
+                     META_KEY_ATTR_TOML_TYPE: str,
+                     META_KEY_ATTR_TYPE: META_TYPE_STR_FILE_PATH,
+                     META_KEY_COMMENT: L_CFG_PAR_RUNNER_CUSTOM_MODULE_PATH,
+                     META_KEY_OPT: False},
+                    {META_KEY_ATTR_DEFAULT_VALUE: '',
+                     META_KEY_ATTR_NAME: CFG_PAR_RUNNER_CUSTOM_SCRIPT_PATH[len(CFG_GROUP_RUNNER)+1:],
+                     META_KEY_ATTR_QUALIFIED_NAME: CFG_PAR_RUNNER_CUSTOM_SCRIPT_PATH,
+                     META_KEY_ATTR_TOML_TYPE: str,
+                     META_KEY_ATTR_TYPE: META_TYPE_STR_DIR_PATH,
+                     META_KEY_COMMENT: L_CFG_PAR_RUNNER_CUSTOM_SCRIPT_PATH,
+                     META_KEY_OPT: False},
+                    {META_KEY_ATTR_DEFAULT_VALUE: '',
+                     META_KEY_ATTR_NAME: CFG_PAR_RUNNER_ENTITY_ASSISTANT[len(CFG_GROUP_RUNNER)+1:],
+                     META_KEY_ATTR_QUALIFIED_NAME: CFG_PAR_RUNNER_ENTITY_ASSISTANT,
+                     META_KEY_ATTR_TOML_TYPE: str,
+                     META_KEY_ATTR_TYPE: META_TYPE_STR_NORMAL,
+                     META_KEY_COMMENT: L_CFG_PAR_RUNNER_ENTITY_ASSISTANT,
+                     META_KEY_OPT: False},
+                    {META_KEY_ATTR_DEFAULT_VALUE: 'console.log',
+                     META_KEY_ATTR_NAME: CFG_PAR_RUNNER_OUTPUT_LOG[len(CFG_GROUP_RUNNER)+1:],
+                     META_KEY_ATTR_QUALIFIED_NAME: CFG_PAR_RUNNER_OUTPUT_LOG,
+                     META_KEY_ATTR_TOML_TYPE: str,
+                     META_KEY_ATTR_TYPE: META_TYPE_STR_NORMAL,
+                     META_KEY_COMMENT: L_CFG_PAR_RUNNER_OUTPUT_LOG,
+                     META_KEY_OPT: False},
+                    {META_KEY_ATTR_DEFAULT_VALUE: '',
+                     META_KEY_ATTR_NAME: CFG_PAR_RUNNER_PLAN_ASSISTANT[len(CFG_GROUP_RUNNER)+1:],
+                     META_KEY_ATTR_QUALIFIED_NAME: CFG_PAR_RUNNER_PLAN_ASSISTANT,
+                     META_KEY_ATTR_TOML_TYPE: str,
+                     META_KEY_ATTR_TYPE: META_TYPE_STR_NORMAL,
+                     META_KEY_COMMENT: L_CFG_PAR_RUNNER_PLAN_ASSISTANT,
+                     META_KEY_OPT: False},
+                    {META_KEY_ATTR_DEFAULT_VALUE: '',
+                     META_KEY_ATTR_NAME: CFG_PAR_RUNNER_PYTHON_VENV_PATH[len(CFG_GROUP_RUNNER)+1:],
+                     META_KEY_ATTR_QUALIFIED_NAME: CFG_PAR_RUNNER_PYTHON_VENV_PATH,
+                     META_KEY_ATTR_TOML_TYPE: str,
+                     META_KEY_ATTR_TYPE: META_TYPE_STR_DIR_PATH,
+                     META_KEY_COMMENT: L_CFG_PAR_RUNNER_PYTHON_VENV_PATH,
+                     META_KEY_OPT: False},
+                    {META_KEY_ATTR_DEFAULT_VALUE: '',
+                     META_KEY_ATTR_NAME: CFG_PAR_RUNNER_TEST_DRIVER_EXE[len(CFG_GROUP_RUNNER)+1:],
+                     META_KEY_ATTR_QUALIFIED_NAME: CFG_PAR_RUNNER_TEST_DRIVER_EXE,
+                     META_KEY_ATTR_TOML_TYPE: str,
+                     META_KEY_ATTR_TYPE: META_TYPE_STR_FILE_PATH,
+                     META_KEY_COMMENT: L_CFG_PAR_RUNNER_TEST_DRIVER_EXE,
+                     META_KEY_OPT: False},
+                    {META_KEY_ATTR_DEFAULT_VALUE: '${testing-root-path}/${product.name}',
+                     META_KEY_ATTR_NAME: CFG_PAR_RUNNER_WORKING_PATH[len(CFG_GROUP_RUNNER)+1:],
+                     META_KEY_ATTR_QUALIFIED_NAME: CFG_PAR_RUNNER_WORKING_PATH,
+                     META_KEY_ATTR_TOML_TYPE: str,
+                     META_KEY_ATTR_TYPE: META_TYPE_STR_DIR_PATH,
+                     META_KEY_COMMENT: L_CFG_PAR_RUNNER_WORKING_PATH,
+                     META_KEY_OPT: False},
+                ]
+                }
+
+# description for group tcms
+_META_TCMS = {META_KEY_ALLOWED_IN_MASTER: True,
+              META_KEY_NAME_PATTERN: None,
+              META_KEY_OPT: False,
+              META_KEY_VALUE_TYPE: None,
+              META_KEY_ATTRS: [
+                  {META_KEY_ATTR_DEFAULT_VALUE: '',
+                   META_KEY_ATTR_NAME: CFG_PAR_TCMS_LABEL_SCHEME[len(CFG_GROUP_TCMS)+1:],
+                   META_KEY_ATTR_QUALIFIED_NAME: CFG_PAR_TCMS_LABEL_SCHEME,
+                   META_KEY_ATTR_TOML_TYPE: str,
+                   META_KEY_ATTR_TYPE: META_TYPE_LABEL_SCHEME,
+                   META_KEY_COMMENT: L_CFG_PAR_TCMS_LABEL_SCHEME,
+                   META_KEY_OPT: False},
+                  {META_KEY_ATTR_DEFAULT_VALUE: {},
+                   META_KEY_ATTR_NAME: CFG_PAR_TCMS_EXECUTION_STATES[len(CFG_GROUP_TCMS)+1:],
+                   META_KEY_ATTR_QUALIFIED_NAME: CFG_PAR_TCMS_EXECUTION_STATES,
+                   META_KEY_ATTR_TOML_TYPE: tomlkit.items.InlineTable,
+                   META_KEY_ATTR_TYPE: META_TYPE_MAPPING_OF_EXECUTION_STATES,
+                   META_KEY_COMMENT: L_CFG_PAR_TCMS_EXECUTION_STATES,
+                   META_KEY_OPT: False},
+                  {META_KEY_ATTR_DEFAULT_VALUE: [],
+                   META_KEY_ATTR_NAME: CFG_PAR_TCMS_RESULT_ATTACHMENTS[len(CFG_GROUP_TCMS)+1:],
+                   META_KEY_ATTR_QUALIFIED_NAME: CFG_PAR_TCMS_RESULT_ATTACHMENTS,
+                   META_KEY_ATTR_TOML_TYPE: tomlkit.items.Array,
+                   META_KEY_ATTR_TYPE: META_TYPE_LIST_OF_STR,
+                   META_KEY_COMMENT: L_CFG_PAR_TCMS_RESULT_ATTACHMENTS,
+                   META_KEY_OPT: False},
+                  {META_KEY_ATTR_DEFAULT_VALUE: [],
+                   META_KEY_ATTR_NAME: CFG_PAR_TCMS_SPEC_ATTACHMENTS[len(CFG_GROUP_TCMS)+1:],
+                   META_KEY_ATTR_QUALIFIED_NAME: CFG_PAR_TCMS_SPEC_ATTACHMENTS,
+                   META_KEY_ATTR_TOML_TYPE: tomlkit.items.Array,
+                   META_KEY_ATTR_TYPE: META_TYPE_LIST_OF_STR,
+                   META_KEY_COMMENT: L_CFG_PAR_TCMS_SPEC_ATTACHMENTS,
+                   META_KEY_OPT: False}
+                  ]
+              }
+
+_META_CFG = {'': _META_ROOT, CFG_GROUP_CUSTOM: _META_CUSTOM, CFG_GROUP_ENV: _META_ENV,
+             CFG_GROUP_PRODUCT: _META_PRODUCT, CFG_GROUP_RUNNER: _META_RUNNER, CFG_GROUP_TCMS: _META_TCMS}

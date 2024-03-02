@@ -79,8 +79,9 @@ ENVA_VALUE_NOT_STR_CFG = f'[env]{os.linesep}TEST_TYPE=3'
 PLAIN_VALUES_CFG = f'testing-root-path = "/tmp"'
 SINGLE_ENV_VALUES_CFG = 'testing-root-path = "$env[HOME]/issai"'
 MULTI_ENV_VALUES_CFG = 'testing-root-path = "/var/$env[USER]/issai/$env[USER]"'
-SIMPLE_REF_CFG = f'testing-root-path = "$env[HOME]/issai"{os.linesep}read-only-path = "${{testing-root-path}}/ro"'
-DOUBLE_REF_CFG = f'testing-root-path="/test"{os.linesep}read-only-path="${{testing-root-path}}${{testing-root-path}}"'
+SIMPLE_REF_CFG = f'testing-root-path = "/test"{os.linesep}[custom]{os.linesep}a = "${{testing-root-path}}/ro"'
+DOUBLE_REF_CFG = f'testing-root-path="/test"{os.linesep}[custom]{os.linesep}'\
+                 f'a="${{testing-root-path}}${{testing-root-path}}"'
 INDIRECT_REF_CFG = f'[custom]{os.linesep}a="${{b}}"{os.linesep}b="prefix-${{c}}-suffix"{os.linesep}c="xyz"'
 ROOT_REF_CFG = f'testing-root-path="/test"{os.linesep}[custom]{os.linesep}a="${{testing-root-path}}"'
 DUP_ATTR1_CFG = f'testing-root-path="/test"{os.linesep}[custom]{os.linesep}testing-root-path="myroot"{os.linesep}'\
@@ -92,6 +93,8 @@ INDIRECT_CYCLE1_CFG = f'[custom]{os.linesep}a="${{b}}"{os.linesep}b="${{c}}"{os.
 INDIRECT_CYCLE2_CFG = f'[custom]{os.linesep}a="${{custom.b}}"{os.linesep}b="${{custom.c}}"{os.linesep}c="${{custom.a}}"'
 INDIRECT_CYCLE3_CFG = f'[custom]{os.linesep}a="${{b}}"{os.linesep}b="${{c}}"{os.linesep}c="${{b}}"'
 INDIRECT_CYCLE4_CFG = f'[custom]{os.linesep}a="${{b}}"{os.linesep}b="${{c}}"{os.linesep}c="${{custom.b}}"'
+GROUP_REF_CFG = f'[product]{os.linesep}name="Issai"{os.linesep}repository-path="{DUMMY_PATH}"{os.linesep}'\
+                f'[custom]{os.linesep}a="${{product}}"'
 
 
 class TestConfig(unittest.TestCase):
@@ -171,11 +174,9 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(f'/var/{_user}/issai/{_user}', _cfg.literal_value_of('',
                          _cfg['testing-root-path'], {'testing-root-path'}))
         _cfg = LocalConfig.from_str(SIMPLE_REF_CFG, DUMMY_FILE_PATH, False)
-        self.assertEqual(f'{_home}/issai/ro', _cfg.literal_value_of('',
-                                                                    _cfg['read-only-path'], {'read-only-path'}))
+        self.assertEqual('/test/ro', _cfg.literal_value_of('', _cfg['custom']['a'], {'a', 'custom.a'}))
         _cfg = LocalConfig.from_str(DOUBLE_REF_CFG, DUMMY_FILE_PATH, False)
-        self.assertEqual('/test/test', _cfg.literal_value_of('',
-                                                             _cfg['read-only-path'], {'read-only-path'}))
+        self.assertEqual('/test/test', _cfg.literal_value_of('', _cfg['custom']['a'], {'a', 'custom.a'}))
         _cfg = LocalConfig.from_str(INDIRECT_REF_CFG, DUMMY_FILE_PATH, False)
         self.assertEqual('prefix-xyz-suffix', _cfg.literal_value_of('custom', _cfg['custom']['a'], {'a', 'custom.a'}))
         _cfg = LocalConfig.from_str(ROOT_REF_CFG, DUMMY_FILE_PATH, False)
@@ -199,7 +200,6 @@ class TestConfig(unittest.TestCase):
         _cfg = TestConfig.unittest_configuration()
         _repo_path = _cfg.get_value('product.repository-path')
         _src_path = f'{_repo_path}/src'
-        self.assertEqual('/var/readonly', _cfg.get_value('read-only-path'))
         self.assertEqual('/var/testing', _cfg.get_value('testing-root-path'))
         self.assertEqual('/usr/local/share/ca-certificates/myCA.crt', _cfg.get_value('env.SSL_CERT_FILE'))
         self.assertEqual(_repo_path, _cfg.get_value('env.ISSAI_REPOSITORY_PATH'))

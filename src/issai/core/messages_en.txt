@@ -25,8 +25,7 @@ e-cfg-env-var-not-defined Environment variable '{0}' used in local configuration
 e-cfg-group-not-table Group {0} in configuration file {1} must be specified as TOML table.
 e-cfg-invalid-data-type Local configuration parameter '{0}' must have data type {1}.
 e-cfg-invalid-dir-structure Product configuration file {0} must be located in a subdirectory.
-e-cfg-invalid-env-var-name Environment variable name '{0}' in configuration file {1} contains invalid characters.
-e-cfg-invalid-env-var-value Value of environment variable '{0}' in configuration file {1} must have type 'string'.
+e-cfg-invalid-par-name Parameter name '{0}' in configuration file {1} contains invalid characters.
 e-cfg-invalid-execution-status Invalid execution status '{0}'.
 e-cfg-invalid-par-value Value of parameter '{0}' in configuration file {2} must have type '{1}'.
 e-cfg-mandatory-par-missing Mandatory parameter '{0}' missing in configuration file {1}.
@@ -39,7 +38,7 @@ e-cfg-runner-spec-invalid Runner script specification '{0}' is not valid.
 e-cfg-var-not-defined Variable '{0}' has not been defined in local configuration.
 e-cfg-var-reference-cycle Reference cycle for variable '{0}' in local configuration.
 w-cfg-grp-ignored Unsupported group '{0}' ignored in configuration file {1}.
-w-cfg-grp-product-ignored Group 'product' ignored in master configuration file {0}.
+w-cfg-grp-ignored-in-master Group '{0}' ignored in master configuration file {1}.
 w-cfg-par-ignored Unsupported parameter '{0}' ignored in configuration file {1}.
 w-cfg-par-reserved Reserved parameter '{0}' ignored in configuration file {1}.
 
@@ -191,6 +190,27 @@ l-menubar-item-run &Run
 l-type-label-scheme-build Build
 l-type-label-scheme-none None
 l-type-label-scheme-version Version
+
+# Configuration parameter comments
+l-cfg-par-product-name Product name, case-sensitive
+l-cfg-par-product-repository-path Root path of repository containing all product files
+l-cfg-par-product-source-path Root path for product source code, defaults to subdirectory 'src' under repository-path
+l-cfg-par-product-test-path Root path for product test code, defaults to subdirectory 'tests' under repository-path
+l-cfg-par-product-test-data-path Root path for product test data, defaults to subdirectory 'tests/testdata' under repository-path
+l-cfg-par-runner-case-assistant Script or python function to call before and after execution of every test case
+l-cfg-par-runner-custom-module-path Python module with custom functions for test execution
+l-cfg-par-runner-custom-script-path Directory containing custom scripts for test execution
+l-cfg-par-runner-entity-assistant Script or python function to call before and after execution of entire test
+l-cfg-par-runner-output-log File name to use for captured console output
+l-cfg-par-runner-plan-assistant Script or python function to call before and after execution of every test plan
+l-cfg-par-runner-python-venv-path Directory containing Python virtual environment to use for tests
+l-cfg-par-runner-test-driver-exe Name of executable to run the product
+l-cfg-par-runner-working-path Working path for intermediate files of test execution
+l-cfg-par-tcms-label-scheme Labeling scheme for test runs and executions: 'none', 'version' or 'build'
+l-cfg-par-tcms-execution-states Mapping of standard test execution statuses to customized names
+l-cfg-par-tcms-result-attachments Regular expression patterns for attachment files to be uploaded after test execution
+l-cfg-par-tcms-spec-attachments Regular expression patterns for attachment files to be downloaded prior to test execution
+l-cfg-par-testing-root-path Root path for intermediate files of all test activities on local machine
 
 t-opt-auto-create-master-data Check to create missing master data in TCMS automatically
 t-opt-dry-run Check to simulate import only

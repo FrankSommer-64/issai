@@ -546,7 +546,7 @@ _PRODUCT_META = [{_META_KEY_GROUP: 'product', _META_KEY_OPT: False,
                        _META_KEY_OPT: False,
                        _META_KEY_COMMENT: 'path of repository containing the product files'},
                       {_META_KEY_ATTR_NAME: 'source-path', _META_KEY_ATTR_TYPE: _META_TYPE_STR,
-                       _META_KEY_ATTR_DEFAULT_VALUE: '',
+                       _META_KEY_ATTR_DEFAULT_VALUE: '${repository-path}/src',
                        _META_KEY_OPT: True,
                        _META_KEY_COMMENT: 'root path for product source code, '
                                           'defaults to subdirectory src under repository path'},
