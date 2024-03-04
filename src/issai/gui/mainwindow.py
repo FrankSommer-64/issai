@@ -52,7 +52,7 @@ from issai.core.util import full_path_of
 from issai.gui.dialogs import AboutDialog, IssaiProductSelectionDialog, select_entity_file, select_output_dir
 from issai.gui.panes import TcmsActionPane, FileActionPane
 from issai.gui.settings import GuiSettings
-from issai.gui.tomleditor import master_config_editor, product_config_editor, xml_rpc_credentials_editor
+from issai.gui.configeditor import master_config_editor, product_config_editor, xml_rpc_credentials_editor
 
 
 class MainWindow(QMainWindow):

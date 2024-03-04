@@ -635,6 +635,13 @@ def check_attr(group_name, attr_name, attr_value, file_name):
     return True
 
 
+def config_meta_data():
+    """
+    :returns: descriptor with configuration metadata
+    """
+    return _META_CFG
+
+
 def attr_desc_for(group_name, attr_name):
     for _attr_desc in _META_CFG[group_name][META_KEY_ATTRS]:
         if _attr_desc[META_KEY_ATTR_NAME] == attr_name:
@@ -680,6 +687,7 @@ META_TYPE_LIST_OF_INT = 'l:i'
 META_TYPE_LIST_OF_STR = 'l:s'
 META_TYPE_MAPPING = 'm'
 META_TYPE_MAPPING_OF_EXECUTION_STATES = 'm:IDLE,PASSED,FAILED,ERROR'
+META_TYPE_STR = 's'
 META_TYPE_STR_DIR_PATH = 's:d'
 META_TYPE_STR_FILE_PATH = 's:f'
 META_TYPE_STR_NORMAL = 's:n'

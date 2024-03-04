@@ -222,49 +222,25 @@ class TcmsInterface:
             TcmsInterface._lock.release()
 
     @staticmethod
-    def server_url_changed():
+    def reset():
         """
-        Connects to another TCMS server. To be called when the URL setting in the XML-RPC credentials file was changed.
-        :raises IssaiException: if there is an XML-RPC communication error
+        Clears all internal data about TCMS server connection.
+        To be called a setting in the XML-RPC credentials file was changed.
         """
-        try:
-            if TcmsInterface._lock.acquire():
-                if not TcmsInterface._initialized:
-                    return
-                TcmsInterface._initialized = False
-                TcmsInterface._current_user = None
-                TcmsInterface._server_version = ''
-                TcmsInterface._case_status_id_confirmed = 0
-                TcmsInterface._connections.clear()
-                TcmsInterface._case_statuses_by_id.clear()
-                TcmsInterface._case_statuses_by_name.clear()
-                TcmsInterface._execution_statuses_by_id.clear()
-                TcmsInterface._execution_statuses_by_name.clear()
-                TcmsInterface._connect_to_server()
-        except BaseException as _e:
-            raise IssaiException(E_TCMS_INIT_FAILED, str(_e))
-        finally:
-            TcmsInterface._lock.release()
-
-    @staticmethod
-    def user_changed(new_user_name):
-        """
-        Updates internal variable containing current TCMS user. To be called when the username setting in
-        the XML-RPC credentials file was changed.
-        :raises IssaiException: if there is an XML-RPC communication error
-        """
-        try:
-            _thread_id = threading.get_ident()
-            if TcmsInterface._lock.acquire():
-                if not TcmsInterface._initialized:
-                    TcmsInterface._connect_to_server()
-                _cxn = TcmsInterface._connection_for_thread(_thread_id)
-                _user = _cxn.exec.User.filter({ATTR_USERNAME: new_user_name})[0]
-                TcmsInterface._current_user = _remove_unsupported_attrs(_user, _SUPPORTED_ATTRS[TCMS_CLASS_USER])
-        except BaseException as _e:
-            raise IssaiException(E_TCMS_INIT_FAILED, str(_e))
-        finally:
-            TcmsInterface._lock.release()
+        if TcmsInterface._lock.acquire():
+            if not TcmsInterface._initialized:
+                TcmsInterface._lock.release()
+                return
+            TcmsInterface._initialized = False
+            TcmsInterface._current_user = None
+            TcmsInterface._server_version = ''
+            TcmsInterface._case_status_id_confirmed = 0
+            TcmsInterface._connections.clear()
+            TcmsInterface._case_statuses_by_id.clear()
+            TcmsInterface._case_statuses_by_name.clear()
+            TcmsInterface._execution_statuses_by_id.clear()
+            TcmsInterface._execution_statuses_by_name.clear()
+        TcmsInterface._lock.release()
 
     @staticmethod
     def _connect_to_server():
