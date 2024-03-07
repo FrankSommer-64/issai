@@ -649,6 +649,23 @@ def attr_desc_for(group_name, attr_name):
     return None
 
 
+def group_data_of(config_data, group_name):
+    """
+    :param tomlkit.TOMLDocument config_data: whole configuration data
+    :param str group_name: name of desired TOML group, '' for root
+    :returns: data of specified TOML group
+    :rtype: tomlkit.items.Table
+    """
+    if len(group_name) > 0:
+        return config_data.get(group_name)
+    _group_data = tomlkit.table()
+    for _k, _v in config_data.items():
+        if isinstance(_v, tomlkit.items.Table):
+            continue
+        _group_data.append(_k, _v)
+    return _group_data
+
+
 def qualified_attr_name_for(group_name, attr_name):
     """
     :param str group_name: name of TOML group the attribute belongs to, '' for root

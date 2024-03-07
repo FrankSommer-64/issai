@@ -36,8 +36,10 @@
 Dialog window to edit settings based on TOML files.
 """
 
+import tomlkit
+from PySide6.QtCore import QObject, Qt, Signal
 from PySide6.QtWidgets import (QTabWidget, QFormLayout, QGroupBox, QWidget, QLabel, QLineEdit, QComboBox, QDialog,
-                               QHBoxLayout, QVBoxLayout, QPushButton, QMessageBox, QCheckBox)
+                               QHBoxLayout, QVBoxLayout, QPushButton, QMessageBox, QCheckBox, QSizePolicy)
 
 from issai.core.config import *
 from issai.core.tcms import *
@@ -57,9 +59,32 @@ class EditorData(dict):
         """
         Constructor.
         :param dict metadata: the metadata describing supported attributes and their types
-        :param dict settings: the actual settings to edit
+        :param tomlkit.TOMLDocument settings: the actual settings to edit
         """
         super().__init__()
+        self.__document_comments = []
+        self.__group_comments = {}
+        self.__attr_comments = {}
+        for _t, _v in settings.body:
+            if isinstance(_v, tomlkit.items.Comment):
+                _comment = _v.as_string()[2:].strip()
+                if _comment.startswith('d '):
+                    self.__document_comments.append(_comment[2:])
+                    continue
+                if _comment.startswith('g'):
+                    _prefix_end = _comment.find(' ')
+                    _group_name = _comment[1:_prefix_end]
+                    if _group_name not in self.__group_comments:
+                        self.__group_comments[_group_name] = []
+                    self.__group_comments[_group_name].append(_comment[_prefix_end+1:])
+                    continue
+                if _comment.startswith('a'):
+                    _prefix_end = _comment.find(' ')
+                    _attr_name = _comment[1:_prefix_end]
+                    if _attr_name not in self.__attr_comments:
+                        self.__attr_comments[_attr_name] = []
+                    self.__attr_comments[_attr_name].append(_comment[_prefix_end+1:])
+                    continue
         for _group_name, _group_meta in metadata.items():
             if len(_group_name) > 0:
                 _group_name += '.'
@@ -74,6 +99,31 @@ class EditorData(dict):
                 self[_qualified_attr_name][_DATA_KEY_ATTR_TYPE] = _attr_type
                 self[_qualified_attr_name][_DATA_KEY_ATTR_VALUE] = _attr_value
                 self[_qualified_attr_name][_DATA_KEY_WIDGET] = None
+
+    def document_comments(self):
+        """
+        :returns: all comments at the top of XML-RPC credentials file
+        :rtype: list
+        """
+        return self.__document_comments
+
+    def group_comments(self, group_name):
+        """
+        :param str group_name: the desired group name
+        :returns: all comments following specified TOML group
+        :rtype: list
+        """
+        _comments = self.__group_comments.get(group_name)
+        return [] if _comments is None else _comments
+
+    def attribute_comments(self, attribute_name):
+        """
+        :param str attribute_name: the desired attribute name
+        :returns: all comments following specified TOML attribute
+        :rtype: list
+        """
+        _comments = self.__attr_comments.get(attribute_name)
+        return [] if _comments is None else _comments
 
     def persistent_value(self, dotted_key):
         """
@@ -180,6 +230,113 @@ class EditorData(dict):
         return _node
 
 
+class EditorTab(QWidget):
+    """
+    Tab item for a single group.
+    """
+    def __init__(self, parent, group_meta, group_data, file_type):
+        """
+        Constructor.
+        :param QWidget parent: the parent widget
+        :param dict|None group_meta: the metadata describing supported group attributes and their types
+        :param tomlkit.items.Table|None group_data: the persistent settings of the group
+        :param int|None file_type: the file type (master config, product config, XML-RPC credentials)
+        """
+        super().__init__(parent)
+        self.__meta = group_meta
+        self.__data = group_data
+        self.__file_type = file_type
+        self.__attr_widgets = {}
+
+    def attribute_widgets(self):
+        """
+        :returns: value widgets for all attributes managed by the tab
+        :rtype: dict
+        """
+        return self.__attr_widgets
+
+    def manages_master_config_group(self):
+        """
+        :returns: True, if the tab manages a master configuration group
+        :rtype: dict
+        """
+        return self.__file_type == _FILE_TYPE_MASTER_CONFIG
+
+    @staticmethod
+    def group_addition_tab(parent):
+        """
+        :param QWidget parent: the parent widget
+        :returns: special tab to add a new group
+        :rtype: EditorTab
+        """
+        return EditorTab(parent, None, None, None)
+
+
+class EditorSignals(QObject):
+    add_group_requested = Signal(tuple)
+
+
+class EditorAdditionTab(QWidget):
+    """
+    Tab item to add groups.
+    """
+    def __init__(self, parent, missing_group_names):
+        """
+        Constructor.
+        :param ConfigEditor parent: the parent widget
+        :param list missing_group_names: the group names currently not shown in the editor
+        """
+        super().__init__(parent)
+        self.__missing_group_names = set(missing_group_names)
+        self.__signals = EditorSignals()
+        self.__signals.add_group_requested.connect(parent.add_group)
+        _tab_layout = QVBoxLayout(self)
+        _tab_layout.setSpacing(20)
+        _group_box = QGroupBox(localized_label(L_SELECT_GROUP), self)
+        _group_layout = QVBoxLayout()
+        _group_layout.setContentsMargins(10, 20, 10, 20)
+        _group_box.setStyleSheet(_GROUP_BOX_STYLE)
+        self.__groups_combo = QComboBox(self)
+        self._fill_group_combo()
+        _group_layout.addWidget(self.__groups_combo)
+        _group_box.setLayout(_group_layout)
+        _tab_layout.addWidget(_group_box)
+        _add_button = QPushButton(localized_label(L_ADD))
+        _add_button.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
+        _add_button.clicked.connect(self._add_clicked)
+        _tab_layout.addWidget(_add_button, alignment=Qt.AlignmentFlag.AlignHCenter)
+        _tab_layout.addStretch()
+        self.setLayout(_tab_layout)
+
+    def group_removed(self, group_name):
+        """
+        Called by the editor if a tab item for a group was removed.
+        :param str group_name: the name of the removed group
+        """
+        self.__missing_group_names.add(group_name)
+        self._fill_group_combo()
+
+    def _add_clicked(self):
+        """
+        Add button was clicked. Emits event to editor to add a new tab item for the selected group.
+        """
+        _group_to_add = self.__groups_combo.currentData()
+        _is_last_group = len(self.__missing_group_names) == 1
+        self.__missing_group_names.remove(_group_to_add)
+        self._fill_group_combo()
+        self.__signals.add_group_requested.emit((_group_to_add, _is_last_group))
+
+    def _fill_group_combo(self):
+        """
+        (Re-)fills group selection combo box from list of missing groups.
+        """
+        self.__groups_combo.clear()
+        for _group_name in sorted(self.__missing_group_names):
+            _display_group_name = "'' (root)" if len(_group_name) == 0 else _group_name
+            self.__groups_combo.addItem(_display_group_name, _group_name)
+        self.__groups_combo.setCurrentIndex(0)
+
+
 class ConfigEditor(QDialog):
     """
     Dialog window to edit Issai and tcms-api configuration files.
@@ -195,12 +352,9 @@ class ConfigEditor(QDialog):
         :param int file_type: the file type (master config, product config, XML-RPC credentials)
         """
         super().__init__(parent)
-        self.__meta_data = metadata
-        self.__file_path = file_path
-        self.__file_type = file_type
         self.__comments_skipped = False
         try:
-            _settings = self._read_settings()
+            _config_data = ConfigEditor._read_config_file(metadata, file_path, file_type)
         except IssaiException as _e:
             _msg_box = exception_box(QMessageBox.Icon.Warning, _e,
                                      localized_label(L_MBOX_INFO_USE_DEFAULT_SETTINGS),
@@ -208,21 +362,26 @@ class ConfigEditor(QDialog):
                                      QMessageBox.StandardButton.Ok)
             if _msg_box.exec() == QMessageBox.StandardButton.Cancel:
                 raise
-            _settings = ConfigEditor._default_settings(metadata)
+            _config_data = ConfigEditor._default_settings(metadata, file_type)
+        self.__meta_data = metadata
+        self.__file_path = file_path
+        self.__file_type = file_type
         self.setWindowTitle(title)
-        self.__editor_data = EditorData(metadata, _settings)
+        self.__editor_data = EditorData(metadata, _config_data)
         _layout = QVBoxLayout()
         _tabs = QTabWidget(self)
         _tabs.setStyleSheet(_TABS_STYLE)
-        for _group_name, _group_meta in metadata.items():
-            _group_values = _settings if len(_group_name) == 0 else _settings.get(_group_name)
-            if _group_values is None:
-                if _group_meta[META_KEY_OPT]:
-                    continue
-                raise IssaiException(W_GUI_READ_SETTINGS_FAILED, file_path, f'Mandatory group {_group_name} missing')
-            _tab = self._create_tab(_group_name, _group_meta, _group_values)
+        _missing_group_names = []
+        for _group_name, _group_meta in sorted_metadata_items(metadata):
+            _group_data = group_data_of(_config_data, _group_name)
+            if _group_data is None or len(_group_data.keys()) == 0:
+                _missing_group_names.append(_group_name)
+                continue
+            _tab = self._create_tab(_group_name, _group_meta, _group_data)
             if _tab is not None:
                 _tabs.addTab(_tab, f'[{_group_name}]')
+        if len(_missing_group_names) > 0:
+            _tabs.addTab(EditorAdditionTab(self, _missing_group_names), '+')
         _layout.addWidget(_tabs)
         _button_box = QGroupBox(self)
         _button_box_layout = QHBoxLayout()
@@ -235,6 +394,9 @@ class ConfigEditor(QDialog):
         _button_box.setLayout(_button_box_layout)
         _layout.addWidget(_button_box)
         self.setLayout(_layout)
+
+    def add_group(self, group_info):
+        print(f'add_group({group_info})')
 
     def _save_clicked(self):
         """
@@ -258,7 +420,7 @@ class ConfigEditor(QDialog):
             while _rc != QMessageBox.StandardButton.No:
                 _rc = QMessageBox.StandardButton.No
                 try:
-                    self._write_settings()
+                    self._write_config_file()
                 except IssaiException as _e:
                     _msg_box = exception_box(QMessageBox.Icon.Critical, _e,
                                              localized_label(L_MBOX_INFO_RETRY),
@@ -296,7 +458,7 @@ class ConfigEditor(QDialog):
         :param dict group_meta: the metadata group descriptor
         :param dict group_data: the group descriptor
         """
-        _tab = QWidget(self)
+        _tab = EditorTab(self, group_meta, group_data_of(group_data, group_name), self.__file_type)
         _tab_layout = QFormLayout()
         _attributes = group_meta[META_KEY_ATTRS]
         for _a in _attributes:
@@ -344,59 +506,73 @@ class ConfigEditor(QDialog):
         _tab.setLayout(_tab_layout)
         return _tab
 
-    def _read_settings(self):
+    @staticmethod
+    def _read_config_file(metadata, file_path, file_type):
         """
-        Reads settings from file.
-        :rtype: dict
+        Reads configuration data from file.
+        :param dict metadata: the metadata describing supported attributes and their types
+        :param str file_path: the name of the file containing the data to edit including path
+        :param int file_type: the file type (master config, product config, XML-RPC credentials)
+        :rtype: tomlkit.TOMLDocument
         :raises IssaiException: if file is malformed
         """
-        if not os.path.isfile(self.__file_path):
-            return ConfigEditor._default_settings(self.__meta_data)
+        if not os.path.isfile(file_path):
+            return ConfigEditor._default_settings(metadata, file_type)
         # noinspection PyBroadException
         try:
-            _data = {}
-            if self.__file_type == _FILE_TYPE_XML_RPC_CREDENTIALS:
-                # TOML with unquoted string values (XML-RPC credentials file)
-                _current_grp = ''
-                with open(self.__file_path, 'r') as _f:
+            _data = tomlkit.document()
+            if file_type == _FILE_TYPE_XML_RPC_CREDENTIALS:
+                # XML-RPC credentials file - TOML with unquoted string values
+                _current_group = None
+                _current_group_name = ''
+                _comment_prefix = 'd '
+                with open(file_path, 'r') as _f:
                     _line = _f.readline()
                     while _line:
                         _line = _line.strip()
                         if len(_line) == 0:
                             _line = _f.readline()
                             continue
-                        if re.match(r'\s*#', _line):
-                            self.__comments_skipped = True
+                        _m = re.match(r'\s*#(.*)', _line)
+                        if _m:
+                            _data.add(tomlkit.comment(f'{_comment_prefix}{_m.group(1)}'))
                             _line = _f.readline()
                             continue
-                        for _group_name, _group_meta in self.__meta_data.items():
+                        for _group_name, _group_meta in metadata.items():
                             _grp_pattern = rf'\s*\[{_group_name}\]'
                             _m = re.match(_grp_pattern, _line)
                             if _m:
-                                _current_grp = _group_name
-                                _data[_current_grp] = {}
+                                _current_group_name = _group_name
+                                _current_group = tomlkit.table()
+                                _data.append(tomlkit.key(_group_name), _current_group)
+                                _comment_prefix = f'g{_group_name} '
                                 break
                             for _a in _group_meta[META_KEY_ATTRS]:
                                 _attr_name = _a[META_KEY_ATTR_NAME]
                                 _attr_pattern = rf'\s*{_attr_name}\s*=\s*(.*)$'
                                 _m = re.match(_attr_pattern, _line)
                                 if _m:
-                                    if len(_current_grp) == 0:
-                                        _data[_attr_name] = _m.group(1)
+                                    _attr_key = tomlkit.key(_attr_name)
+                                    _attr = tomlkit.string(_m.group(1))
+                                    _qualified_attr_name = qualified_attr_name_for(_current_group_name, _attr_name)
+                                    _comment_prefix = f'a{_qualified_attr_name} '
+                                    if _current_group is None:
+                                        _data.append(_attr_key, _attr)
                                     else:
-                                        _data[_current_grp][_attr_name] = _m.group(1)
+                                        _current_group.append(_attr_key, _attr)
                                     break
                         _line = _f.readline()
             else:
                 # plain TOML (issai configuration files)
-                with open(self.__file_path, 'r') as _f:
+                with open(file_path, 'r') as _f:
                     _data = tomlkit.load(_f)
-            ConfigEditor._fill_mandatory_attributes(_data, self.__meta_data)
+                    validate_config_structure(_data, file_path, file_type == _FILE_TYPE_PRODUCT_CONFIG)
+            ConfigEditor._fill_mandatory_attributes(_data, metadata, file_type)
             return _data
         except Exception as _e:
-            raise IssaiException(W_GUI_READ_SETTINGS_FAILED, self.__file_path, _e)
+            raise IssaiException(W_GUI_READ_SETTINGS_FAILED, file_path, _e)
 
-    def _write_settings(self):
+    def _write_config_file(self):
         """
         Writes settings to file.
         :raises IssaiException: if settings can't be saved to file
@@ -407,13 +583,22 @@ class ConfigEditor(QDialog):
             with open(self.__file_path, 'w') as _f:
                 if self.__file_type == _FILE_TYPE_XML_RPC_CREDENTIALS:
                     # TOML with unquoted string values (XML-RPC credentials file)
+                    for _comment in self.__editor_data.document_comments():
+                        _f.write(f'#{_comment}{os.linesep}')
                     for _k, _v in _settings.items():
                         if isinstance(_v, dict):
                             _f.write(f'[{_k}]{os.linesep}')
+                            for _comment in self.__editor_data.group_comments(_k):
+                                _f.write(f'#{_comment}{os.linesep}')
                             for _ak, _av in _v.items():
                                 _f.write(f'{_ak} = {str(_av)}{os.linesep}')
+                                _qualified_ak = qualified_attr_name_for(_k, _ak)
+                                for _comment in self.__editor_data.attribute_comments(_qualified_ak):
+                                    _f.write(f'#{_comment}{os.linesep}')
                         else:
                             _f.write(f'{_k} = {str(_v)}{os.linesep}')
+                            for _comment in self.__editor_data.attribute_comments(_k):
+                                _f.write(f'#{_comment}{os.linesep}')
                 else:
                     # plain TOML (issai configuration files)
                     tomlkit.dump(_settings, _f)
@@ -421,13 +606,14 @@ class ConfigEditor(QDialog):
             raise IssaiException(E_GUI_WRITE_SETTINGS_FAILED, self.__file_path, _e)
 
     @staticmethod
-    def _fill_mandatory_attributes(settings, metadata):
+    def _fill_mandatory_attributes(settings, metadata, file_type):
         """
         Adds mandatory attributes if missing.
         :param dict settings: the settings
         :param dict metadata: the metadata describing supported attributes and their types
+        :param int file_type: the file type (master config, product config, XML-RPC credentials)
         """
-        _defaults = ConfigEditor._default_settings(metadata)
+        _defaults = ConfigEditor._default_settings(metadata, file_type)
         for _gk, _gv in _defaults.items():
             if isinstance(_gv, dict):
                 if _gk not in settings:
@@ -441,15 +627,18 @@ class ConfigEditor(QDialog):
                 settings[_gk] = _gv
 
     @staticmethod
-    def _default_settings(metadata):
+    def _default_settings(metadata, file_type):
         """
         Returns default settings based on the metadata definitions.
         :param dict metadata: metadata with all TOML groups and attributes
+        :param int file_type: the file type (master config, product config, XML-RPC credentials)
         :returns: default settings
         :rtype: dict
         """
         _data = {}
         for _group_name, _group_meta in metadata.items():
+            if file_type == _FILE_TYPE_MASTER_CONFIG and not _group_meta[META_KEY_ALLOWED_IN_MASTER]:
+                continue
             if _group_meta[META_KEY_OPT]:
                 continue
             if len(_group_name) > 0:
@@ -510,7 +699,27 @@ def xml_rpc_credentials_editor(parent):
                         full_path_of(TCMS_XML_RPC_CREDENTIALS_FILE_PATH), _FILE_TYPE_XML_RPC_CREDENTIALS)
 
 
+def sorted_metadata_items(metadata):
+    """
+    :param dict metadata: the metadata describing supported groups and attributes of a configuration file
+    :returns: metadata items sorted for the need of the tab item
+    :rtype: list
+    """
+    _sorted_items = sorted(metadata.items())
+    if CFG_GROUP_PRODUCT in metadata.keys():
+        for _i in range(1, len(_sorted_items)):
+            if _sorted_items[_i][0] == CFG_GROUP_PRODUCT:
+                _sorted_items[1], _sorted_items[_i] = _sorted_items[_i], _sorted_items[1]
+                break
+    return _sorted_items
+
+
 _ATTR_NAME_STYLE = 'font-weight: bold'
+_GROUP_BOX_STYLE = '''QGroupBox {font: bold; border: 1px solid black; border-radius: 6px; margin-top: 6px;}
+QGroupBox:title{subcontrol-origin: margin;
+subcontrol-position: top left;
+left: 7px;}
+'''
 _TABS_STYLE = 'QTabBar {font-weight: bold}'
 
 _DATA_KEY_ATTR_TYPE = 'type'

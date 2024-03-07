@@ -109,6 +109,7 @@ e-toml-master-data-type-invalid Invalid master data type {0}.
 e-toml-master-data-type-not-array Master data type {0} is not an array.
 
 # GUI
+l-add Add
 l-auto-create-master-data Create missing master data
 l-cancel Cancel
 l-close Close
@@ -139,6 +140,7 @@ l-run-descendant-plans Run descendant test plans
 l-run-entity Run {0}
 l-save Save
 l-select Select
+l-select-group Select group
 l-store-result Store result in TCMS
 l-summary Summary
 l-test-case Test Case
