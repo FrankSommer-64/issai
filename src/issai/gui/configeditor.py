@@ -38,8 +38,9 @@ Dialog window to edit settings based on TOML files.
 
 import tomlkit
 from PySide6.QtCore import QObject, Qt, Signal
-from PySide6.QtWidgets import (QTabWidget, QFormLayout, QGroupBox, QWidget, QLabel, QLineEdit, QComboBox, QDialog,
-                               QHBoxLayout, QVBoxLayout, QPushButton, QMessageBox, QCheckBox, QSizePolicy)
+from PySide6.QtWidgets import (QTabWidget, QAbstractScrollArea, QGroupBox, QWidget, QLineEdit, QComboBox, QDialog,
+                               QHBoxLayout, QVBoxLayout, QPushButton, QMessageBox, QCheckBox, QSizePolicy, QMenu,
+                               QTableWidget, QTableWidgetItem, QHeaderView)
 
 from issai.core.config import *
 from issai.core.tcms import *
@@ -210,6 +211,15 @@ class EditorData(dict):
                 _data[_grp][_attr] = self.get(_attr_id).get(_DATA_KEY_ATTR_VALUE)
         return _data
 
+    def add_group(self, group_name):
+        """
+        Adds a group.
+        :param str group_name: the group name
+        :returns: persistent data for group
+        :rtype: tomlkit.items.Table
+        """
+        pass
+
     @staticmethod
     def _attr_value(data, dotted_key):
         """
@@ -230,63 +240,344 @@ class EditorData(dict):
         return _node
 
 
+class EditorTabFolder(QTabWidget):
+    """
+    Holds all tab items of the config editor.
+    """
+    def __init__(self, parent, config_data, meta_data, editor_data):
+        """
+        Constructor.
+        :param QWidget parent: the parent widget
+        :param tomlkit.TOMLDocument config_data: the persistent data
+        :param dict meta_data: the metadata describing supported groups, attributes and their types
+        :param EditorData editor_data: the editor data
+        """
+        super().__init__(parent)
+        self.__meta_data = meta_data
+        self.__editor_data = editor_data
+        self.__addition_tab = None
+        self.__signals = EditorSignals()
+        self.setStyleSheet(_TAB_FOLDER_STYLE)
+        _missing_group_names = []
+        for _group_name, _group_meta in sorted_metadata_items(meta_data):
+            _group_data = group_data_of(config_data, _group_name)
+            if _group_data is None or len(_group_data.keys()) == 0:
+                _missing_group_names.append(_group_name)
+                continue
+            self._insert_tab(_group_name, _group_meta, _group_data)
+        if len(_missing_group_names) > 0:
+            self._append_addition_tab(_missing_group_names)
+
+    def current_tab(self):
+        """
+        :returns: currently selected tab item
+        :rtype: EditorTab
+        """
+        return self.currentWidget()
+
+    def add_group(self, group_info):
+        """
+        Called by addition tab, when a new tab item shall be created.
+        :param tuple group_info: group name, flag indicating whether it's the last supported group
+        """
+        _group_name, _is_last_group = group_info
+        _group_data = tomlkit.table()
+        self._insert_tab(_group_name, self.__meta_data.get(_group_name), _group_data, self.count()-1)
+        if _is_last_group:
+            self._remove_addition_tab()
+
+    def mouseReleaseEvent(self, event):
+        """
+        Event handler for right mouse button.
+        Shows popup menu with possibility to remove current tab.
+        """
+        if event.button() == Qt.RightButton:
+            _tab = self.current_tab()
+            if _tab.is_removable():
+                _group_name = self.tabBar().tabText(self.currentIndex())[1:-1]
+                _menu = QMenu()
+                _menu.addAction(localized_label(L_REMOVE_GROUP))
+                if _menu.exec_(event.globalPos()):
+                    _rc = QMessageBox.question(self, localized_label(L_MBOX_TITLE_INFO),
+                                               localized_message(L_MBOX_INFO_REMOVE_GROUP, _group_name))
+                    if _rc == QMessageBox.StandardButton.Yes:
+                        self.__signals.group_removed.emit(_group_name)
+                        self.removeTab(self.currentIndex())
+                        if self.__addition_tab is None:
+                            self._append_addition_tab([_group_name])
+            return
+        super().mouseReleaseEvent(event)
+
+    def _insert_tab(self, group_name, group_meta, group_data, index=-1):
+        """
+        Insert a new tab item for a group.
+        :param str group_name: the group name
+        :param dict group_meta: the group metadata
+        :param tomlkit.items.Table group_data: the persistent group data
+        :param int index: the insertion index
+        """
+        _tab = EditorGroupTab(self, group_meta, group_data)
+        '''
+        _tab_layout = QFormLayout()
+        _attributes = group_meta[META_KEY_ATTRS]
+        for _a in _attributes:
+            _attr_name = _a[META_KEY_ATTR_NAME]
+            _qualified_attr_name = qualified_attr_name_for(group_name, _attr_name)
+            _attr_type = _a[META_KEY_ATTR_TYPE]
+            _attr_is_optional = _a[META_KEY_OPT]
+            _attr_value = group_data.get(_attr_name)
+            if _a[META_KEY_OPT] and _attr_value is None:
+                continue
+            _attr_label = QLabel(_attr_name)
+            _attr_label.setStyleSheet(_ATTR_NAME_STYLE)
+            if _attr_type.startswith(META_TYPE_STR) or _attr_type == META_TYPE_INT:
+                _attr_widget = QLineEdit()
+                _attr_widget.setFixedWidth(400)
+                if _attr_type == META_TYPE_STR_PASSWORD:
+                    _attr_widget.setEchoMode(QLineEdit.EchoMode.Password)
+                _attr_widget.setText(_attr_value)
+            elif _attr_type == META_TYPE_BOOLEAN:
+                _attr_widget = QCheckBox()
+                _attr_widget.setChecked(_attr_value)
+            elif _attr_type.startswith(META_TYPE_LIST):
+                _attr_widget = QLineEdit()
+                _attr_widget.setFixedWidth(400)
+                _attr_widget.setText(','.join(_attr_value))
+            elif _attr_type.startswith(META_TYPE_MAPPING):
+                _attr_widget = QLineEdit()
+                _attr_widget.setFixedWidth(400)
+                _attr_widget.setText(str(_attr_value))
+            elif _attr_type.startswith(META_TYPE_ENUM):
+                _enum_values = _attr_type[2:].split(',')
+                _attr_widget = QComboBox()
+                for _v in _enum_values:
+                    _attr_widget.addItem(_v)
+                _attr_widget.setCurrentText(_attr_value)
+            else:
+                _emsg = localized_message(E_GUI_SETTINGS_META_DEFINITION, _qualified_attr_name)
+                _ex = IssaiException(E_INTERNAL_ERROR, _emsg)
+                _msg_box = exception_box(QMessageBox.Icon.Critical, _ex, '',
+                                         QMessageBox.StandardButton.Ok, QMessageBox.StandardButton.Ok)
+                _msg_box.exec()
+                raise _ex
+            _tab_layout.addRow(_attr_label, _attr_widget)
+            self.__editor_data[_qualified_attr_name][_DATA_KEY_WIDGET] = _attr_widget
+        _tab.setLayout(_tab_layout)
+        '''
+        self.insertTab(index, _tab, f'[{group_name}]')
+
+    def _append_addition_tab(self, missing_group_names):
+        """
+        Adds a special tab where the user can create additional group tab items.
+        """
+        if self.__addition_tab is None:
+            self.__addition_tab = EditorAdditionTab(self, missing_group_names)
+            self.addTab(self.__addition_tab, _ADDITION_WIDGET_TEXT)
+            self.__signals.group_removed.connect(self.__addition_tab.group_removed)
+
+    def _remove_addition_tab(self):
+        """
+        Removes special tab where the user can create additional group tab items.
+        """
+        if self.__addition_tab is None:
+            return
+        _index = self.indexOf(self.__addition_tab)
+        if _index >= 0:
+            self.removeTab(_index)
+        self.__addition_tab = None
+
+
+class EditorSignals(QObject):
+    add_group_requested = Signal(tuple)
+    group_removed = Signal(str)
+    remove_attr_requested = Signal(str)
+
+
+class RemoveAttrButton(QPushButton):
+    """
+    Push button to remove an attribute from an editor tab.
+    """
+    def __init__(self, parent, attr_name):
+        """
+        Constructor.
+        :param EditorGroupTab parent: the tab holding the button
+        :param str attr_name: the attribute name
+        """
+        super().__init__('-')
+        self.setStyleSheet(_REMOVE_ATTR_BUTTON_STYLE)
+        self.setMaximumWidth(20)
+        self.__attr_name = attr_name
+        self.__signals = EditorSignals()
+        self.__signals.remove_attr_requested.connect(parent.remove_attr)
+        self.clicked.connect(self._clicked)
+
+    def _clicked(self):
+        self.__signals.remove_attr_requested.emit(self.__attr_name)
+
+
 class EditorTab(QWidget):
     """
-    Tab item for a single group.
+    Base class for all tab items.
     """
-    def __init__(self, parent, group_meta, group_data, file_type):
+    def __init__(self, parent, group_meta):
         """
         Constructor.
         :param QWidget parent: the parent widget
         :param dict|None group_meta: the metadata describing supported group attributes and their types
-        :param tomlkit.items.Table|None group_data: the persistent settings of the group
-        :param int|None file_type: the file type (master config, product config, XML-RPC credentials)
         """
         super().__init__(parent)
-        self.__meta = group_meta
-        self.__data = group_data
-        self.__file_type = file_type
-        self.__attr_widgets = {}
+        self.meta = group_meta
+
+    def is_removable(self):
+        """
+        :returns: True, if tab can be removed from the folder, i.e. it manages an optional group.
+        :rtype: bool
+        """
+        return self.meta[META_KEY_OPT]
+
+
+class EditorGroupTab(EditorTab):
+    """
+    Tab item for a single group.
+    """
+    def __init__(self, parent, group_meta, group_data):
+        """
+        Constructor.
+        :param QWidget parent: the parent widget
+        :param dict group_meta: the metadata describing supported group attributes and their types
+        :param tomlkit.items.Table group_data: the persistent settings of the group
+        """
+        super().__init__(parent, group_meta)
+        self.data = group_data
+        self.attr_widgets = {}
+        _tab_layout = QVBoxLayout()
+        self.__attr_table = QTableWidget(self)
+        self.__attr_table.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContentsOnFirstShow)
+        self.__attr_table.setColumnCount(3)
+        self.__attr_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        self.__attr_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        self.__attr_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
+        self.__attr_table.setHorizontalHeaderLabels(['Action', 'Attribute', 'Value'])
+        self.__attr_descriptors = {}
+        for _attr_desc in group_meta[META_KEY_ATTRS]:
+            self.__attr_descriptors[META_KEY_ATTR_NAME] = _attr_desc
+        if len(self.__attr_descriptors) == 0:
+            # any attribute names allowed
+            self.__attr_table.setRowCount(len(group_data.unwrap()))
+            _row = 0
+            for _attr_name, _attr_value in group_data.items():
+                _remove_button = RemoveAttrButton(self, _attr_name)
+                _remove_button_frame = QWidget()
+                _layout = QHBoxLayout(self)
+                _layout.addWidget(_remove_button)
+                _layout.setAlignment(Qt.AlignCenter)
+                _remove_button_frame.setLayout(_layout)
+                self.__attr_table.setCellWidget(_row, 0, _remove_button_frame)
+                self.__attr_table.setItem(_row, 1, QTableWidgetItem(_attr_name))
+                self.__attr_table.setCellWidget(_row, 2, self._attr_value_widget_for(_attr_name, _attr_value))
+                _row += 1
+        else:
+            self.__attr_table.setRowCount(1)
+            self.__attr_table.setItem(0, 0, QTableWidgetItem('Attribute'))
+            self.__attr_table.setItem(0, 1, QTableWidgetItem('Value'))
+            self.__attr_table.setItem(0, 2, QTableWidgetItem('ADD ATTRIBUTE'))
+        self.__attr_table.resizeColumnsToContents()
+        _tab_layout.addWidget(self.__attr_table)
+        self.setLayout(_tab_layout)
+        '''
+        _attributes = group_meta[META_KEY_ATTRS]
+        for _a in _attributes:
+            _attr_name = _a[META_KEY_ATTR_NAME]
+            _qualified_attr_name = qualified_attr_name_for(group_name, _attr_name)
+            _attr_type = _a[META_KEY_ATTR_TYPE]
+            _attr_is_optional = _a[META_KEY_OPT]
+            _attr_value = group_data.get(_attr_name)
+            if _a[META_KEY_OPT] and _attr_value is None:
+                continue
+            _attr_label = QLabel(_attr_name)
+            _attr_label.setStyleSheet(_ATTR_NAME_STYLE)
+            if _attr_type.startswith(META_TYPE_STR) or _attr_type == META_TYPE_INT:
+                _attr_widget = QLineEdit()
+                _attr_widget.setFixedWidth(400)
+                if _attr_type == META_TYPE_STR_PASSWORD:
+                    _attr_widget.setEchoMode(QLineEdit.EchoMode.Password)
+                _attr_widget.setText(_attr_value)
+            elif _attr_type == META_TYPE_BOOLEAN:
+                _attr_widget = QCheckBox()
+                _attr_widget.setChecked(_attr_value)
+            elif _attr_type.startswith(META_TYPE_LIST):
+                _attr_widget = QLineEdit()
+                _attr_widget.setFixedWidth(400)
+                _attr_widget.setText(','.join(_attr_value))
+            elif _attr_type.startswith(META_TYPE_MAPPING):
+                _attr_widget = QLineEdit()
+                _attr_widget.setFixedWidth(400)
+                _attr_widget.setText(str(_attr_value))
+            elif _attr_type.startswith(META_TYPE_ENUM):
+                _enum_values = _attr_type[2:].split(',')
+                _attr_widget = QComboBox()
+                for _v in _enum_values:
+                    _attr_widget.addItem(_v)
+                _attr_widget.setCurrentText(_attr_value)
+            else:
+                _emsg = localized_message(E_GUI_SETTINGS_META_DEFINITION, _qualified_attr_name)
+                _ex = IssaiException(E_INTERNAL_ERROR, _emsg)
+                _msg_box = exception_box(QMessageBox.Icon.Critical, _ex, '',
+                                         QMessageBox.StandardButton.Ok, QMessageBox.StandardButton.Ok)
+                _msg_box.exec()
+                raise _ex
+            _tab_layout.addRow(_attr_label, _attr_widget)
+            self.__editor_data[_qualified_attr_name][_DATA_KEY_WIDGET] = _attr_widget
+        _tab.setLayout(_tab_layout)
+        '''
 
     def attribute_widgets(self):
         """
         :returns: value widgets for all attributes managed by the tab
         :rtype: dict
         """
-        return self.__attr_widgets
+        return self.attr_widgets
 
-    def manages_master_config_group(self):
+    def remove_attr(self, attr_name):
         """
-        :returns: True, if the tab manages a master configuration group
-        :rtype: dict
+        Called, when the remove button for specified attribute was clicked.
+        Removes corresponding row from the table.
+        :param str attr_name: the attribute name
         """
-        return self.__file_type == _FILE_TYPE_MASTER_CONFIG
+        for _row in range(0, self.__attr_table.rowCount()):
+            _name_cell = self.__attr_table.item(_row, 1)
+            if _name_cell.text() == attr_name:
+                self.__attr_table.removeRow(_row)
 
-    @staticmethod
-    def group_addition_tab(parent):
+    def _attr_value_widget_for(self, attr_name, attr_value):
         """
-        :param QWidget parent: the parent widget
-        :returns: special tab to add a new group
-        :rtype: EditorTab
+        :param str attr_name: the attribute name
+        :param attr_value: the attribute value
+        :returns: widget for specified attribute, value filled
+        :rtype: QTableWidgetItem
         """
-        return EditorTab(parent, None, None, None)
+        _attr_desc = self.__attr_descriptors.get(attr_name)
+        if _attr_desc is None:
+            # all names allowed
+            _attr_widget = QLineEdit()
+            _attr_widget.setText(attr_value.as_string().strip('"'))
+            return _attr_widget
+        else:
+            # supported names allowed only
+            return None
 
 
-class EditorSignals(QObject):
-    add_group_requested = Signal(tuple)
-
-
-class EditorAdditionTab(QWidget):
+class EditorAdditionTab(EditorTab):
     """
     Tab item to add groups.
     """
     def __init__(self, parent, missing_group_names):
         """
         Constructor.
-        :param ConfigEditor parent: the parent widget
+        :param EditorTabFolder parent: the parent widget
         :param list missing_group_names: the group names currently not shown in the editor
         """
-        super().__init__(parent)
+        super().__init__(parent, _META_ADDITION_TAB)
         self.__missing_group_names = set(missing_group_names)
         self.__signals = EditorSignals()
         self.__signals.add_group_requested.connect(parent.add_group)
@@ -352,7 +643,7 @@ class ConfigEditor(QDialog):
         :param int file_type: the file type (master config, product config, XML-RPC credentials)
         """
         super().__init__(parent)
-        self.__comments_skipped = False
+        self.setMinimumSize(600, 400)
         try:
             _config_data = ConfigEditor._read_config_file(metadata, file_path, file_type)
         except IssaiException as _e:
@@ -369,20 +660,8 @@ class ConfigEditor(QDialog):
         self.setWindowTitle(title)
         self.__editor_data = EditorData(metadata, _config_data)
         _layout = QVBoxLayout()
-        _tabs = QTabWidget(self)
-        _tabs.setStyleSheet(_TABS_STYLE)
-        _missing_group_names = []
-        for _group_name, _group_meta in sorted_metadata_items(metadata):
-            _group_data = group_data_of(_config_data, _group_name)
-            if _group_data is None or len(_group_data.keys()) == 0:
-                _missing_group_names.append(_group_name)
-                continue
-            _tab = self._create_tab(_group_name, _group_meta, _group_data)
-            if _tab is not None:
-                _tabs.addTab(_tab, f'[{_group_name}]')
-        if len(_missing_group_names) > 0:
-            _tabs.addTab(EditorAdditionTab(self, _missing_group_names), '+')
-        _layout.addWidget(_tabs)
+        self.__tab_folder = EditorTabFolder(self, _config_data, metadata, self.__editor_data)
+        _layout.addWidget(self.__tab_folder)
         _button_box = QGroupBox(self)
         _button_box_layout = QHBoxLayout()
         _save_button = QPushButton(localized_label(L_SAVE))
@@ -395,23 +674,12 @@ class ConfigEditor(QDialog):
         _layout.addWidget(_button_box)
         self.setLayout(_layout)
 
-    def add_group(self, group_info):
-        print(f'add_group({group_info})')
-
     def _save_clicked(self):
         """
         Called when the save button was clicked.
         Writes settings to file, if they were changed and closes the dialog window.
         """
         if self.__editor_data.is_changed():
-            if self.__comments_skipped:
-                # comment lines were skipped during file load, save will result in all comments being deleted
-                _rc = QMessageBox.question(self, localized_label(L_MBOX_TITLE_INFO),
-                                           localized_label(L_MBOX_INFO_DISCARD_COMMENTS),
-                                           QMessageBox.StandardButton.Cancel | QMessageBox.StandardButton.Yes,
-                                           QMessageBox.StandardButton.Cancel)
-                if _rc == QMessageBox.StandardButton.Cancel:
-                    return
             _xml_rpc_credentials_modified = False
             if self.__file_type == _FILE_TYPE_XML_RPC_CREDENTIALS:
                 _xml_rpc_credentials_modified = self.__editor_data.xml_rpc_credentials_modified()
@@ -448,63 +716,6 @@ class ConfigEditor(QDialog):
             if _rc == QMessageBox.StandardButton.No:
                 return
         self.close()
-
-    def _create_tab(self, group_name, group_meta, group_data):
-        """
-        Creates a tab to allow editing attributes of a specific group.
-        Closes the dialog window, if the settings were not changed.
-        Asks for confirmation to discard changes, if the settings were edited.
-        :param str group_name: the group name
-        :param dict group_meta: the metadata group descriptor
-        :param dict group_data: the group descriptor
-        """
-        _tab = EditorTab(self, group_meta, group_data_of(group_data, group_name), self.__file_type)
-        _tab_layout = QFormLayout()
-        _attributes = group_meta[META_KEY_ATTRS]
-        for _a in _attributes:
-            _attr_name = _a[META_KEY_ATTR_NAME]
-            _qualified_attr_name = qualified_attr_name_for(group_name, _attr_name)
-            _attr_type = _a[META_KEY_ATTR_TYPE]
-            _attr_is_optional = _a[META_KEY_OPT]
-            _attr_value = group_data.get(_attr_name)
-            if _a[META_KEY_OPT] and _attr_value is None:
-                continue
-            _attr_label = QLabel(_attr_name)
-            _attr_label.setStyleSheet(_ATTR_NAME_STYLE)
-            if _attr_type.startswith(META_TYPE_STR) or _attr_type == META_TYPE_INT:
-                _attr_widget = QLineEdit()
-                _attr_widget.setFixedWidth(400)
-                if _attr_type == META_TYPE_STR_PASSWORD:
-                    _attr_widget.setEchoMode(QLineEdit.EchoMode.Password)
-                _attr_widget.setText(_attr_value)
-            elif _attr_type == META_TYPE_BOOLEAN:
-                _attr_widget = QCheckBox()
-                _attr_widget.setChecked(_attr_value)
-            elif _attr_type.startswith(META_TYPE_LIST):
-                _attr_widget = QLineEdit()
-                _attr_widget.setFixedWidth(400)
-                _attr_widget.setText(','.join(_attr_value))
-            elif _attr_type.startswith(META_TYPE_MAPPING):
-                _attr_widget = QLineEdit()
-                _attr_widget.setFixedWidth(400)
-                _attr_widget.setText(str(_attr_value))
-            elif _attr_type.startswith(META_TYPE_ENUM):
-                _enum_values = _attr_type[2:].split(',')
-                _attr_widget = QComboBox()
-                for _v in _enum_values:
-                    _attr_widget.addItem(_v)
-                _attr_widget.setCurrentText(_attr_value)
-            else:
-                _emsg = localized_message(E_GUI_SETTINGS_META_DEFINITION, _qualified_attr_name)
-                _ex = IssaiException(E_INTERNAL_ERROR, _emsg)
-                _msg_box = exception_box(QMessageBox.Icon.Critical, _ex, '',
-                                         QMessageBox.StandardButton.Ok, QMessageBox.StandardButton.Ok)
-                _msg_box.exec()
-                raise _ex
-            _tab_layout.addRow(_attr_label, _attr_widget)
-            self.__editor_data[_qualified_attr_name][_DATA_KEY_WIDGET] = _attr_widget
-        _tab.setLayout(_tab_layout)
-        return _tab
 
     @staticmethod
     def _read_config_file(metadata, file_path, file_type):
@@ -714,13 +925,18 @@ def sorted_metadata_items(metadata):
     return _sorted_items
 
 
+_ADD_ATTR_BUTTON_STYLE = 'background-color: green; color: white; font-weight: bold'
+_REMOVE_ATTR_BUTTON_STYLE = 'background-color: darkred; color: white; font-weight: bold'
 _ATTR_NAME_STYLE = 'font-weight: bold'
 _GROUP_BOX_STYLE = '''QGroupBox {font: bold; border: 1px solid black; border-radius: 6px; margin-top: 6px;}
 QGroupBox:title{subcontrol-origin: margin;
 subcontrol-position: top left;
 left: 7px;}
 '''
-_TABS_STYLE = 'QTabBar {font-weight: bold}'
+_TAB_FOLDER_STYLE = 'QTabBar {font-weight: bold}'
+
+_ADDITION_WIDGET_TEXT = '+'
+_REMOVE_WIDGET_TEXT = '-'
 
 _DATA_KEY_ATTR_TYPE = 'type'
 _DATA_KEY_ATTR_VALUE = 'value'
@@ -753,3 +969,5 @@ _META_XML_RPC = {META_KEY_ALLOWED_IN_MASTER: True,
                  }
 
 _META_XML_RPC_CFG = {CFG_GROUP_TCMS: _META_XML_RPC}
+
+_META_ADDITION_TAB = {META_KEY_OPT: False}

@@ -135,6 +135,8 @@ l-options Options
 l-output-path Output path
 l-product Product
 l-recent Recent
+l-remove Remove
+l-remove-group Remove group
 l-run Run
 l-run-descendant-plans Run descendant test plans
 l-run-entity Run {0}
@@ -167,6 +169,7 @@ l-dlg-title-xml-rpc-editor XML RPC credentials
 l-main-win-default-title Issai
 l-mbox-info-discard-changes Discard changes ?
 l-mbox-info-discard-comments All comment lines in the file will be discarded. Proceed anyway ?
+l-mbox-info-remove-group Remove group {0} ?
 l-mbox-info-retry Retry ?
 l-mbox-info-use-default-settings Proceed with default settings instead ?
 l-mbox-title-error Error
