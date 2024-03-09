@@ -109,7 +109,9 @@ e-toml-master-data-type-invalid Invalid master data type {0}.
 e-toml-master-data-type-not-array Master data type {0} is not an array.
 
 # GUI
+l-action Action
 l-add Add
+l-attribute Attribute
 l-auto-create-master-data Create missing master data
 l-cancel Cancel
 l-close Close
@@ -149,6 +151,7 @@ l-test-case Test Case
 l-test-plan Test Plan
 l-test-plan-result Test plan result
 l-type Type
+l-value Value
 l-build-combo Build
 l-env-combo Environment
 l-product-combo Product

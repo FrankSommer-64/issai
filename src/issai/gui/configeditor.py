@@ -457,15 +457,21 @@ class EditorGroupTab(EditorTab):
         self.__attr_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
         self.__attr_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
         self.__attr_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
-        self.__attr_table.setHorizontalHeaderLabels(['Action', 'Attribute', 'Value'])
+        self.__attr_table.setHorizontalHeaderLabels([localized_label(L_ACTION), localized_label(L_ATTRIBUTE),
+                                                     localized_label(L_VALUE)])
+        self.__attr_table.verticalHeader().hide()
+        self.__attr_selection_combo = QComboBox()
+        self.__attr_selection_combo.currentTextChanged.connect(self._addition_attr_selected)
         self.__attr_descriptors = {}
         for _attr_desc in group_meta[META_KEY_ATTRS]:
-            self.__attr_descriptors[META_KEY_ATTR_NAME] = _attr_desc
-        if len(self.__attr_descriptors) == 0:
-            # any attribute names allowed
-            self.__attr_table.setRowCount(len(group_data.unwrap()))
-            _row = 0
-            for _attr_name, _attr_value in group_data.items():
+            self.__attr_descriptors[_attr_desc[META_KEY_ATTR_NAME]] = _attr_desc
+        _initial_row_count = len(group_data.unwrap())
+        if len(group_meta[META_KEY_ATTRS]) == 0 or len(group_meta[META_KEY_ATTRS]) > _initial_row_count:
+            _initial_row_count += 1
+        self.__attr_table.setRowCount(_initial_row_count)
+        _row = 0
+        for _attr_name, _attr_value in group_data.items():
+            if self._attr_is_optional(_attr_name):
                 _remove_button = RemoveAttrButton(self, _attr_name)
                 _remove_button_frame = QWidget()
                 _layout = QHBoxLayout(self)
@@ -473,63 +479,14 @@ class EditorGroupTab(EditorTab):
                 _layout.setAlignment(Qt.AlignCenter)
                 _remove_button_frame.setLayout(_layout)
                 self.__attr_table.setCellWidget(_row, 0, _remove_button_frame)
-                self.__attr_table.setItem(_row, 1, QTableWidgetItem(_attr_name))
-                self.__attr_table.setCellWidget(_row, 2, self._attr_value_widget_for(_attr_name, _attr_value))
-                _row += 1
-        else:
-            self.__attr_table.setRowCount(1)
-            self.__attr_table.setItem(0, 0, QTableWidgetItem('Attribute'))
-            self.__attr_table.setItem(0, 1, QTableWidgetItem('Value'))
-            self.__attr_table.setItem(0, 2, QTableWidgetItem('ADD ATTRIBUTE'))
+            self.__attr_table.setItem(_row, 1, QTableWidgetItem(_attr_name))
+            self.__attr_table.setCellWidget(_row, 2, self._attr_value_widget_for(_attr_name, _attr_value))
+            _row += 1
+        if _row < _initial_row_count:
+            self._create_attr_addition_row()
         self.__attr_table.resizeColumnsToContents()
         _tab_layout.addWidget(self.__attr_table)
         self.setLayout(_tab_layout)
-        '''
-        _attributes = group_meta[META_KEY_ATTRS]
-        for _a in _attributes:
-            _attr_name = _a[META_KEY_ATTR_NAME]
-            _qualified_attr_name = qualified_attr_name_for(group_name, _attr_name)
-            _attr_type = _a[META_KEY_ATTR_TYPE]
-            _attr_is_optional = _a[META_KEY_OPT]
-            _attr_value = group_data.get(_attr_name)
-            if _a[META_KEY_OPT] and _attr_value is None:
-                continue
-            _attr_label = QLabel(_attr_name)
-            _attr_label.setStyleSheet(_ATTR_NAME_STYLE)
-            if _attr_type.startswith(META_TYPE_STR) or _attr_type == META_TYPE_INT:
-                _attr_widget = QLineEdit()
-                _attr_widget.setFixedWidth(400)
-                if _attr_type == META_TYPE_STR_PASSWORD:
-                    _attr_widget.setEchoMode(QLineEdit.EchoMode.Password)
-                _attr_widget.setText(_attr_value)
-            elif _attr_type == META_TYPE_BOOLEAN:
-                _attr_widget = QCheckBox()
-                _attr_widget.setChecked(_attr_value)
-            elif _attr_type.startswith(META_TYPE_LIST):
-                _attr_widget = QLineEdit()
-                _attr_widget.setFixedWidth(400)
-                _attr_widget.setText(','.join(_attr_value))
-            elif _attr_type.startswith(META_TYPE_MAPPING):
-                _attr_widget = QLineEdit()
-                _attr_widget.setFixedWidth(400)
-                _attr_widget.setText(str(_attr_value))
-            elif _attr_type.startswith(META_TYPE_ENUM):
-                _enum_values = _attr_type[2:].split(',')
-                _attr_widget = QComboBox()
-                for _v in _enum_values:
-                    _attr_widget.addItem(_v)
-                _attr_widget.setCurrentText(_attr_value)
-            else:
-                _emsg = localized_message(E_GUI_SETTINGS_META_DEFINITION, _qualified_attr_name)
-                _ex = IssaiException(E_INTERNAL_ERROR, _emsg)
-                _msg_box = exception_box(QMessageBox.Icon.Critical, _ex, '',
-                                         QMessageBox.StandardButton.Ok, QMessageBox.StandardButton.Ok)
-                _msg_box.exec()
-                raise _ex
-            _tab_layout.addRow(_attr_label, _attr_widget)
-            self.__editor_data[_qualified_attr_name][_DATA_KEY_WIDGET] = _attr_widget
-        _tab.setLayout(_tab_layout)
-        '''
 
     def attribute_widgets(self):
         """
@@ -549,7 +506,18 @@ class EditorGroupTab(EditorTab):
             if _name_cell.text() == attr_name:
                 self.__attr_table.removeRow(_row)
 
-    def _attr_value_widget_for(self, attr_name, attr_value):
+    def _attr_is_optional(self, attr_name):
+        """
+        :param str attr_name: the attribute name
+        :returns: True, if specified attribute is not mandatory
+        :rtype: bool
+        """
+        _attr_desc = self.__attr_descriptors.get(attr_name)
+        if _attr_desc is not None:
+            return _attr_desc[META_KEY_OPT]
+        return True
+
+    def _attr_value_widget_for(self, attr_name, attr_value=None):
         """
         :param str attr_name: the attribute name
         :param attr_value: the attribute value
@@ -560,11 +528,84 @@ class EditorGroupTab(EditorTab):
         if _attr_desc is None:
             # all names allowed
             _attr_widget = QLineEdit()
-            _attr_widget.setText(attr_value.as_string().strip('"'))
+            if attr_value is not None:
+                _attr_widget.setText(attr_value.as_string().strip('"'))
             return _attr_widget
         else:
             # supported names allowed only
-            return None
+            _attr_type = _attr_desc[META_KEY_ATTR_TYPE]
+            if _attr_type == META_TYPE_BOOLEAN:
+                _attr_widget = QCheckBox()
+                if attr_value is not None:
+                    _attr_widget.setChecked(attr_value)
+            elif _attr_type.startswith(META_TYPE_ENUM):
+                _enum_values = _attr_type[2:].split(',')
+                _attr_widget = QComboBox()
+                for _v in _enum_values:
+                    _attr_widget.addItem(_v)
+                if attr_value is not None:
+                    _attr_widget.setCurrentText(attr_value)
+            else:
+                _attr_widget = QLineEdit()
+                if _attr_type == META_TYPE_STR_PASSWORD:
+                    _attr_widget.setEchoMode(QLineEdit.EchoMode.Password)
+                if attr_value is not None:
+                    _attr_widget.setText(attr_value.as_string().strip('"'))
+            return _attr_widget
+
+    def _create_attr_addition_row(self):
+        """
+        Creates a row for attribute addition at the bottom of the table.
+        Table row count must have been incremented in advance.
+        """
+        _add_button = QPushButton(_ADDITION_WIDGET_TEXT)
+        _add_button.setStyleSheet(_ADD_ATTR_BUTTON_STYLE)
+        _add_button.setMaximumWidth(20)
+        _add_button.clicked.connect(self._add_attr_clicked)
+        _add_button_frame = QWidget()
+        _layout = QHBoxLayout(self)
+        _layout.addWidget(_add_button)
+        _layout.setAlignment(Qt.AlignCenter)
+        _add_button_frame.setLayout(_layout)
+        _row = self.__attr_table.rowCount() - 1
+        self.__attr_table.setCellWidget(_row, 0, _add_button_frame)
+        if len(self.__attr_descriptors) == 0:
+            self.__attr_table.setCellWidget(_row, 1, QLineEdit())
+            self.__attr_table.setCellWidget(_row, 2, QLineEdit())
+        else:
+            _supported_attrs = set(self.__attr_descriptors.keys())
+            _displayed_attrs = set(self.data.keys())
+            _hidden_attrs = _supported_attrs - _displayed_attrs
+            self.__attr_selection_combo.clear()
+            self.__attr_selection_combo.addItems(sorted(_hidden_attrs))
+            self.__attr_table.setCellWidget(_row, 1, self.__attr_selection_combo)
+
+    def _add_attr_clicked(self):
+        print('add attr clicked')
+        _row = self.__attr_table.rowCount() - 1
+        if len(self.__attr_descriptors) == 0:
+            # TODO check attr name/value according to group descriptor
+            _attr_name = self.__attr_table.cellWidget(_row, 1).text()
+            if len(_attr_name) == 0:
+                QMessageBox.information(self, localized_label(L_MBOX_TITLE_INFO), 'No attribute name specified')
+                return
+            _attr_value = self.__attr_table.cellWidget(_row, 2).text()
+        else:
+            _attr_name = self.__attr_table.cellWidget(_row, 1).currentText()
+            if len(_attr_name) == 0:
+                QMessageBox.information(self, localized_label(L_MBOX_TITLE_INFO), 'No attribute name specified')
+                return
+            # TODO determine attr value
+            _attr_value = None
+        if _attr_name in self.data:
+            QMessageBox.information(self, localized_label(L_MBOX_TITLE_INFO), 'Attribute already exists')
+            return
+        self.data[_attr_name] = _attr_value
+        # TODO remove attr from combo, eventually new addition line, change action button
+
+    def _addition_attr_selected(self, attr_name):
+        _row = self.__attr_table.rowCount() - 1
+        self.__attr_table.setCellWidget(_row, 2, self._attr_value_widget_for(attr_name))
 
 
 class EditorAdditionTab(EditorTab):
