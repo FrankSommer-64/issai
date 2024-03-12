@@ -249,11 +249,14 @@ e-gui-import-product-failed Import Product {0} failed.
 i-gui-about-detail-text Version {0}\nQt version {1}
 i-gui-about-info-text Copyright (c) 2024 Frank Sommer
 i-gui-about-text Issai - Framework to run automated tests managed in Kiwi Test case management system
+i-gui-attribute-exists Attribute {0} already defined.
 i-gui-config-problem Problems in Issai configuration detected:
 i-gui-config-warning Warnings in Issai configuration detected:
 i-gui-export-case-successful Test case {0} successfully exported.
 i-gui-export-plan-successful Test plan {0} successfully exported.
 i-gui-export-product-successful Product {0} successfully exported.
+i-gui-invalid-attribute-name Attribute name {0} does not match pattern {1}.
+i-gui-no-attribute-name No attribute name specified.
 i-gui-no-build-selected No build selected.
 i-gui-no-lru-entities No recently used test entities available.
 i-gui-no-version-selected No version selected.

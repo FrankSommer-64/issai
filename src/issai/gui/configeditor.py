@@ -48,213 +48,19 @@ from issai.core.util import full_path_of
 from issai.gui.dialogs import exception_box, IssaiProductSelectionDialog
 
 
-class EditorData(dict):
-    """
-    Holds the data needed by the editor.
-    Class is a dictionary using fully qualified TOML attribute names as keys.
-    For every attribute there are three sub keys, one for the value as read from file, one for the attribute type and
-    one for the widget responsible for editing the attribute value.
-    """
-
-    def __init__(self, metadata, settings):
-        """
-        Constructor.
-        :param dict metadata: the metadata describing supported attributes and their types
-        :param tomlkit.TOMLDocument settings: the actual settings to edit
-        """
-        super().__init__()
-        self.__document_comments = []
-        self.__group_comments = {}
-        self.__attr_comments = {}
-        for _t, _v in settings.body:
-            if isinstance(_v, tomlkit.items.Comment):
-                _comment = _v.as_string()[2:].strip()
-                if _comment.startswith('d '):
-                    self.__document_comments.append(_comment[2:])
-                    continue
-                if _comment.startswith('g'):
-                    _prefix_end = _comment.find(' ')
-                    _group_name = _comment[1:_prefix_end]
-                    if _group_name not in self.__group_comments:
-                        self.__group_comments[_group_name] = []
-                    self.__group_comments[_group_name].append(_comment[_prefix_end+1:])
-                    continue
-                if _comment.startswith('a'):
-                    _prefix_end = _comment.find(' ')
-                    _attr_name = _comment[1:_prefix_end]
-                    if _attr_name not in self.__attr_comments:
-                        self.__attr_comments[_attr_name] = []
-                    self.__attr_comments[_attr_name].append(_comment[_prefix_end+1:])
-                    continue
-        for _group_name, _group_meta in metadata.items():
-            if len(_group_name) > 0:
-                _group_name += '.'
-            _attrs = _group_meta[META_KEY_ATTRS]
-            for _attr in _attrs:
-                _qualified_attr_name = _attr[META_KEY_ATTR_QUALIFIED_NAME]
-                _attr_type = _attr[META_KEY_ATTR_TYPE]
-                _attr_value = EditorData._attr_value(settings, _qualified_attr_name)
-                if _attr_value is None:
-                    continue
-                self[_qualified_attr_name] = {}
-                self[_qualified_attr_name][_DATA_KEY_ATTR_TYPE] = _attr_type
-                self[_qualified_attr_name][_DATA_KEY_ATTR_VALUE] = _attr_value
-                self[_qualified_attr_name][_DATA_KEY_WIDGET] = None
-
-    def document_comments(self):
-        """
-        :returns: all comments at the top of XML-RPC credentials file
-        :rtype: list
-        """
-        return self.__document_comments
-
-    def group_comments(self, group_name):
-        """
-        :param str group_name: the desired group name
-        :returns: all comments following specified TOML group
-        :rtype: list
-        """
-        _comments = self.__group_comments.get(group_name)
-        return [] if _comments is None else _comments
-
-    def attribute_comments(self, attribute_name):
-        """
-        :param str attribute_name: the desired attribute name
-        :returns: all comments following specified TOML attribute
-        :rtype: list
-        """
-        _comments = self.__attr_comments.get(attribute_name)
-        return [] if _comments is None else _comments
-
-    def persistent_value(self, dotted_key):
-        """
-        Returns an attribute value as loaded from file resp. as to be stored to file.
-        :param str dotted_key: the attribute ID
-        :returns: the attribute value
-        """
-        return self.get(dotted_key).get(_DATA_KEY_ATTR_VALUE)
-
-    def gui_value(self, dotted_key):
-        """
-        Returns an attribute value as displayed on the GUI.
-        :param str dotted_key: the attribute ID
-        :returns: the attribute value
-        """
-        _widget = self.get(dotted_key).get(_DATA_KEY_WIDGET)
-        _attr_type = self.get(dotted_key).get(_DATA_KEY_ATTR_TYPE)
-        if _attr_type.startswith(META_TYPE_STR):
-            # QLineEdit
-            return _widget.text()
-        if _attr_type == META_TYPE_INT:
-            # QLineEdit
-            return int(_widget.text())
-        if _attr_type == META_TYPE_BOOLEAN:
-            # QCheckBox
-            return _widget.isChecked()
-        if _attr_type == META_TYPE_LIST_OF_STR:
-            # QLineEdit
-            _value = _widget.text().strip()
-            return [] if len(_value) == 0 else [_item.strip() for _item in _value.split(',')]
-        if _attr_type == META_TYPE_LIST_OF_INT:
-            # QLineEdit
-            _value = _widget.text().strip()
-            return [] if len(_value) == 0 else [int(_item.strip()) for _item in _value.split(',')]
-        if _attr_type.startswith(META_TYPE_ENUM):
-            # QComboBox
-            return _widget.currentText()
-        return None
-
-    def is_changed(self):
-        """
-        Indicates whether at least one attribute value has been changed on the GUI.
-        :returns: True, if changes exist
-        :rtype: bool
-        """
-        for _attr_id in self.keys():
-            if self.persistent_value(_attr_id) != self.gui_value(_attr_id):
-                return True
-        return False
-
-    def xml_rpc_credentials_modified(self):
-        """
-        :returns: True, if TCMS server URL has been changed in the editor; otherwise False
-        :rtype: bool
-        """
-        _result = False
-        for _attr in [CFG_PAR_TCMS_XML_RPC_URL, CFG_PAR_TCMS_XML_RPC_USERNAME, CFG_PAR_TCMS_XML_RPC_PASSWORD]:
-            _widget = self.get(_attr).get(_DATA_KEY_WIDGET)
-            _result = _result | _widget.isModified()
-        return _result
-
-    def apply_changes(self):
-        """
-        Copies attribute values from GUI widgets into the variables representing persistent values.
-        """
-        for _attr_id in self.keys():
-            self.get(_attr_id)[_DATA_KEY_ATTR_VALUE] = self.gui_value(_attr_id)
-
-    def settings(self):
-        """
-        :returns: all persistent settings
-        :rtype: dict
-        """
-        _data = {}
-        for _attr_id in self.keys():
-            if _attr_id.find('.') < 0:
-                _data[_attr_id] = self.get(_attr_id).get(_DATA_KEY_ATTR_VALUE)
-            else:
-                _attr_parts = _attr_id.split('.')
-                _grp = _attr_parts[0]
-                _attr = _attr_parts[1]
-                if _grp not in _data:
-                    _data[_grp] = {}
-                _data[_grp][_attr] = self.get(_attr_id).get(_DATA_KEY_ATTR_VALUE)
-        return _data
-
-    def add_group(self, group_name):
-        """
-        Adds a group.
-        :param str group_name: the group name
-        :returns: persistent data for group
-        :rtype: tomlkit.items.Table
-        """
-        pass
-
-    @staticmethod
-    def _attr_value(data, dotted_key):
-        """
-        Returns an attribute value contained in the hierarchy of the given dictionary.
-        :param dict data: the TOML data
-        :param str dotted_key: the attribute ID
-        :returns: the attribute value; None if attribute with given ID not contained in the dictionary
-        """
-        if dotted_key.find('.') < 0:
-            _node = data.get(dotted_key)
-        else:
-            _node = data
-            _key_parts = dotted_key.split('.')
-            for _key_part in _key_parts:
-                if _key_part not in _node:
-                    return None
-                _node = _node[_key_part]
-        return _node
-
-
 class EditorTabFolder(QTabWidget):
     """
     Holds all tab items of the config editor.
     """
-    def __init__(self, parent, config_data, meta_data, editor_data):
+    def __init__(self, parent, config_data, meta_data):
         """
         Constructor.
         :param QWidget parent: the parent widget
         :param tomlkit.TOMLDocument config_data: the persistent data
         :param dict meta_data: the metadata describing supported groups, attributes and their types
-        :param EditorData editor_data: the editor data
         """
         super().__init__(parent)
         self.__meta_data = meta_data
-        self.__editor_data = editor_data
         self.__addition_tab = None
         self.__signals = EditorSignals()
         self.setStyleSheet(_TAB_FOLDER_STYLE)
@@ -267,6 +73,62 @@ class EditorTabFolder(QTabWidget):
             self._insert_tab(_group_name, _group_meta, _group_data)
         if len(_missing_group_names) > 0:
             self._append_addition_tab(_missing_group_names)
+
+    def group_names(self):
+        """
+        :returns: names of all groups in tab folder
+        :rtype: set
+        """
+        _group_names = set()
+        for _i in range(0, self.count()):
+            _group_name = self.tabText(_i)
+            if _group_name != _ADDITION_WIDGET_TEXT:
+                _group_names.add(_group_name[1:-1])
+        return _group_names
+
+    def qualified_attribute_names(self):
+        """
+        :returns: qualified names of all attributes in tab folder
+        :rtype: set
+        """
+        _attr_names = set()
+        for _i in range(0, self.count()):
+            _tab = self.widget(_i)
+            if not isinstance(_tab, EditorGroupTab):
+                continue
+            _attr_names.update(_tab.qualified_attribute_names())
+        return _attr_names
+
+    def gui_values(self):
+        """
+        :returns: TOML values for all attributes managed by the tab folder, keys are qualified attribute names
+        :rtype: dict
+        """
+        _gui_values = {}
+        for _i in range(0, self.count()):
+            _tab = self.widget(_i)
+            if not isinstance(_tab, EditorGroupTab):
+                continue
+            _gui_values.update(_tab.gui_values())
+        return _gui_values
+
+    def gui_data(self):
+        """
+        :returns: TOML values for all attributes managed by the tab folder, keys are qualified attribute names
+        :rtype: tomlkit.TOMLDocument
+        """
+        _gui_data = tomlkit.TOMLDocument()
+        for _group in self.group_names():
+            if len(_group) > 0:
+                _gui_data.append(_group, tomlkit.table())
+        _gui_values = self.gui_values()
+        for _k, _v in _gui_values.items():
+            if _k.find('.') < 0:
+                _gui_data.append(_k, _v)
+            else:
+                _g, _a = _k.split('.')
+                _gui_data.get(_g).append(_a, _v)
+        return _gui_data
 
     def current_tab(self):
         """
@@ -316,54 +178,7 @@ class EditorTabFolder(QTabWidget):
         :param tomlkit.items.Table group_data: the persistent group data
         :param int index: the insertion index
         """
-        _tab = EditorGroupTab(self, group_meta, group_data)
-        '''
-        _tab_layout = QFormLayout()
-        _attributes = group_meta[META_KEY_ATTRS]
-        for _a in _attributes:
-            _attr_name = _a[META_KEY_ATTR_NAME]
-            _qualified_attr_name = qualified_attr_name_for(group_name, _attr_name)
-            _attr_type = _a[META_KEY_ATTR_TYPE]
-            _attr_is_optional = _a[META_KEY_OPT]
-            _attr_value = group_data.get(_attr_name)
-            if _a[META_KEY_OPT] and _attr_value is None:
-                continue
-            _attr_label = QLabel(_attr_name)
-            _attr_label.setStyleSheet(_ATTR_NAME_STYLE)
-            if _attr_type.startswith(META_TYPE_STR) or _attr_type == META_TYPE_INT:
-                _attr_widget = QLineEdit()
-                _attr_widget.setFixedWidth(400)
-                if _attr_type == META_TYPE_STR_PASSWORD:
-                    _attr_widget.setEchoMode(QLineEdit.EchoMode.Password)
-                _attr_widget.setText(_attr_value)
-            elif _attr_type == META_TYPE_BOOLEAN:
-                _attr_widget = QCheckBox()
-                _attr_widget.setChecked(_attr_value)
-            elif _attr_type.startswith(META_TYPE_LIST):
-                _attr_widget = QLineEdit()
-                _attr_widget.setFixedWidth(400)
-                _attr_widget.setText(','.join(_attr_value))
-            elif _attr_type.startswith(META_TYPE_MAPPING):
-                _attr_widget = QLineEdit()
-                _attr_widget.setFixedWidth(400)
-                _attr_widget.setText(str(_attr_value))
-            elif _attr_type.startswith(META_TYPE_ENUM):
-                _enum_values = _attr_type[2:].split(',')
-                _attr_widget = QComboBox()
-                for _v in _enum_values:
-                    _attr_widget.addItem(_v)
-                _attr_widget.setCurrentText(_attr_value)
-            else:
-                _emsg = localized_message(E_GUI_SETTINGS_META_DEFINITION, _qualified_attr_name)
-                _ex = IssaiException(E_INTERNAL_ERROR, _emsg)
-                _msg_box = exception_box(QMessageBox.Icon.Critical, _ex, '',
-                                         QMessageBox.StandardButton.Ok, QMessageBox.StandardButton.Ok)
-                _msg_box.exec()
-                raise _ex
-            _tab_layout.addRow(_attr_label, _attr_widget)
-            self.__editor_data[_qualified_attr_name][_DATA_KEY_WIDGET] = _attr_widget
-        _tab.setLayout(_tab_layout)
-        '''
+        _tab = EditorGroupTab(self, group_name, group_meta, group_data)
         self.insertTab(index, _tab, f'[{group_name}]')
 
     def _append_addition_tab(self, missing_group_names):
@@ -388,6 +203,9 @@ class EditorTabFolder(QTabWidget):
 
 
 class EditorSignals(QObject):
+    """
+    Custom signals used within the editor.
+    """
     add_group_requested = Signal(tuple)
     group_removed = Signal(str)
     remove_attr_requested = Signal(str)
@@ -440,14 +258,16 @@ class EditorGroupTab(EditorTab):
     """
     Tab item for a single group.
     """
-    def __init__(self, parent, group_meta, group_data):
+    def __init__(self, parent, group_name, group_meta, group_data):
         """
         Constructor.
         :param QWidget parent: the parent widget
+        :param str group_name: the name of the group manage by this tab
         :param dict group_meta: the metadata describing supported group attributes and their types
-        :param tomlkit.items.Table group_data: the persistent settings of the group
+        :param tomlkit.items.Table group_data: the persistent data
         """
         super().__init__(parent, group_meta)
+        self.group_name = group_name
         self.data = group_data
         self.attr_widgets = {}
         _tab_layout = QVBoxLayout()
@@ -465,28 +285,46 @@ class EditorGroupTab(EditorTab):
         self.__attr_descriptors = {}
         for _attr_desc in group_meta[META_KEY_ATTRS]:
             self.__attr_descriptors[_attr_desc[META_KEY_ATTR_NAME]] = _attr_desc
-        _initial_row_count = len(group_data.unwrap())
+        _initial_row_count = len(self.data.unwrap())
         if len(group_meta[META_KEY_ATTRS]) == 0 or len(group_meta[META_KEY_ATTRS]) > _initial_row_count:
             _initial_row_count += 1
         self.__attr_table.setRowCount(_initial_row_count)
         _row = 0
-        for _attr_name, _attr_value in group_data.items():
+        for _attr_name, _attr_value in self.data.items():
+            _attr_value = _gui_value_of(_attr_value)
             if self._attr_is_optional(_attr_name):
-                _remove_button = RemoveAttrButton(self, _attr_name)
-                _remove_button_frame = QWidget()
-                _layout = QHBoxLayout(self)
-                _layout.addWidget(_remove_button)
-                _layout.setAlignment(Qt.AlignCenter)
-                _remove_button_frame.setLayout(_layout)
-                self.__attr_table.setCellWidget(_row, 0, _remove_button_frame)
+                _remove_button = self._create_remove_attr_button(_attr_name)
+                self.__attr_table.setCellWidget(_row, 0, _remove_button)
             self.__attr_table.setItem(_row, 1, QTableWidgetItem(_attr_name))
-            self.__attr_table.setCellWidget(_row, 2, self._attr_value_widget_for(_attr_name, _attr_value))
+            self.attr_widgets[_attr_name] = self._attr_value_widget_for(_attr_name, _attr_value)
+            self.__attr_table.setCellWidget(_row, 2, self.attr_widgets[_attr_name])
             _row += 1
         if _row < _initial_row_count:
             self._create_attr_addition_row()
         self.__attr_table.resizeColumnsToContents()
         _tab_layout.addWidget(self.__attr_table)
         self.setLayout(_tab_layout)
+
+    def qualified_attribute_names(self):
+        """
+        :returns: qualified names of all attributes in tab
+        :rtype: set
+        """
+        _attr_names = set()
+        for _attr_name in self.attr_widgets.keys():
+            _attr_names.add(qualified_attr_name_for(self.group_name, _attr_name))
+        return _attr_names
+
+    def gui_values(self):
+        """
+        :returns: TOML values for all attributes managed by the tab, keys are qualified attribute names
+        :rtype: dict
+        """
+        _gui_values = {}
+        for _attr_name, _widget in self.attr_widgets.items():
+            _attr_desc = self.__attr_descriptors.get(_attr_name)
+            _gui_values[qualified_attr_name_for(self.group_name, _attr_name)] = _toml_value_of(_widget, _attr_desc)
+        return _gui_values
 
     def attribute_widgets(self):
         """
@@ -522,14 +360,14 @@ class EditorGroupTab(EditorTab):
         :param str attr_name: the attribute name
         :param attr_value: the attribute value
         :returns: widget for specified attribute, value filled
-        :rtype: QTableWidgetItem
+        :rtype: QWidget
         """
         _attr_desc = self.__attr_descriptors.get(attr_name)
         if _attr_desc is None:
             # all names allowed
             _attr_widget = QLineEdit()
             if attr_value is not None:
-                _attr_widget.setText(attr_value.as_string().strip('"'))
+                _attr_widget.setText(attr_value)
             return _attr_widget
         else:
             # supported names allowed only
@@ -550,8 +388,27 @@ class EditorGroupTab(EditorTab):
                 if _attr_type == META_TYPE_STR_PASSWORD:
                     _attr_widget.setEchoMode(QLineEdit.EchoMode.Password)
                 if attr_value is not None:
-                    _attr_widget.setText(attr_value.as_string().strip('"'))
+                    _attr_widget.setText(attr_value)
             return _attr_widget
+
+    def _create_remove_attr_button(self, attr_name):
+        _remove_button = RemoveAttrButton(self, attr_name)
+        _remove_button_frame = QWidget()
+        _layout = QHBoxLayout()
+        _layout.addWidget(_remove_button)
+        _layout.setAlignment(Qt.AlignCenter)
+        _remove_button_frame.setLayout(_layout)
+        return _remove_button_frame
+
+    def _attr_value_for(self, attr_name):
+        """
+        Returns value for a supported attribute.
+        :param str attr_name: the attribute name
+        :returns: value for specified attribute
+        """
+        _attr_widget = self.attr_widgets[attr_name]
+        _attr_desc = self.__attr_descriptors.get(attr_name)
+        return _python_value_of(_attr_widget, _attr_desc)
 
     def _create_attr_addition_row(self):
         """
@@ -563,7 +420,7 @@ class EditorGroupTab(EditorTab):
         _add_button.setMaximumWidth(20)
         _add_button.clicked.connect(self._add_attr_clicked)
         _add_button_frame = QWidget()
-        _layout = QHBoxLayout(self)
+        _layout = QHBoxLayout()
         _layout.addWidget(_add_button)
         _layout.setAlignment(Qt.AlignCenter)
         _add_button_frame.setLayout(_layout)
@@ -581,31 +438,55 @@ class EditorGroupTab(EditorTab):
             self.__attr_table.setCellWidget(_row, 1, self.__attr_selection_combo)
 
     def _add_attr_clicked(self):
-        print('add attr clicked')
+        """
+        Called when the '+'-Button to add an attribute has been clicked.
+        """
         _row = self.__attr_table.rowCount() - 1
         if len(self.__attr_descriptors) == 0:
-            # TODO check attr name/value according to group descriptor
             _attr_name = self.__attr_table.cellWidget(_row, 1).text()
             if len(_attr_name) == 0:
-                QMessageBox.information(self, localized_label(L_MBOX_TITLE_INFO), 'No attribute name specified')
+                QMessageBox.information(self, localized_label(L_MBOX_TITLE_INFO),
+                                        localized_label(I_GUI_NO_ATTRIBUTE_NAME))
                 return
+            _attr_name_pattern = self.meta[META_KEY_NAME_PATTERN]
+            if _attr_name_pattern is not None:
+                if not _attr_name_pattern.match(_attr_name):
+                    QMessageBox.information(self, localized_label(L_MBOX_TITLE_INFO),
+                                            localized_message(I_GUI_INVALID_ATTRIBUTE_NAME,
+                                                            _attr_name, _attr_name_pattern.pattern))
+                    return
             _attr_value = self.__attr_table.cellWidget(_row, 2).text()
         else:
             _attr_name = self.__attr_table.cellWidget(_row, 1).currentText()
             if len(_attr_name) == 0:
-                QMessageBox.information(self, localized_label(L_MBOX_TITLE_INFO), 'No attribute name specified')
+                QMessageBox.information(self, localized_label(L_MBOX_TITLE_INFO),
+                                        localized_label(I_GUI_NO_ATTRIBUTE_NAME))
                 return
-            # TODO determine attr value
-            _attr_value = None
+            _attr_value = self._attr_value_for(_attr_name)
         if _attr_name in self.data:
-            QMessageBox.information(self, localized_label(L_MBOX_TITLE_INFO), 'Attribute already exists')
+            QMessageBox.information(self, localized_label(L_MBOX_TITLE_INFO),
+                                    localized_message(I_GUI_ATTRIBUTE_EXISTS, _attr_name))
             return
         self.data[_attr_name] = _attr_value
-        # TODO remove attr from combo, eventually new addition line, change action button
+        _attr_type = self.__attr_descriptors.get(_attr_name)
+        _remove_button = self._create_remove_attr_button(_attr_name)
+        self.__attr_table.setCellWidget(_row, 0, _remove_button)
+        if len(self.__attr_descriptors) == 0:
+            self.__attr_table.setRowCount(_row + 2)
+            self._create_attr_addition_row()
+            return
+        self.__attr_table.setItem(_row, 1, QTableWidgetItem(_attr_name))
+        if self.__attr_selection_combo.count() > 1:
+            self.__attr_table.setRowCount(_row + 2)
+            self._create_attr_addition_row()
 
     def _addition_attr_selected(self, attr_name):
         _row = self.__attr_table.rowCount() - 1
-        self.__attr_table.setCellWidget(_row, 2, self._attr_value_widget_for(attr_name))
+        # TODO widget must be added to attr_widgets after + - click !
+        # self.attr_widgets[attr_name] = self._attr_value_widget_for(attr_name)
+        # self.__attr_table.setCellWidget(_row, 2, self.attr_widgets[attr_name])
+        _widget = self._attr_value_widget_for(attr_name)
+        self.__attr_table.setCellWidget(_row, 2, _widget)
 
 
 class EditorAdditionTab(EditorTab):
@@ -672,6 +553,7 @@ class EditorAdditionTab(EditorTab):
 class ConfigEditor(QDialog):
     """
     Dialog window to edit Issai and tcms-api configuration files.
+    The editor class is mainly responsible for reading and writing configuration files.
     """
 
     def __init__(self, parent, title, metadata, file_path, file_type):
@@ -684,7 +566,7 @@ class ConfigEditor(QDialog):
         :param int file_type: the file type (master config, product config, XML-RPC credentials)
         """
         super().__init__(parent)
-        self.setMinimumSize(600, 400)
+        self.setMinimumSize(_MINIMUM_EDITOR_WIDTH, _MINIMUM_EDITOR_HEIGHT)
         try:
             _config_data = ConfigEditor._read_config_file(metadata, file_path, file_type)
         except IssaiException as _e:
@@ -695,13 +577,13 @@ class ConfigEditor(QDialog):
             if _msg_box.exec() == QMessageBox.StandardButton.Cancel:
                 raise
             _config_data = ConfigEditor._default_settings(metadata, file_type)
+        self.__config_data = _config_data
         self.__meta_data = metadata
         self.__file_path = file_path
         self.__file_type = file_type
         self.setWindowTitle(title)
-        self.__editor_data = EditorData(metadata, _config_data)
         _layout = QVBoxLayout()
-        self.__tab_folder = EditorTabFolder(self, _config_data, metadata, self.__editor_data)
+        self.__tab_folder = EditorTabFolder(self, _config_data, metadata)
         _layout.addWidget(self.__tab_folder)
         _button_box = QGroupBox(self)
         _button_box_layout = QHBoxLayout()
@@ -715,21 +597,77 @@ class ConfigEditor(QDialog):
         _layout.addWidget(_button_box)
         self.setLayout(_layout)
 
+    def closeEvent(self, event):
+        if self._data_has_been_changed():
+            _rc = QMessageBox.question(self, localized_label(L_MBOX_TITLE_DATA_EDITED),
+                                       localized_label(L_MBOX_INFO_DISCARD_CHANGES))
+            if _rc == QMessageBox.StandardButton.No:
+                event.setAccepted(False)
+
+    def _data_has_been_changed(self):
+        """
+        Indicates whether configuration data has been changed.
+        :returns: True, if persistent and GUI data differs
+        :rtype: bool
+        """
+        # check whether group names differ
+        _group_names = self.__tab_folder.group_names()
+        if self._persistent_group_names() != _group_names:
+            return True
+        # check whether attribute names differ
+        if self._qualified_persistent_attribute_names() != self.__tab_folder.qualified_attribute_names():
+            return True
+        # check whether any attribute value differs
+        _gui_values = self.__tab_folder.gui_values()
+        for _k, _v in self.__config_data.items():
+            if isinstance(_v, tomlkit.items.Table):
+                for _ak, _av in _v.items():
+                    _guis = _gui_values[qualified_attr_name_for(_k, _ak)]
+                    if _av != _gui_values[qualified_attr_name_for(_k, _ak)]:
+                        return True
+            else:
+                if _v != _gui_values[_k]:
+                    return True
+        return False
+
+    def _persistent_group_names(self):
+        """
+        :returns: names of all groups in persistent configuration
+        :rtype: set
+        """
+        _group_names = set()
+        for _k, _v in self.__config_data.items():
+            _group_name = _k if isinstance(_v, tomlkit.items.Table) else ''
+            _group_names.add(_group_name)
+        return _group_names
+
+    def _qualified_persistent_attribute_names(self):
+        """
+        :returns: qualified names of all attributes in persistent configuration
+        :rtype: set
+        """
+        _attr_names = set()
+        for _k, _v in self.__config_data.items():
+            if isinstance(_v, tomlkit.items.Table):
+                for _attr_name in _v.keys():
+                    _attr_names.add(qualified_attr_name_for(_k, _attr_name))
+            else:
+                _attr_names.add(_k)
+        return _attr_names
+
     def _save_clicked(self):
         """
         Called when the save button was clicked.
         Writes settings to file, if they were changed and closes the dialog window.
         """
-        if self.__editor_data.is_changed():
-            _xml_rpc_credentials_modified = False
-            if self.__file_type == _FILE_TYPE_XML_RPC_CREDENTIALS:
-                _xml_rpc_credentials_modified = self.__editor_data.xml_rpc_credentials_modified()
-            self.__editor_data.apply_changes()
+        if self._data_has_been_changed():
             _rc = QMessageBox.StandardButton.Yes
             while _rc != QMessageBox.StandardButton.No:
                 _rc = QMessageBox.StandardButton.No
                 try:
-                    self._write_config_file()
+                    _gui_data = self.__tab_folder.gui_data()
+                    self._write_config_file(_gui_data)
+                    self.__config_data = _gui_data
                 except IssaiException as _e:
                     _msg_box = exception_box(QMessageBox.Icon.Critical, _e,
                                              localized_label(L_MBOX_INFO_RETRY),
@@ -739,8 +677,7 @@ class ConfigEditor(QDialog):
             if self.__file_type == _FILE_TYPE_XML_RPC_CREDENTIALS:
                 # noinspection PyBroadException
                 try:
-                    if _xml_rpc_credentials_modified:
-                        TcmsInterface.reset()
+                    TcmsInterface.reset()
                 except BaseException:
                     pass
         self.close()
@@ -751,11 +688,8 @@ class ConfigEditor(QDialog):
         Closes the dialog window, if the settings were not changed.
         Asks for confirmation to discard changes, if the settings were edited.
         """
-        if self.__editor_data.is_changed():
-            _rc = QMessageBox.question(self, localized_label(L_MBOX_TITLE_DATA_EDITED),
-                                       localized_label(L_MBOX_INFO_DISCARD_CHANGES))
-            if _rc == QMessageBox.StandardButton.No:
-                return
+        if self._data_has_been_changed():
+            pass
         self.close()
 
     @staticmethod
@@ -824,36 +758,27 @@ class ConfigEditor(QDialog):
         except Exception as _e:
             raise IssaiException(W_GUI_READ_SETTINGS_FAILED, file_path, _e)
 
-    def _write_config_file(self):
+    def _write_config_file(self, config_data):
         """
-        Writes settings to file.
+        Writes configuration data to file.
+        :param tomlkit.TOMLDocument config_data: the configuration data
         :raises IssaiException: if settings can't be saved to file
         """
         # noinspection PyBroadException
-        _settings = self.__editor_data.settings()
         try:
             with open(self.__file_path, 'w') as _f:
                 if self.__file_type == _FILE_TYPE_XML_RPC_CREDENTIALS:
                     # TOML with unquoted string values (XML-RPC credentials file)
-                    for _comment in self.__editor_data.document_comments():
-                        _f.write(f'#{_comment}{os.linesep}')
-                    for _k, _v in _settings.items():
-                        if isinstance(_v, dict):
+                    for _k, _v in config_data.items():
+                        if isinstance(_v, tomlkit.items.Table):
                             _f.write(f'[{_k}]{os.linesep}')
-                            for _comment in self.__editor_data.group_comments(_k):
-                                _f.write(f'#{_comment}{os.linesep}')
                             for _ak, _av in _v.items():
-                                _f.write(f'{_ak} = {str(_av)}{os.linesep}')
-                                _qualified_ak = qualified_attr_name_for(_k, _ak)
-                                for _comment in self.__editor_data.attribute_comments(_qualified_ak):
-                                    _f.write(f'#{_comment}{os.linesep}')
+                                _f.write(f'{_ak} = {_av.unwrap()}{os.linesep}')
                         else:
-                            _f.write(f'{_k} = {str(_v)}{os.linesep}')
-                            for _comment in self.__editor_data.attribute_comments(_k):
-                                _f.write(f'#{_comment}{os.linesep}')
+                            _f.write(f'{_k} = {_v.unwrap()}{os.linesep}')
                 else:
                     # plain TOML (issai configuration files)
-                    tomlkit.dump(_settings, _f)
+                    tomlkit.dump(config_data, _f)
         except Exception as _e:
             raise IssaiException(E_GUI_WRITE_SETTINGS_FAILED, self.__file_path, _e)
 
@@ -966,6 +891,77 @@ def sorted_metadata_items(metadata):
     return _sorted_items
 
 
+def _toml_value_of(widget, attr_desc):
+    """
+    :param QWidget widget: the widget holding the GUI value
+    :param dict attr_desc: the attribute descriptor, may be None
+    :returns: TOML value of specified widget
+    """
+    if isinstance(widget, QCheckBox):
+        return tomlkit.boolean(widget.isChecked())
+    if isinstance(widget, QComboBox):
+        return tomlkit.string(widget.currentText())
+    if isinstance(widget, QLineEdit):
+        _gui_value = widget.text().strip()
+        if attr_desc is None:
+            return tomlkit.string(_gui_value)
+        _attr_type = attr_desc[META_KEY_ATTR_TYPE]
+        if _attr_type == META_TYPE_INT:
+            return tomlkit.integer(_gui_value)
+        if _attr_type.startswith(META_TYPE_LIST):
+            _toml_value = tomlkit.array()
+            _gui_value = _gui_value.lstrip('[').rstrip(']').strip()
+            if len(_gui_value) == 0:
+                return _toml_value
+            _items = _gui_value.split(',')
+            for _item in _items:
+                if _attr_type == META_TYPE_LIST_OF_INT:
+                    _toml_value.append(tomlkit.integer(_item.strip()))
+                else:
+                    _toml_value.append(_item.strip())
+            return _toml_value
+        if _attr_type.startswith(META_TYPE_MAPPING):
+            _toml_value = tomlkit.inline_table()
+            _gui_value = _gui_value.lstrip('{').rstrip('}').strip()
+            if len(_gui_value) == 0:
+                return _toml_value
+            _items = _gui_value.split(',')
+            for _item in _items:
+                _k, _v = _item.strip().split('=')
+                _toml_value.append(_k.strip(), tomlkit.string(_v.strip()))
+            return _toml_value
+        return tomlkit.string(_gui_value)
+    return None
+
+
+def _python_value_of(widget, attr_desc):
+    """
+    :param QWidget widget: the widget holding the GUI value
+    :param dict attr_desc: the attribute descriptor, may be None
+    :returns: Python value of specified widget
+    """
+    _toml_value = _toml_value_of(widget, attr_desc)
+    return None if _toml_value is None else _toml_value.unwrap()
+
+
+def _gui_value_of(toml_value):
+    """
+    :param tomlkit.items.  toml_value: the TOML value
+    :returns: GUI (string) value of specified TOML value
+    :rtype: str
+    """
+    if isinstance(toml_value, tomlkit.items.Array):
+        _items = ','.join(toml_value.unwrap())
+        return f'[{_items}]'
+    if isinstance(toml_value, tomlkit.items.InlineTable):
+        _items = ','.join([f'{_k}={_v}' for _k, _v in toml_value.unwrap().items()])
+        return f'{{{_items}}}'
+    return toml_value.unwrap()
+
+
+_MINIMUM_EDITOR_HEIGHT = 400
+_MINIMUM_EDITOR_WIDTH = 600
+
 _ADD_ATTR_BUTTON_STYLE = 'background-color: green; color: white; font-weight: bold'
 _REMOVE_ATTR_BUTTON_STYLE = 'background-color: darkred; color: white; font-weight: bold'
 _ATTR_NAME_STYLE = 'font-weight: bold'
@@ -990,6 +986,7 @@ _FILE_TYPE_XML_RPC_CREDENTIALS = 3
 _META_XML_RPC = {META_KEY_ALLOWED_IN_MASTER: True,
                  META_KEY_NAME_PATTERN: None,
                  META_KEY_OPT: False,
+                 META_KEY_UNQUOTED_STR_VALUES: True,
                  META_KEY_VALUE_TYPE: None,
                  META_KEY_ATTRS: [{META_KEY_ATTR_NAME: CFG_PAR_TCMS_XML_RPC_URL[len(CFG_GROUP_TCMS)+1:],
                                    META_KEY_ATTR_QUALIFIED_NAME: CFG_PAR_TCMS_XML_RPC_URL,

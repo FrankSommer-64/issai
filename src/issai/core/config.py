@@ -692,6 +692,7 @@ META_KEY_ATTRS = 'attributes'
 META_KEY_COMMENT = 'comment'
 META_KEY_NAME_PATTERN = 'name-pattern'
 META_KEY_OPT = 'is-optional'
+META_KEY_UNQUOTED_STR_VALUES = 'unquoted-str-values'
 META_KEY_VALUE_TYPE = 'value-type'
 
 META_TYPE_BOOLEAN = 'b'
@@ -714,6 +715,7 @@ META_TYPE_STR_PASSWORD = 's:p'
 _META_CUSTOM = {META_KEY_ALLOWED_IN_MASTER: True,
                 META_KEY_NAME_PATTERN: None,
                 META_KEY_OPT: True,
+                META_KEY_UNQUOTED_STR_VALUES: False,
                 META_KEY_VALUE_TYPE: None,
                 META_KEY_ATTRS: [],
                 }
@@ -722,6 +724,7 @@ _META_CUSTOM = {META_KEY_ALLOWED_IN_MASTER: True,
 _META_ENV = {META_KEY_ALLOWED_IN_MASTER: True,
              META_KEY_NAME_PATTERN: ENV_VAR_NAME_PATTERN,
              META_KEY_OPT: True,
+             META_KEY_UNQUOTED_STR_VALUES: False,
              META_KEY_VALUE_TYPE: str,
              META_KEY_ATTRS: []
              }
@@ -730,6 +733,7 @@ _META_ENV = {META_KEY_ALLOWED_IN_MASTER: True,
 _META_PRODUCT = {META_KEY_ALLOWED_IN_MASTER: False,
                  META_KEY_NAME_PATTERN: None,
                  META_KEY_OPT: False,
+                 META_KEY_UNQUOTED_STR_VALUES: False,
                  META_KEY_VALUE_TYPE: None,
                  META_KEY_ATTRS: [
                       {META_KEY_ATTR_DEFAULT_VALUE: '',
@@ -774,6 +778,7 @@ _META_PRODUCT = {META_KEY_ALLOWED_IN_MASTER: False,
 _META_ROOT = {META_KEY_ALLOWED_IN_MASTER: True,
               META_KEY_NAME_PATTERN: None,
               META_KEY_OPT: True,
+              META_KEY_UNQUOTED_STR_VALUES: False,
               META_KEY_VALUE_TYPE: None,
               META_KEY_ATTRS: [
                      {META_KEY_ATTR_DEFAULT_VALUE: '',
@@ -790,6 +795,7 @@ _META_ROOT = {META_KEY_ALLOWED_IN_MASTER: True,
 _META_RUNNER = {META_KEY_ALLOWED_IN_MASTER: True,
                 META_KEY_NAME_PATTERN: None,
                 META_KEY_OPT: True,
+                META_KEY_UNQUOTED_STR_VALUES: False,
                 META_KEY_VALUE_TYPE: None,
                 META_KEY_ATTRS: [
                     {META_KEY_ATTR_DEFAULT_VALUE: '',
@@ -862,6 +868,7 @@ _META_RUNNER = {META_KEY_ALLOWED_IN_MASTER: True,
 _META_TCMS = {META_KEY_ALLOWED_IN_MASTER: True,
               META_KEY_NAME_PATTERN: None,
               META_KEY_OPT: True,
+              META_KEY_UNQUOTED_STR_VALUES: False,
               META_KEY_VALUE_TYPE: None,
               META_KEY_ATTRS: [
                   {META_KEY_ATTR_DEFAULT_VALUE: '',
