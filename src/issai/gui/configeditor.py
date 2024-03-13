@@ -52,12 +52,13 @@ class EditorTabFolder(QTabWidget):
     """
     Holds all tab items of the config editor.
     """
-    def __init__(self, parent, config_data, meta_data):
+    def __init__(self, parent, config_data, meta_data, file_type):
         """
         Constructor.
         :param QWidget parent: the parent widget
         :param tomlkit.TOMLDocument config_data: the persistent data
         :param dict meta_data: the metadata describing supported groups, attributes and their types
+        :param int file_type: the file type (master config, product config, XML-RPC credentials)
         """
         super().__init__(parent)
         self.__meta_data = meta_data
@@ -68,7 +69,8 @@ class EditorTabFolder(QTabWidget):
         for _group_name, _group_meta in sorted_metadata_items(meta_data):
             _group_data = group_data_of(config_data, _group_name)
             if _group_data is None or len(_group_data.keys()) == 0:
-                _missing_group_names.append(_group_name)
+                if file_type != _FILE_TYPE_MASTER_CONFIG or _group_meta[META_KEY_ALLOWED_IN_MASTER]:
+                    _missing_group_names.append(_group_name)
                 continue
             self._insert_tab(_group_name, _group_meta, _group_data)
         if len(_missing_group_names) > 0:
@@ -114,7 +116,7 @@ class EditorTabFolder(QTabWidget):
 
     def gui_data(self):
         """
-        :returns: TOML values for all attributes managed by the tab folder, keys are qualified attribute names
+        :returns: all GUI data in TOML format
         :rtype: tomlkit.TOMLDocument
         """
         _gui_data = tomlkit.TOMLDocument()
@@ -150,8 +152,9 @@ class EditorTabFolder(QTabWidget):
 
     def mouseReleaseEvent(self, event):
         """
-        Event handler for right mouse button.
-        Shows popup menu with possibility to remove current tab.
+        Called when right mouse button was clicked on the tab.
+        Shows popup menu with possibility to remove the tab.
+        :param QMouseEvent event: the mouse click event
         """
         if event.button() == Qt.RightButton:
             _tab = self.current_tab()
@@ -172,7 +175,7 @@ class EditorTabFolder(QTabWidget):
 
     def _insert_tab(self, group_name, group_meta, group_data, index=-1):
         """
-        Insert a new tab item for a group.
+        Inserts a new tab item for a group. Tab header is group name enclosed in brackets.
         :param str group_name: the group name
         :param dict group_meta: the group metadata
         :param tomlkit.items.Table group_data: the persistent group data
@@ -184,6 +187,7 @@ class EditorTabFolder(QTabWidget):
     def _append_addition_tab(self, missing_group_names):
         """
         Adds a special tab where the user can create additional group tab items.
+        :param list missing_group_names: names of all groups currently not shown in the tab folder
         """
         if self.__addition_tab is None:
             self.__addition_tab = EditorAdditionTab(self, missing_group_names)
@@ -206,8 +210,11 @@ class EditorSignals(QObject):
     """
     Custom signals used within the editor.
     """
+    # editor addition tab indicates new group to tab folder (parameter group name, last group indicator flag)
     add_group_requested = Signal(tuple)
+    # popup menu on a tab indicates deleted group to tab folder (parameter group name)
     group_removed = Signal(str)
+    # button in table indicates deleted attribute to tab (parameter attribute name)
     remove_attr_requested = Signal(str)
 
 
@@ -221,7 +228,7 @@ class RemoveAttrButton(QPushButton):
         :param EditorGroupTab parent: the tab holding the button
         :param str attr_name: the attribute name
         """
-        super().__init__('-')
+        super().__init__(_REMOVE_WIDGET_TEXT)
         self.setStyleSheet(_REMOVE_ATTR_BUTTON_STYLE)
         self.setMaximumWidth(20)
         self.__attr_name = attr_name
@@ -230,6 +237,11 @@ class RemoveAttrButton(QPushButton):
         self.clicked.connect(self._clicked)
 
     def _clicked(self):
+        """
+        Called when the button to remove an attribute was clicked.
+        Emits signal to the editor tab that an attribute shall be deleted. Two-stage signalling needed, because
+        standard clicked signal doesn't allow a parameter for the attribute name.
+        """
         self.__signals.remove_attr_requested.emit(self.__attr_name)
 
 
@@ -256,7 +268,7 @@ class EditorTab(QWidget):
 
 class EditorGroupTab(EditorTab):
     """
-    Tab item for a single group.
+    Tab item for the management of a single group.
     """
     def __init__(self, parent, group_name, group_meta, group_data):
         """
@@ -268,29 +280,20 @@ class EditorGroupTab(EditorTab):
         """
         super().__init__(parent, group_meta)
         self.group_name = group_name
-        self.data = group_data
         self.attr_widgets = {}
         _tab_layout = QVBoxLayout()
-        self.__attr_table = QTableWidget(self)
-        self.__attr_table.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContentsOnFirstShow)
-        self.__attr_table.setColumnCount(3)
-        self.__attr_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
-        self.__attr_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
-        self.__attr_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
-        self.__attr_table.setHorizontalHeaderLabels([localized_label(L_ACTION), localized_label(L_ATTRIBUTE),
-                                                     localized_label(L_VALUE)])
-        self.__attr_table.verticalHeader().hide()
+        self.__attr_table = self._create_attr_table()
         self.__attr_selection_combo = QComboBox()
         self.__attr_selection_combo.currentTextChanged.connect(self._addition_attr_selected)
         self.__attr_descriptors = {}
         for _attr_desc in group_meta[META_KEY_ATTRS]:
             self.__attr_descriptors[_attr_desc[META_KEY_ATTR_NAME]] = _attr_desc
-        _initial_row_count = len(self.data.unwrap())
+        _initial_row_count = len(group_data.unwrap())
         if len(group_meta[META_KEY_ATTRS]) == 0 or len(group_meta[META_KEY_ATTRS]) > _initial_row_count:
             _initial_row_count += 1
         self.__attr_table.setRowCount(_initial_row_count)
         _row = 0
-        for _attr_name, _attr_value in self.data.items():
+        for _attr_name, _attr_value in group_data.items():
             _attr_value = _gui_value_of(_attr_value)
             if self._attr_is_optional(_attr_name):
                 _remove_button = self._create_remove_attr_button(_attr_name)
@@ -305,15 +308,19 @@ class EditorGroupTab(EditorTab):
         _tab_layout.addWidget(self.__attr_table)
         self.setLayout(_tab_layout)
 
+    def attribute_names(self):
+        """
+        :returns: pure names of all attributes in tab
+        :rtype: set
+        """
+        return set([_a for _a in self.attr_widgets.keys()])
+
     def qualified_attribute_names(self):
         """
         :returns: qualified names of all attributes in tab
         :rtype: set
         """
-        _attr_names = set()
-        for _attr_name in self.attr_widgets.keys():
-            _attr_names.add(qualified_attr_name_for(self.group_name, _attr_name))
-        return _attr_names
+        return set([qualified_attr_name_for(self.group_name, _a) for _a in self.attr_widgets.keys()])
 
     def gui_values(self):
         """
@@ -326,23 +333,35 @@ class EditorGroupTab(EditorTab):
             _gui_values[qualified_attr_name_for(self.group_name, _attr_name)] = _toml_value_of(_widget, _attr_desc)
         return _gui_values
 
-    def attribute_widgets(self):
-        """
-        :returns: value widgets for all attributes managed by the tab
-        :rtype: dict
-        """
-        return self.attr_widgets
-
     def remove_attr(self, attr_name):
         """
         Called, when the remove button for specified attribute was clicked.
-        Removes corresponding row from the table.
+        Removes corresponding row from the table and input widget from internal managed attributes dict.
         :param str attr_name: the attribute name
         """
         for _row in range(0, self.__attr_table.rowCount()):
             _name_cell = self.__attr_table.item(_row, 1)
-            if _name_cell.text() == attr_name:
-                self.__attr_table.removeRow(_row)
+            if _name_cell is None or _name_cell.text() != attr_name:
+                continue
+            del self.attr_widgets[attr_name]
+            self.__attr_table.removeRow(_row)
+            return
+
+    def _create_attr_table(self):
+        """
+        :returns: table to manage the attributes of the group
+        :rtype: QTableWidget
+        """
+        _table = QTableWidget(self)
+        _table.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContentsOnFirstShow)
+        _table.setColumnCount(3)
+        _table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        _table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        _table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
+        _table.setHorizontalHeaderLabels([localized_label(L_ACTION), localized_label(L_ATTRIBUTE),
+                                          localized_label(L_VALUE)])
+        _table.verticalHeader().hide()
+        return _table
 
     def _attr_is_optional(self, attr_name):
         """
@@ -358,8 +377,8 @@ class EditorGroupTab(EditorTab):
     def _attr_value_widget_for(self, attr_name, attr_value=None):
         """
         :param str attr_name: the attribute name
-        :param attr_value: the attribute value
-        :returns: widget for specified attribute, value filled
+        :param attr_value: the optional attribute value
+        :returns: widget for specified attribute, value filled if specified
         :rtype: QWidget
         """
         _attr_desc = self.__attr_descriptors.get(attr_name)
@@ -392,6 +411,11 @@ class EditorGroupTab(EditorTab):
             return _attr_widget
 
     def _create_remove_attr_button(self, attr_name):
+        """
+        :param str attr_name: the name of the attribute
+        :return: button to remove the attribute with specified name from the table
+        :rtype: QWidget
+        """
         _remove_button = RemoveAttrButton(self, attr_name)
         _remove_button_frame = QWidget()
         _layout = QHBoxLayout()
@@ -399,16 +423,6 @@ class EditorGroupTab(EditorTab):
         _layout.setAlignment(Qt.AlignCenter)
         _remove_button_frame.setLayout(_layout)
         return _remove_button_frame
-
-    def _attr_value_for(self, attr_name):
-        """
-        Returns value for a supported attribute.
-        :param str attr_name: the attribute name
-        :returns: value for specified attribute
-        """
-        _attr_widget = self.attr_widgets[attr_name]
-        _attr_desc = self.__attr_descriptors.get(attr_name)
-        return _python_value_of(_attr_widget, _attr_desc)
 
     def _create_attr_addition_row(self):
         """
@@ -431,7 +445,7 @@ class EditorGroupTab(EditorTab):
             self.__attr_table.setCellWidget(_row, 2, QLineEdit())
         else:
             _supported_attrs = set(self.__attr_descriptors.keys())
-            _displayed_attrs = set(self.data.keys())
+            _displayed_attrs = self.attribute_names()
             _hidden_attrs = _supported_attrs - _displayed_attrs
             self.__attr_selection_combo.clear()
             self.__attr_selection_combo.addItems(sorted(_hidden_attrs))
@@ -439,7 +453,7 @@ class EditorGroupTab(EditorTab):
 
     def _add_attr_clicked(self):
         """
-        Called when the '+'-Button to add an attribute has been clicked.
+        Called when the '+'-Button to add an attribute was clicked.
         """
         _row = self.__attr_table.rowCount() - 1
         if len(self.__attr_descriptors) == 0:
@@ -452,41 +466,39 @@ class EditorGroupTab(EditorTab):
             if _attr_name_pattern is not None:
                 if not _attr_name_pattern.match(_attr_name):
                     QMessageBox.information(self, localized_label(L_MBOX_TITLE_INFO),
-                                            localized_message(I_GUI_INVALID_ATTRIBUTE_NAME,
-                                                            _attr_name, _attr_name_pattern.pattern))
+                                            localized_message(I_GUI_INVALID_ATTRIBUTE_NAME, _attr_name,
+                                                              _attr_name_pattern.pattern))
                     return
-            _attr_value = self.__attr_table.cellWidget(_row, 2).text()
         else:
             _attr_name = self.__attr_table.cellWidget(_row, 1).currentText()
             if len(_attr_name) == 0:
                 QMessageBox.information(self, localized_label(L_MBOX_TITLE_INFO),
                                         localized_label(I_GUI_NO_ATTRIBUTE_NAME))
                 return
-            _attr_value = self._attr_value_for(_attr_name)
-        if _attr_name in self.data:
+        if _attr_name in self.attribute_names():
             QMessageBox.information(self, localized_label(L_MBOX_TITLE_INFO),
                                     localized_message(I_GUI_ATTRIBUTE_EXISTS, _attr_name))
             return
-        self.data[_attr_name] = _attr_value
-        _attr_type = self.__attr_descriptors.get(_attr_name)
         _remove_button = self._create_remove_attr_button(_attr_name)
         self.__attr_table.setCellWidget(_row, 0, _remove_button)
+        self.__attr_table.setItem(_row, 1, QTableWidgetItem(_attr_name))
+        self.attr_widgets[_attr_name] = self.__attr_table.cellWidget(_row, 2)
         if len(self.__attr_descriptors) == 0:
             self.__attr_table.setRowCount(_row + 2)
             self._create_attr_addition_row()
             return
-        self.__attr_table.setItem(_row, 1, QTableWidgetItem(_attr_name))
         if self.__attr_selection_combo.count() > 1:
             self.__attr_table.setRowCount(_row + 2)
             self._create_attr_addition_row()
 
     def _addition_attr_selected(self, attr_name):
+        """
+        Called when the user selects an attribute from the combo box of supported attributes.
+        Creates an input widget matching the attribute type in the third table column.
+        :param str attr_name: the selected attribute name
+        """
         _row = self.__attr_table.rowCount() - 1
-        # TODO widget must be added to attr_widgets after + - click !
-        # self.attr_widgets[attr_name] = self._attr_value_widget_for(attr_name)
-        # self.__attr_table.setCellWidget(_row, 2, self.attr_widgets[attr_name])
-        _widget = self._attr_value_widget_for(attr_name)
-        self.__attr_table.setCellWidget(_row, 2, _widget)
+        self.__attr_table.setCellWidget(_row, 2, self._attr_value_widget_for(attr_name))
 
 
 class EditorAdditionTab(EditorTab):
@@ -523,7 +535,7 @@ class EditorAdditionTab(EditorTab):
 
     def group_removed(self, group_name):
         """
-        Called by the editor if a tab item for a group was removed.
+        Called by the editor when a tab item for a group was removed.
         :param str group_name: the name of the removed group
         """
         self.__missing_group_names.add(group_name)
@@ -531,7 +543,7 @@ class EditorAdditionTab(EditorTab):
 
     def _add_clicked(self):
         """
-        Add button was clicked. Emits event to editor to add a new tab item for the selected group.
+        Called when the add button was clicked. Emits event to editor to add a new tab item for the selected group.
         """
         _group_to_add = self.__groups_combo.currentData()
         _is_last_group = len(self.__missing_group_names) == 1
@@ -545,7 +557,7 @@ class EditorAdditionTab(EditorTab):
         """
         self.__groups_combo.clear()
         for _group_name in sorted(self.__missing_group_names):
-            _display_group_name = "'' (root)" if len(_group_name) == 0 else _group_name
+            _display_group_name = _ROOT_GROUP_DISPLAY_TEXT if len(_group_name) == 0 else _group_name
             self.__groups_combo.addItem(_display_group_name, _group_name)
         self.__groups_combo.setCurrentIndex(0)
 
@@ -576,14 +588,14 @@ class ConfigEditor(QDialog):
                                      QMessageBox.StandardButton.Ok)
             if _msg_box.exec() == QMessageBox.StandardButton.Cancel:
                 raise
-            _config_data = ConfigEditor._default_settings(metadata, file_type)
+            _config_data = ConfigEditor._default_configuration(metadata, file_type)
         self.__config_data = _config_data
         self.__meta_data = metadata
         self.__file_path = file_path
         self.__file_type = file_type
         self.setWindowTitle(title)
         _layout = QVBoxLayout()
-        self.__tab_folder = EditorTabFolder(self, _config_data, metadata)
+        self.__tab_folder = EditorTabFolder(self, _config_data, metadata, file_type)
         _layout.addWidget(self.__tab_folder)
         _button_box = QGroupBox(self)
         _button_box_layout = QHBoxLayout()
@@ -598,6 +610,11 @@ class ConfigEditor(QDialog):
         self.setLayout(_layout)
 
     def closeEvent(self, event):
+        """
+        :param QEvent event: the close event
+        Called when the dialog shall be closed, either by Save resp. Cancel button or from window close button.
+        Asks for confirmation, if changes would be lost.
+        """
         if self._data_has_been_changed():
             _rc = QMessageBox.question(self, localized_label(L_MBOX_TITLE_DATA_EDITED),
                                        localized_label(L_MBOX_INFO_DISCARD_CHANGES))
@@ -685,11 +702,9 @@ class ConfigEditor(QDialog):
     def _cancel_clicked(self):
         """
         Called when the cancel button was clicked.
-        Closes the dialog window, if the settings were not changed.
-        Asks for confirmation to discard changes, if the settings were edited.
+        Closes the dialog window, if the configuration data were not changed.
+        Asks for confirmation to discard changes, if the configuration data were edited.
         """
-        if self._data_has_been_changed():
-            pass
         self.close()
 
     @staticmethod
@@ -703,7 +718,7 @@ class ConfigEditor(QDialog):
         :raises IssaiException: if file is malformed
         """
         if not os.path.isfile(file_path):
-            return ConfigEditor._default_settings(metadata, file_type)
+            return ConfigEditor._default_configuration(metadata, file_type)
         # noinspection PyBroadException
         try:
             _data = tomlkit.document()
@@ -783,33 +798,32 @@ class ConfigEditor(QDialog):
             raise IssaiException(E_GUI_WRITE_SETTINGS_FAILED, self.__file_path, _e)
 
     @staticmethod
-    def _fill_mandatory_attributes(settings, metadata, file_type):
+    def _fill_mandatory_attributes(config_data, metadata, file_type):
         """
-        Adds mandatory attributes if missing.
-        :param dict settings: the settings
+        Adds mandatory attributes to specified configuration data if missing.
+        :param tomlkit.TOMLDocument config_data: the configuration data
         :param dict metadata: the metadata describing supported attributes and their types
         :param int file_type: the file type (master config, product config, XML-RPC credentials)
         """
-        _defaults = ConfigEditor._default_settings(metadata, file_type)
+        _defaults = ConfigEditor._default_configuration(metadata, file_type)
         for _gk, _gv in _defaults.items():
             if isinstance(_gv, dict):
-                if _gk not in settings:
-                    settings[_gk] = _gv.copy()
+                if _gk not in config_data:
+                    config_data[_gk] = _gv.copy()
                 else:
                     for _ak, _av in _gv.items():
-                        if _ak not in settings[_gk]:
-                            settings[_gk][_ak] = _av
+                        if _ak not in config_data[_gk]:
+                            config_data[_gk][_ak] = _av
                 continue
-            if _gk not in settings:
-                settings[_gk] = _gv
+            if _gk not in config_data:
+                config_data[_gk] = _gv
 
     @staticmethod
-    def _default_settings(metadata, file_type):
+    def _default_configuration(metadata, file_type):
         """
-        Returns default settings based on the metadata definitions.
         :param dict metadata: metadata with all TOML groups and attributes
         :param int file_type: the file type (master config, product config, XML-RPC credentials)
-        :returns: default settings
+        :returns: default configuration of specified file type based on the metadata definitions
         :rtype: dict
         """
         _data = {}
@@ -835,7 +849,6 @@ class ConfigEditor(QDialog):
 
 def master_config_editor(parent):
     """
-    Creates and returns a dialog window to edit the Issai master configuration file
     :param QWidget parent: the parent widget
     :returns: Dialog window to edit Issai master configuration file
     :rtype: ConfigEditor
@@ -848,9 +861,8 @@ def master_config_editor(parent):
 
 def product_config_editor(parent, products):
     """
-    Creates and returns a dialog window to edit an Issai product configuration file
     :param QWidget parent: the parent widget
-    :param list products: the parent widget
+    :param list products: names of all products in Issai configuration directory
     :returns: Dialog window to edit Issai product configuration file
     :rtype: ConfigEditor
     :raises IssaiException: if the editor can't be created
@@ -866,9 +878,8 @@ def product_config_editor(parent, products):
 
 def xml_rpc_credentials_editor(parent):
     """
-    Creates and returns a dialog window to edit the credentials for XML-RPC communication with Kiwi TCMS
     :param QWidget parent: the parent widget
-    :returns: Dialog window to edit XML-RPC credentials
+    :returns: Dialog window to edit the credentials for XML-RPC communication with Kiwi TCMS
     :rtype: ConfigEditor
     :raises IssaiException: if the editor can't be created
     """
@@ -934,16 +945,6 @@ def _toml_value_of(widget, attr_desc):
     return None
 
 
-def _python_value_of(widget, attr_desc):
-    """
-    :param QWidget widget: the widget holding the GUI value
-    :param dict attr_desc: the attribute descriptor, may be None
-    :returns: Python value of specified widget
-    """
-    _toml_value = _toml_value_of(widget, attr_desc)
-    return None if _toml_value is None else _toml_value.unwrap()
-
-
 def _gui_value_of(toml_value):
     """
     :param tomlkit.items.  toml_value: the TOML value
@@ -974,6 +975,7 @@ _TAB_FOLDER_STYLE = 'QTabBar {font-weight: bold}'
 
 _ADDITION_WIDGET_TEXT = '+'
 _REMOVE_WIDGET_TEXT = '-'
+_ROOT_GROUP_DISPLAY_TEXT = "'' (root)"
 
 _DATA_KEY_ATTR_TYPE = 'type'
 _DATA_KEY_ATTR_VALUE = 'value'

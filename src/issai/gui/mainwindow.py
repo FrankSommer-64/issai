@@ -99,7 +99,7 @@ class MainWindow(QMainWindow):
         # file menu with settings and exit items
         _file_menu = _bar.addMenu(localized_label(L_MENUBAR_ITEM_FILE))
         _settings_menu = _file_menu.addMenu(localized_label(L_MENU_ITEM_SETTINGS))
-        _settings_defaults_action = QAction(localized_label(L_ACTION_ITEM_SETTINGS_DEFAULTS), self)
+        _settings_defaults_action = QAction(localized_label(L_ACTION_ITEM_SETTINGS_MASTER), self)
         _settings_defaults_action.triggered.connect(self._update_master_config)
         _settings_menu.addAction(_settings_defaults_action)
         _settings_products_action = QAction(localized_label(L_ACTION_ITEM_SETTINGS_PRODUCTS), self)

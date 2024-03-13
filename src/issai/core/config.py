@@ -58,11 +58,6 @@ from issai.core.messages import *
 from issai.core.util import full_path_of
 
 
-DEFAULT_CONFIG_PATH = '~/.config/issai'
-MASTER_CFG_FILE_NAME = 'default.toml'
-PRODUCT_CFG_FILE_NAME = 'product.toml'
-
-
 class LocalConfig(dict):
     """
     Holds attributes specific to local environment.
@@ -482,7 +477,7 @@ def issai_products():
     return _prods
 
 
-def master_config(file_name=MASTER_CFG_FILE_NAME):
+def master_config(file_name=ISSAI_MASTER_CONFIG_FILE_NAME):
     """
     :returns: Issai master configuration from file, if it exists, otherwise None.
     :rtype: LocalConfig
@@ -507,7 +502,7 @@ def product_config(product_name, master_cfg):
     _product_config_path = os.path.join(_config_path, product_name)
     if not os.path.isdir(_product_config_path):
         raise IssaiException(E_CFG_PRODUCT_CONFIG_DIR_NOT_FOUND, product_name, _config_path)
-    _file_path = os.path.join(_product_config_path, PRODUCT_CFG_FILE_NAME)
+    _file_path = os.path.join(_product_config_path, ISSAI_PRODUCT_CONFIG_FILE_NAME)
     if not os.path.isfile(_file_path):
         raise IssaiException(E_CFG_PRODUCT_CONFIG_FILE_NOT_FOUND, _file_path)
     _prod_config = LocalConfig.from_file(_file_path, True)
@@ -534,7 +529,7 @@ def config_root_path():
         if not os.path.isdir(_config_path):
             raise IssaiException(E_CFG_CUSTOM_CONFIG_ROOT_NOT_FOUND, _config_path, ENVA_ISSAI_CONFIG_PATH)
         return _config_path
-    _config_path = full_path_of(DEFAULT_CONFIG_PATH)
+    _config_path = full_path_of(ISSAI_CONFIG_PATH)
     if not os.path.isdir(_config_path):
         raise IssaiException(E_CFG_DEFAULT_CONFIG_ROOT_NOT_FOUND, _config_path)
     return _config_path

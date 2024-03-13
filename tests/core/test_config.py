@@ -105,7 +105,7 @@ class TestConfig(unittest.TestCase):
         _orig_home_dir = os.environ['HOME']
         try:
             # test default config root
-            self.assertEqual(os.path.expanduser(DEFAULT_CONFIG_PATH), config_root_path())
+            self.assertEqual(os.path.expanduser(ISSAI_CONFIG_PATH), config_root_path())
             # test custom config root
             _custom_root = TestConfig.custom_root_path()
             os.environ[ENVA_ISSAI_CONFIG_PATH] = _custom_root
