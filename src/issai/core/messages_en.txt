@@ -137,7 +137,6 @@ l-options Options
 l-output-path Output path
 l-product Product
 l-recent Recent
-l-remove Remove
 l-remove-group Remove group
 l-run Run
 l-run-descendant-plans Run descendant test plans
@@ -171,10 +170,9 @@ l-dlg-title-select-import-file Select import file
 l-dlg-title-xml-rpc-editor XML RPC credentials
 l-main-win-default-title Issai
 l-mbox-info-discard-changes Discard changes ?
-l-mbox-info-discard-comments All comment lines in the file will be discarded. Proceed anyway ?
 l-mbox-info-remove-group Remove group {0} ?
 l-mbox-info-retry Retry ?
-l-mbox-info-use-default-settings Proceed with default settings instead ?
+l-mbox-info-use-default-config Proceed with default configuration instead ?
 l-mbox-title-error Error
 l-mbox-title-info Information
 l-mbox-title-output-exists Output files exist
@@ -188,10 +186,10 @@ l-action-item-help-about &About
 l-action-item-import Import
 l-action-item-run-file Offline &file...
 l-action-item-run-plan Test &plan...
-l-action-item-settings-xml-rpc &XML-RPC credentials...
-l-action-item-settings-master &Master configuration...
-l-action-item-settings-products &Products...
-l-menu-item-settings &Settings
+l-action-item-config-xml-rpc &XML-RPC credentials...
+l-action-item-config-master &Master configuration...
+l-action-item-config-products &Products...
+l-menu-item-config &Configuration
 l-menubar-item-export &Export
 l-menubar-item-file &File
 l-menubar-item-help &Help
@@ -233,7 +231,7 @@ t-opt-run-descendant-plans Check to run all descendant test plans of selection
 t-opt-store-result Check to automatically store test results in TCMS after test execution
 t-opt-user-import Select how to deal with references to users that don't exist in TCMS
 
-e-gui-write-settings-failed Could not write settings to file {0}. {1}.
+e-gui-write-config-data-failed Could not write configuration data to file {0}. {1}.
 e-gui-no-id-specified No ID entered.
 e-gui-id-not-numeric The entered ID '{0}' is not numeric.
 e-gui-neither-product-nor-version-selected Neither product nor version selected.
@@ -241,7 +239,6 @@ e-gui-no-entity-selected No entity selected.
 e-gui-no-product-selected No product selected.
 e-gui-no-version-selected No product version selected.
 e-gui-output-path-invalid Invalid output path {0}.
-e-gui-settings-meta-definition Invalid metadata for settings attribute {0}.
 e-gui-import-case-failed Import Test case '{0}' failed.
 e-gui-import-plan-failed Import Test plan '{0}' failed.
 e-gui-import-plan-result-failed Import Test plan result for run ID {0} failed.
@@ -270,7 +267,7 @@ i-gui-progress-task-failed Task failed
 i-gui-progress-task-running Background task running...
 i-gui-progress-task-started Task started at {0}
 i-gui-progress-upload-file Uploaded attachment file {0} for {1} ID {2}
-w-gui-read-settings-failed Could not read settings from file {0}. {1}.
+w-gui-read-config-data-failed Could not read configuration data from file {0}. {1}.
 w-gui-write-gui-configuration-failed Could not write GUI configuration to file {0}. {1}.
 
 e-run-case-script-missing No script defined for test case '{0}'.

@@ -36,7 +36,7 @@
 Issai runtime configuration.
 The framework is configured by files located under Issai configuration directory. This directory
 can be specified in environment variable ISSAI_CONFIG_PATH, it defaults to $HOME/.config/issai.
-If there is a file named default.toml, it is considered as master configuration for all products.
+If there is a file named master.toml, it is considered as master configuration for all products.
 For each product, there must be a subdirectory with the Issai product name and inside the subdirectory
 a file product.toml containing product specific configuration.
 During test execution, the configuration may be updated from attachment files contained in test plans
