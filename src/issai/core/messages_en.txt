@@ -249,6 +249,7 @@ i-gui-about-text Issai - Framework to run automated tests managed in Kiwi Test c
 i-gui-attribute-exists Attribute {0} already defined.
 i-gui-config-problem Problems in Issai configuration detected:
 i-gui-config-warning Warnings in Issai configuration detected:
+i-gui-create-config-root OK to create Issai configuration directory, Cancel to terminate application.
 i-gui-export-case-successful Test case {0} successfully exported.
 i-gui-export-plan-successful Test plan {0} successfully exported.
 i-gui-export-product-successful Product {0} successfully exported.

@@ -47,6 +47,7 @@ import importlib
 import importlib.util
 import os.path
 import re
+import shutil
 import sys
 
 import tomlkit
@@ -442,39 +443,39 @@ class LocalConfig(dict):
 def load_runtime_configs():
     """
     Loads issai runtime configurations for all locally supported products.
-    :returns: local runtime configurations, problems, warnings
+    :returns: master configuration, product configurations, problems, warnings
     :rtype: tuple
     :raises IssaiException: if no products available
     """
-    _configs = []
+    _product_configs = []
     _problems = []
     _warnings = []
-    _products = issai_products()
     _master_cfg = master_config()
-    for _p in _products:
-        try:
-            _product_cfg = product_config(_p, _master_cfg)
-            _warnings.extend(_product_cfg.warnings())
-            _configs.append(_product_cfg)
-        except IssaiException as _e:
-            _problems.append(str(_e))
-    return _configs, _problems, _warnings
+    _products = issai_products()
+    if len(_products) == 0:
+        _problems.append(localized_message(E_CFG_NO_PRODUCTS, config_root_path()))
+    else:
+        for _p in _products:
+            try:
+                _product_cfg = product_config(_p, _master_cfg)
+                _warnings.extend(_product_cfg.warnings())
+                _product_configs.append(_product_cfg)
+            except IssaiException as _e:
+                _problems.append(str(_e))
+    return _master_cfg, _product_configs, _problems, _warnings
 
 
 def issai_products():
     """
     :returns: names of all products supported by local Issai installation
     :rtype: list
-    :raises IssaiException: if Issai installation is incomplete or no products are configured
     """
     _config_path = config_root_path()
-    _prods = []
+    _products = []
     for _node in os.listdir(_config_path):
         if os.path.isdir(os.path.join(_config_path, _node)):
-            _prods.append(_node)
-    if len(_prods) == 0:
-        raise IssaiException(E_CFG_NO_PRODUCTS, _config_path)
-    return _prods
+            _products.append(_node)
+    return _products
 
 
 def master_config(file_name=ISSAI_MASTER_CONFIG_FILE_NAME):
@@ -533,6 +534,22 @@ def config_root_path():
     if not os.path.isdir(_config_path):
         raise IssaiException(E_CFG_DEFAULT_CONFIG_ROOT_NOT_FOUND, _config_path)
     return _config_path
+
+
+def create_config_root():
+    """
+    Creates root directory for Issai configuration and a default master configuration file.
+    If defined, directory path is taken from environment variable ISSAI_CONFIG_PATH,
+    otherwise creates default directory $HOME/.config/issai.
+    """
+    _config_path = os.environ.get(ENVA_ISSAI_CONFIG_PATH)
+    if _config_path is None:
+        _config_path = ISSAI_CONFIG_PATH
+    _config_path = full_path_of(_config_path)
+    os.makedirs(_config_path, 0o755, True)
+    _master_template = os.path.abspath(os.path.join(__file__, '..', '..', '..', '..',
+                                                    ISSAI_TEMPLATES_DIR, ISSAI_MASTER_CONFIG_FILE_NAME))
+    shutil.copy(_master_template, _config_path)
 
 
 def validate_config_structure(data, file_path, is_product_config):

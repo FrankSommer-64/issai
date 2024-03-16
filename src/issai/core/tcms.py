@@ -1,4 +1,5 @@
-# -----------------------------------------------------------------------------------------------
+# -*- coding: utf-8 -*-
+
 # -----------------------------------------------------------------------------------------------
 # issai - test runner for tests managed by Kiwi test case management system
 #
@@ -155,7 +156,7 @@ class TcmsInterface:
     def connection():
         """
         :returns: XML-RPC connection for current thread
-        :rtype: TCMS
+        :rtype: tcms_api._ConnectionProxy
         :raises IssaiException: if there is an XML-RPC communication error
         """
         try:
@@ -249,23 +250,23 @@ class TcmsInterface:
         variables. Class lock must have been acquired successfully when calling this function.
         :raises IssaiException: if there is an XML-RPC communication error
         """
-        _xml_rpc_cxn = TCMS()
+        _xml_rpc_cxn = TCMS().exec
         TcmsInterface._connections[threading.get_ident()] = _xml_rpc_cxn
         _credentials_file_path = full_path_of(TCMS_XML_RPC_CREDENTIALS_FILE_PATH)
         with open(_credentials_file_path, 'r') as _f:
             _contents = _f.read()
         _m = re.search(r'^\s*username\s*=\s*(.*?)\s*$', _contents, re.MULTILINE | re.DOTALL)
         _user_name = _m.group(1)
-        _user = _xml_rpc_cxn.exec.User.filter({ATTR_USERNAME: _user_name})[0]
+        _user = _xml_rpc_cxn.User.filter({ATTR_USERNAME: _user_name})[0]
         TcmsInterface._current_user = _remove_unsupported_attrs(_user, _SUPPORTED_ATTRS[TCMS_CLASS_USER])
-        TcmsInterface._server_version = _xml_rpc_cxn.exec.KiwiTCMS.version()
-        _case_statuses = _xml_rpc_cxn.exec.TestCaseStatus.filter({})
+        TcmsInterface._server_version = _xml_rpc_cxn.KiwiTCMS.version()
+        _case_statuses = _xml_rpc_cxn.TestCaseStatus.filter({})
         for _case_status in _case_statuses:
             TcmsInterface._case_statuses_by_id[_case_status[ATTR_ID]] = _case_status
             TcmsInterface._case_statuses_by_name[_case_status[ATTR_NAME]] = _case_status
             if _case_status[ATTR_IS_CONFIRMED]:
                 TcmsInterface._case_status_id_confirmed = _case_status[ATTR_ID]
-        _execution_statuses = _xml_rpc_cxn.exec.TestExecutionStatus.filter({})
+        _execution_statuses = _xml_rpc_cxn.TestExecutionStatus.filter({})
         for _execution_status in _execution_statuses:
             TcmsInterface._execution_statuses_by_id[_execution_status[ATTR_ID]] = _execution_status
             TcmsInterface._execution_statuses_by_name[_execution_status[ATTR_NAME]] = _execution_status
@@ -283,7 +284,7 @@ class TcmsInterface:
         """
         _handle = TcmsInterface._connections.get(thread_id)
         if _handle is None:
-            _handle = TCMS()
+            _handle = TCMS().exec
             TcmsInterface._connections[thread_id] = _handle
         return _handle
 
@@ -295,7 +296,7 @@ def add_plan_case(plan_id, case_id):
     :param int case_id: the TCMS test case ID
     """
     _cxn = TcmsInterface.connection()
-    _cxn.exec.TestPlan.add_case(plan_id, case_id)
+    _cxn.TestPlan.add_case(plan_id, case_id)
 
 
 def create_run_from_plan(plan, build):
@@ -312,16 +313,16 @@ def create_run_from_plan(plan, build):
         _manager = TcmsInterface.current_user()[ATTR_ID]
         _attributes = {ATTR_BUILD: build[ATTR_ID], ATTR_MANAGER: TcmsInterface.current_user()[ATTR_ID],
                        ATTR_PLAN: plan[ATTR_ID], ATTR_SUMMARY: plan[ATTR_NAME]}
-        _run = _cxn.exec.TestRun.create(_attributes)
+        _run = _cxn.TestRun.create(_attributes)
         _run[ATTR_EXECUTIONS] = []
         _run[ATTR_TAGS] = []
         _run_id = _run[ATTR_ID]
         for _case_id in plan[ATTR_CASES]:
-            _executions = _cxn.exec.TestRun.add_case(_run_id, _case_id)
+            _executions = _cxn.TestRun.add_case(_run_id, _case_id)
             for _execution in _executions:
                 _run[ATTR_EXECUTIONS].append(_execution[ATTR_ID])
         for _tag in plan[ATTR_TAGS]:
-            _cxn.exec.TestRun.add_tag(_run_id, _tag)
+            _cxn.TestRun.add_tag(_run_id, _tag)
             _run[ATTR_TAGS].append(_tag)
         return _run
     except IssaiException:
@@ -346,75 +347,74 @@ def create_tcms_object(class_id, container_object):
             del _attributes[ATTR_ID]
         _remove_unsupported_attrs(_attributes, _SUPPORTED_ATTRS[tcms_class_name_for_id(class_id)])
         if class_id == TCMS_CLASS_ID_BUILD:
-            _builds = _cxn.exec.Build.filter({ATTR_NAME: _attributes[ATTR_NAME],
-                                              ATTR_VERSION: _attributes[ATTR_VERSION]})
+            _builds = _cxn.Build.filter({ATTR_NAME: _attributes[ATTR_NAME], ATTR_VERSION: _attributes[ATTR_VERSION]})
             if len(_builds) > 0:
                 _object = _builds[0]
             else:
-                _object = _cxn.exec.Build.create(_attributes)
+                _object = _cxn.Build.create(_attributes)
         elif class_id == TCMS_CLASS_ID_CATEGORY:
-            _object = _cxn.exec.Category.create(_attributes)
+            _object = _cxn.Category.create(_attributes)
         elif class_id == TCMS_CLASS_ID_CLASSIFICATION:
-            _object = _cxn.exec.Classification.create(_attributes)
+            _object = _cxn.Classification.create(_attributes)
         elif class_id == TCMS_CLASS_ID_COMPONENT:
             del _attributes[ATTR_CASES]
-            _object = _cxn.exec.Component.create(_attributes)
+            _object = _cxn.Component.create(_attributes)
         elif class_id == TCMS_CLASS_ID_ENVIRONMENT:
             # not supported prior to TCMS server version 12.1
-            _object = _cxn.exec.Environment.create(_attributes)
+            _object = _cxn.Environment.create(_attributes)
             _env_id = _object[ATTR_ID]
             for _property in container_object[ATTR_PROPERTIES]:
                 for _property_name, _property_value in _property.items():
-                    _cxn.exec.Environment.add_property(_env_id, _property_name, _property_value)
+                    _cxn.Environment.add_property(_env_id, _property_name, _property_value)
         elif class_id == TCMS_CLASS_ID_PLAN_TYPE:
-            _object = _cxn.exec.PlanType.create(_attributes)
+            _object = _cxn.PlanType.create(_attributes)
         elif class_id == TCMS_CLASS_ID_PRODUCT:
-            _object = _cxn.exec.Product.create(_attributes)
+            _object = _cxn.Product.create(_attributes)
         elif class_id == TCMS_CLASS_ID_TAG:
-            _object = _cxn.exec.Tag.create(_attributes)
+            _object = _cxn.Tag.create(_attributes)
         elif class_id == TCMS_CLASS_ID_TEST_CASE:
             _attributes[ATTR_PRODUCT] = container_object[ATTR_PRODUCT]
-            _object = _cxn.exec.TestCase.create(_attributes)
+            _object = _cxn.TestCase.create(_attributes)
             _case_id = _object[ATTR_ID]
             if len(container_object[ATTR_CC_NOTIFICATIONS]) > 0:
-                _cxn.exec.TestCase.add_notification_cc(_case_id, container_object[ATTR_CC_NOTIFICATIONS])
+                _cxn.TestCase.add_notification_cc(_case_id, container_object[ATTR_CC_NOTIFICATIONS])
             for _comment in container_object[ATTR_COMMENTS]:
-                _cxn.exec.TestCase.add_comment(_case_id, _comment)
+                _cxn.TestCase.add_comment(_case_id, _comment)
             for _component in container_object[ATTR_COMPONENTS]:
-                _cxn.exec.TestCase.add_component(_case_id, _component)
+                _cxn.TestCase.add_component(_case_id, _component)
             for _property in container_object[ATTR_PROPERTIES]:
                 for _property_name, _property_value in _property.items():
-                    _cxn.exec.TestCase.add_property(_case_id, _property_name, _property_value)
+                    _cxn.TestCase.add_property(_case_id, _property_name, _property_value)
             for _tag in container_object[ATTR_TAGS]:
-                _cxn.exec.TestCase.add_tag(_case_id, _tag)
+                _cxn.TestCase.add_tag(_case_id, _tag)
         elif class_id == TCMS_CLASS_ID_TEST_CASE_STATUS:
-            _object = _cxn.exec.TestCaseStatus.create(_attributes)
+            _object = _cxn.TestCaseStatus.create(_attributes)
         elif class_id == TCMS_CLASS_ID_TEST_EXECUTION:
             _run_id = _attributes[ATTR_RUN]
             _case_id = _attributes[ATTR_CASE]
-            _tcms_execution = _cxn.exec.TestRun.add_case(_run_id, _case_id)[0]
-            _object = _cxn.exec.TestExecution.update(_tcms_execution[ATTR_ID], _attributes)
+            _tcms_execution = _cxn.TestRun.add_case(_run_id, _case_id)[0]
+            _object = _cxn.TestExecution.update(_tcms_execution[ATTR_ID], _attributes)
             _execution_id = _object[ATTR_ID]
             for _comment in container_object[ATTR_COMMENTS]:
-                _cxn.exec.TestExecution.add_comment(_case_id, _comment)
+                _cxn.TestExecution.add_comment(_case_id, _comment)
             for _link in container_object[ATTR_LINKS]:
-                _cxn.exec.TestExecution.add_link(_case_id, _link)
+                _cxn.TestExecution.add_link(_case_id, _link)
         elif class_id == TCMS_CLASS_ID_TEST_EXECUTION_STATUS:
-            _object = _cxn.exec.TestExecutionStatus.create(_attributes)
+            _object = _cxn.TestExecutionStatus.create(_attributes)
         elif class_id == TCMS_CLASS_ID_TEST_PLAN:
-            _object = _cxn.exec.TestPlan.create(_attributes)
+            _object = _cxn.TestPlan.create(_attributes)
             _plan_id = _object[ATTR_ID]
             for _case_id in container_object[ATTR_CASES]:
-                _cxn.exec.TestPlan.add_case(_plan_id, _case_id)
+                _cxn.TestPlan.add_case(_plan_id, _case_id)
             for _tag in container_object[ATTR_TAGS]:
-                _cxn.exec.TestPlan.add_tag(_plan_id, _tag)
+                _cxn.TestPlan.add_tag(_plan_id, _tag)
         elif class_id == TCMS_CLASS_ID_TEST_RUN:
-            _object = _cxn.exec.TestRun.create(_attributes)
+            _object = _cxn.TestRun.create(_attributes)
             _run_id = _object[ATTR_ID]
             for _tag in container_object[ATTR_TAGS]:
-                _cxn.exec.TestRun.add_tag(_run_id, _tag)
+                _cxn.TestRun.add_tag(_run_id, _tag)
         elif class_id == TCMS_CLASS_ID_VERSION:
-            _object = _cxn.exec.Version.create(_attributes)
+            _object = _cxn.Version.create(_attributes)
         else:
             _msg = localized_message(E_TCMS_INVALID_CLASS_ID, class_id)
             raise IssaiException(E_INTERNAL_ERROR, _msg)
@@ -476,10 +476,10 @@ def find_product_for_tcms_object(class_id, tcms_object):
     try:
         _cxn = TcmsInterface.connection()
         if class_id == TCMS_CLASS_ID_TEST_CASE:
-            _category = _cxn.exec.Category.filter({ATTR_ID: tcms_object[ATTR_CATEGORY]})[0]
+            _category = _cxn.Category.filter({ATTR_ID: tcms_object[ATTR_CATEGORY]})[0]
             _product_id = _category[ATTR_PRODUCT]
         else:
-            _version = _cxn.exec.Version.filter({ATTR_ID: tcms_object[ATTR_PRODUCT_VERSION]})[0]
+            _version = _cxn.Version.filter({ATTR_ID: tcms_object[ATTR_PRODUCT_VERSION]})[0]
             _product_id = _version[ATTR_PRODUCT]
         return _find_tcms_object(_cxn, TCMS_CLASS_ID_PRODUCT, {ATTR_ID: _product_id})
     except Exception as _e:
@@ -495,12 +495,12 @@ def read_tcms_environments():
     """
     try:
         _cxn = TcmsInterface.connection()
-        _envs = _remove_unsupported_attrs(_cxn.exec.Environment.filter({}), _SUPPORTED_ATTRS[TCMS_CLASS_ENVIRONMENT])
+        _envs = _remove_unsupported_attrs(_cxn.Environment.filter({}), _SUPPORTED_ATTRS[TCMS_CLASS_ENVIRONMENT])
         _envs_dict = dict([(_e[ATTR_ID], _e) for _e in _envs])
         for _e in _envs:
             _e[ATTR_PROPERTIES] = []
         _env_ids = [_e[ATTR_ID] for _e in _envs]
-        for _prop in _cxn.exec.Environment.properties({}):
+        for _prop in _cxn.Environment.properties({}):
             print(_prop)
             _envs_dict[_prop[ATTR_ENVIRONMENT]][ATTR_PROPERTIES].append({_prop[ATTR_NAME]: _prop[ATTR_VALUE]})
         return _envs
@@ -518,7 +518,7 @@ def read_tcms_versions_for_product(product):
     """
     try:
         _cxn = TcmsInterface.connection()
-        _versions = _cxn.exec.Version.filter({ATTR_PRODUCT: product[ATTR_ID]})
+        _versions = _cxn.Version.filter({ATTR_PRODUCT: product[ATTR_ID]})
         return _remove_unsupported_attrs(_versions, _SUPPORTED_ATTRS[TCMS_CLASS_VERSION])
     except Exception as _e:
         raise IssaiException(E_TCMS_FIND_OBJECT_FAILED, TCMS_CLASS_VERSION, str(_e))
@@ -539,7 +539,7 @@ def read_tcms_builds_for_version(versions, active_only=False):
         _filter = {f'{ATTR_VERSION}__in': _version_ids}
         if active_only:
             _filter[ATTR_IS_ACTIVE] = True
-        _builds = _cxn.exec.Build.filter(_filter)
+        _builds = _cxn.Build.filter(_filter)
         return _remove_unsupported_attrs(_builds, _SUPPORTED_ATTRS[TCMS_CLASS_BUILD])
     except Exception as _e:
         raise IssaiException(E_TCMS_FIND_OBJECT_FAILED, TCMS_CLASS_BUILD, str(_e))
@@ -559,16 +559,16 @@ def read_tcms_plans(versions, consider_runs):
         _cxn = TcmsInterface.connection()
         _version_ids = [_version[ATTR_ID] for _version in versions]
         _filter = {f'{ATTR_PRODUCT_VERSION}__in': _version_ids}
-        _plans = _remove_unsupported_attrs(_cxn.exec.TestPlan.filter(_filter), _SUPPORTED_ATTRS[TCMS_CLASS_TEST_PLAN])
+        _plans = _remove_unsupported_attrs(_cxn.TestPlan.filter(_filter), _SUPPORTED_ATTRS[TCMS_CLASS_TEST_PLAN])
         for _plan in _plans:
-            _plan[ATTR_ATTACHMENTS] = [_a[ATTR_URL] for _a in _cxn.exec.TestPlan.list_attachments(_plan[ATTR_ID])]
+            _plan[ATTR_ATTACHMENTS] = [_a[ATTR_URL] for _a in _cxn.TestPlan.list_attachments(_plan[ATTR_ID])]
             _plan[ATTR_TAGS] = []
-            _plan[ATTR_CASES] = [_c[ATTR_ID] for _c in _cxn.exec.TestCase.filter({ATTR_PLAN: _plan[ATTR_ID]})]
+            _plan[ATTR_CASES] = [_c[ATTR_ID] for _c in _cxn.TestCase.filter({ATTR_PLAN: _plan[ATTR_ID]})]
             if consider_runs:
-                _plan[ATTR_RUNS] = [_r[ATTR_ID] for _r in _cxn.exec.TestRun.filter({ATTR_PLAN: _plan[ATTR_ID]})]
+                _plan[ATTR_RUNS] = [_r[ATTR_ID] for _r in _cxn.TestRun.filter({ATTR_PLAN: _plan[ATTR_ID]})]
         _plans_dict = dict([(_p[ATTR_ID], _p) for _p in _plans])
         _plan_ids = [_p[ATTR_ID] for _p in _plans]
-        for _tag in _cxn.exec.Tag.filter({f'{ATTR_PLAN}__in': _plan_ids}):
+        for _tag in _cxn.Tag.filter({f'{ATTR_PLAN}__in': _plan_ids}):
             _plans_dict[_tag[ATTR_PLAN]][ATTR_TAGS].append(_tag[ATTR_NAME])
         return _plans
     except Exception as _e:
@@ -588,16 +588,16 @@ def read_tcms_runs(builds):
         _cxn = TcmsInterface.connection()
         _build_ids = [_build[ATTR_ID] for _build in builds]
         _filter = {f'{ATTR_BUILD}__in': _build_ids}
-        _runs = _remove_unsupported_attrs(_cxn.exec.TestRun.filter(_filter), _SUPPORTED_ATTRS[TCMS_CLASS_TEST_RUN])
+        _runs = _remove_unsupported_attrs(_cxn.TestRun.filter(_filter), _SUPPORTED_ATTRS[TCMS_CLASS_TEST_RUN])
         for _run in _runs:
             _run[ATTR_PROPERTIES] = []
             _run[ATTR_TAGS] = []
-            _run[ATTR_EXECUTIONS] = [_e[ATTR_ID] for _e in _cxn.exec.TestExecution.filter({ATTR_RUN: _run[ATTR_ID]})]
+            _run[ATTR_EXECUTIONS] = [_e[ATTR_ID] for _e in _cxn.TestExecution.filter({ATTR_RUN: _run[ATTR_ID]})]
         _runs_dict = dict([(_r[ATTR_ID], _r) for _r in _runs])
         _run_ids = [_r[ATTR_ID] for _r in _runs]
-        for _prop in _cxn.exec.TestRun.properties({f'{ATTR_RUN}__in': _run_ids}):
+        for _prop in _cxn.TestRun.properties({f'{ATTR_RUN}__in': _run_ids}):
             _runs_dict[_prop[ATTR_RUN]][ATTR_PROPERTIES].append({_prop[ATTR_NAME]: _prop[ATTR_VALUE]})
-        for _tag in _cxn.exec.Tag.filter({f'{ATTR_RUN}__in': _run_ids}):
+        for _tag in _cxn.Tag.filter({f'{ATTR_RUN}__in': _run_ids}):
             _runs_dict[_tag[ATTR_RUN]][ATTR_TAGS].append(_tag[ATTR_NAME])
         return _runs
     except Exception as _e:
@@ -617,20 +617,20 @@ def read_tcms_case(case_id, consider_executions, consider_history):
     """
     try:
         _cxn = TcmsInterface.connection()
-        _case = _remove_unsupported_attrs(_cxn.exec.TestCase.filter({ATTR_ID: case_id}),
+        _case = _remove_unsupported_attrs(_cxn.TestCase.filter({ATTR_ID: case_id}),
                                           _SUPPORTED_ATTRS[TCMS_CLASS_TEST_CASE])[0]
-        _attachments = [_a[ATTR_URL] for _a in _cxn.exec.TestCase.list_attachments(case_id)]
+        _attachments = [_a[ATTR_URL] for _a in _cxn.TestCase.list_attachments(case_id)]
         _case[ATTR_ATTACHMENTS] = _attachments
-        _case[ATTR_CC_NOTIFICATIONS] = _cxn.exec.TestCase.get_notification_cc(case_id)
-        _case[ATTR_COMMENTS] = _cxn.exec.TestCase.comments(case_id)
-        _case[ATTR_COMPONENTS] = [_c[ATTR_ID] for _c in _cxn.exec.Component.filter({ATTR_CASES: case_id})]
+        _case[ATTR_CC_NOTIFICATIONS] = _cxn.TestCase.get_notification_cc(case_id)
+        _case[ATTR_COMMENTS] = _cxn.TestCase.comments(case_id)
+        _case[ATTR_COMPONENTS] = [_c[ATTR_ID] for _c in _cxn.Component.filter({ATTR_CASES: case_id})]
         _filter = {ATTR_CASE: case_id}
-        _case[ATTR_PROPERTIES] = [{_p[ATTR_NAME]: _p[ATTR_VALUE]} for _p in _cxn.exec.TestCase.properties(_filter)]
-        _case[ATTR_TAGS] = [_t[ATTR_NAME] for _t in _cxn.exec.Tag.filter({ATTR_CASE: case_id})]
+        _case[ATTR_PROPERTIES] = [{_p[ATTR_NAME]: _p[ATTR_VALUE]} for _p in _cxn.TestCase.properties(_filter)]
+        _case[ATTR_TAGS] = [_t[ATTR_NAME] for _t in _cxn.Tag.filter({ATTR_CASE: case_id})]
         if consider_executions:
-            _case[ATTR_EXECUTIONS] = [_e[ATTR_ID] for _e in _cxn.exec.TestExecution.filter({ATTR_CASE: case_id})]
+            _case[ATTR_EXECUTIONS] = [_e[ATTR_ID] for _e in _cxn.TestExecution.filter({ATTR_CASE: case_id})]
         if consider_history:
-            _case[ATTR_HISTORY] = _remove_unsupported_attrs(_cxn.exec.TestCase.history(case_id, {}),
+            _case[ATTR_HISTORY] = _remove_unsupported_attrs(_cxn.TestCase.history(case_id, {}),
                                                             _SUPPORTED_ATTRS[TCMS_CLASS_TEST_CASE_HISTORY])
         return _case
     except Exception as _e:
@@ -653,28 +653,28 @@ def read_tcms_cases(all_test_cases, filter_objects, consider_executions, conside
         _cxn = TcmsInterface.connection()
         _filter_ids = [_object[ATTR_ID] for _object in filter_objects]
         _filter = {f'{ATTR_CATEGORY}__in': _filter_ids} if all_test_cases else {f'{ATTR_PLAN}__in': _filter_ids}
-        _cases = _remove_unsupported_attrs(_cxn.exec.TestCase.filter(_filter), _SUPPORTED_ATTRS[TCMS_CLASS_TEST_CASE])
+        _cases = _remove_unsupported_attrs(_cxn.TestCase.filter(_filter), _SUPPORTED_ATTRS[TCMS_CLASS_TEST_CASE])
         for _case in _cases:
-            _attachments = [_a[ATTR_URL] for _a in _cxn.exec.TestCase.list_attachments(_case[ATTR_ID])]
+            _attachments = [_a[ATTR_URL] for _a in _cxn.TestCase.list_attachments(_case[ATTR_ID])]
             _case[ATTR_ATTACHMENTS] = _attachments
-            _case[ATTR_CC_NOTIFICATIONS] = _cxn.exec.TestCase.get_notification_cc(_case[ATTR_ID])
-            _case[ATTR_COMMENTS] = _cxn.exec.TestCase.comments(_case[ATTR_ID])
+            _case[ATTR_CC_NOTIFICATIONS] = _cxn.TestCase.get_notification_cc(_case[ATTR_ID])
+            _case[ATTR_COMMENTS] = _cxn.TestCase.comments(_case[ATTR_ID])
             _case[ATTR_COMPONENTS] = []
             _case[ATTR_PROPERTIES] = []
             _case[ATTR_TAGS] = []
             if consider_executions:
                 _filter = {ATTR_CASE: _case[ATTR_ID]}
-                _case[ATTR_EXECUTIONS] = [_e[ATTR_ID] for _e in _cxn.exec.TestExecution.filter(_filter)]
+                _case[ATTR_EXECUTIONS] = [_e[ATTR_ID] for _e in _cxn.TestExecution.filter(_filter)]
             if consider_history:
-                _case[ATTR_HISTORY] = _remove_unsupported_attrs(_cxn.exec.TestCase.history(_case[ATTR_ID], {}),
+                _case[ATTR_HISTORY] = _remove_unsupported_attrs(_cxn.TestCase.history(_case[ATTR_ID], {}),
                                                                 _SUPPORTED_ATTRS[TCMS_CLASS_TEST_CASE_HISTORY])
         _cases_dict = dict([(_c[ATTR_ID], _c) for _c in _cases])
         _case_ids = [_c[ATTR_ID] for _c in _cases]
-        for _component in _cxn.exec.Component.filter({f'{ATTR_CASES}__in': _case_ids}):
+        for _component in _cxn.Component.filter({f'{ATTR_CASES}__in': _case_ids}):
             _cases_dict[_component[ATTR_CASES]][ATTR_COMPONENTS].append(_component[ATTR_ID])
-        for _prop in _cxn.exec.TestCase.properties({f'{ATTR_CASE}__in': _case_ids}):
+        for _prop in _cxn.TestCase.properties({f'{ATTR_CASE}__in': _case_ids}):
             _cases_dict[_prop[ATTR_CASE]][ATTR_PROPERTIES].append({_prop[ATTR_NAME]: _prop[ATTR_VALUE]})
-        for _tag in _cxn.exec.Tag.filter({f'{ATTR_CASE}__in': _case_ids}):
+        for _tag in _cxn.Tag.filter({f'{ATTR_CASE}__in': _case_ids}):
             _cases_dict[_tag[ATTR_CASE]][ATTR_TAGS].append(_tag[ATTR_NAME])
         return _cases
     except Exception as _e:
@@ -701,7 +701,7 @@ def read_tcms_executions(builds, consider_history, cases=None):
         if cases is not None:
             _case_ids = [_c[ATTR_ID] for _c in cases]
             _filter[f'{ATTR_CASE}__in'] = _case_ids
-        _executions = _remove_unsupported_attrs(_cxn.exec.TestExecution.filter(_filter),
+        _executions = _remove_unsupported_attrs(_cxn.TestExecution.filter(_filter),
                                                 _SUPPORTED_ATTRS[TCMS_CLASS_TEST_EXECUTION])
         _executions_dict = dict([(_e[ATTR_ID], _e) for _e in _executions])
         _executions_ids = [_e[ATTR_ID] for _e in _executions]
@@ -710,16 +710,16 @@ def read_tcms_executions(builds, consider_history, cases=None):
             _exn[ATTR_COMMENTS] = []
             _exn[ATTR_PROPERTIES] = []
             _exn[ATTR_LINKS] = []
-            _comments = _remove_unsupported_attrs(_cxn.exec.TestExecution.get_comments(_execution_id),
+            _comments = _remove_unsupported_attrs(_cxn.TestExecution.get_comments(_execution_id),
                                                   _SUPPORTED_ATTRS[TCMS_CLASS_COMMENT])
             for _comment in _comments:
                 _executions_dict[_execution_id][ATTR_COMMENTS].append(_comment)
             if consider_history:
-                _exn[ATTR_HISTORY] = _remove_unsupported_attrs(_cxn.exec.TestExecution.history(_execution_id),
+                _exn[ATTR_HISTORY] = _remove_unsupported_attrs(_cxn.TestExecution.history(_execution_id),
                                                                _SUPPORTED_ATTRS[TCMS_CLASS_TEST_EXECUTION_HISTORY])
-        for _prop in _cxn.exec.TestExecution.properties({f'{ATTR_EXECUTION}__in': _executions_ids}):
+        for _prop in _cxn.TestExecution.properties({f'{ATTR_EXECUTION}__in': _executions_ids}):
             _executions_dict[_prop[ATTR_EXECUTION]][ATTR_PROPERTIES].append({_prop[ATTR_NAME]: _prop[ATTR_VALUE]})
-        for _link in _cxn.exec.TestExecution.get_links({f'{ATTR_EXECUTION}__in': _executions_ids}):
+        for _link in _cxn.TestExecution.get_links({f'{ATTR_EXECUTION}__in': _executions_ids}):
             _executions_dict[_link[ATTR_EXECUTION]][ATTR_LINKS].append(_link)
         return _executions
     except Exception as _e:
@@ -738,19 +738,19 @@ def read_tcms_plan(plan, incl_descendants, incl_runs):
     """
     try:
         _cxn = TcmsInterface.connection()
-        _ids = [_p[ATTR_ID] for _p in _cxn.exec.TestPlan.tree(plan[ATTR_ID])] if incl_descendants else [plan[ATTR_ID]]
-        _family = _remove_unsupported_attrs(_cxn.exec.TestPlan.filter({f'{ATTR_ID}__in': _ids}),
+        _ids = [_p[ATTR_ID] for _p in _cxn.TestPlan.tree(plan[ATTR_ID])] if incl_descendants else [plan[ATTR_ID]]
+        _family = _remove_unsupported_attrs(_cxn.TestPlan.filter({f'{ATTR_ID}__in': _ids}),
                                             _SUPPORTED_ATTRS[TCMS_CLASS_TEST_PLAN])
         for _plan in _family:
-            _attachments = [_a[ATTR_URL] for _a in _cxn.exec.TestPlan.list_attachments(_plan[ATTR_ID])]
+            _attachments = [_a[ATTR_URL] for _a in _cxn.TestPlan.list_attachments(_plan[ATTR_ID])]
             _plan[ATTR_ATTACHMENTS] = _attachments
             _plan[ATTR_TAGS] = []
-            _plan[ATTR_CASES] = [_c[ATTR_ID] for _c in _cxn.exec.TestCase.filter({ATTR_PLAN: _plan[ATTR_ID]})]
+            _plan[ATTR_CASES] = [_c[ATTR_ID] for _c in _cxn.TestCase.filter({ATTR_PLAN: _plan[ATTR_ID]})]
             if incl_runs:
-                _plan[ATTR_RUNS] = [_r[ATTR_ID] for _r in _cxn.exec.TestRun.filter({ATTR_PLAN: _plan[ATTR_ID]})]
+                _plan[ATTR_RUNS] = [_r[ATTR_ID] for _r in _cxn.TestRun.filter({ATTR_PLAN: _plan[ATTR_ID]})]
         _plans_dict = dict([(_p[ATTR_ID], _p) for _p in _family])
         _plan_ids = [_p[ATTR_ID] for _p in _family]
-        for _tag in _cxn.exec.Tag.filter({f'{ATTR_PLAN}__in': _plan_ids}):
+        for _tag in _cxn.Tag.filter({f'{ATTR_PLAN}__in': _plan_ids}):
             _plans_dict[_tag[ATTR_PLAN]][ATTR_TAGS].append(_tag[ATTR_NAME])
         return _family
     except Exception as _e:
@@ -769,22 +769,22 @@ def read_tcms_plan_for_execution(plan, incl_descendants):
     try:
         _cxn = TcmsInterface.connection()
         _confirmed_status = TcmsInterface.confirmed_case_status_id()
-        _ids = [_p[ATTR_ID] for _p in _cxn.exec.TestPlan.tree(plan[ATTR_ID])] if incl_descendants else [plan[ATTR_ID]]
-        _full_plan = _remove_unsupported_attrs(_cxn.exec.TestPlan.filter({f'{ATTR_ID}__in': _ids}),
+        _ids = [_p[ATTR_ID] for _p in _cxn.TestPlan.tree(plan[ATTR_ID])] if incl_descendants else [plan[ATTR_ID]]
+        _full_plan = _remove_unsupported_attrs(_cxn.TestPlan.filter({f'{ATTR_ID}__in': _ids}),
                                                _SUPPORTED_ATTRS[TCMS_CLASS_TEST_PLAN])
         for _plan in _full_plan:
             _plan_id = _plan[ATTR_ID]
-            _plan[ATTR_ATTACHMENTS] = [_a[ATTR_URL] for _a in _cxn.exec.TestPlan.list_attachments(_plan_id)]
-            _plan[ATTR_TAGS] = [_t[ATTR_NAME] for _t in _cxn.exec.Tag.filter({ATTR_PLAN: _plan_id})]
+            _plan[ATTR_ATTACHMENTS] = [_a[ATTR_URL] for _a in _cxn.TestPlan.list_attachments(_plan_id)]
+            _plan[ATTR_TAGS] = [_t[ATTR_NAME] for _t in _cxn.Tag.filter({ATTR_PLAN: _plan_id})]
             _cases_filter = {ATTR_PLAN: _plan_id, ATTR_CASE_STATUS: _confirmed_status, ATTR_IS_AUTOMATED: True}
-            _cases = _remove_unsupported_attrs(_cxn.exec.TestCase.filter(_cases_filter),
+            _cases = _remove_unsupported_attrs(_cxn.TestCase.filter(_cases_filter),
                                                _SUPPORTED_ATTRS[TCMS_CLASS_TEST_CASE])
             for _case in _cases:
                 _case_id = _case[ATTR_ID]
-                _case[ATTR_ATTACHMENTS] = [_a[ATTR_URL] for _a in _cxn.exec.TestCase.list_attachments(_case_id)]
-                _case[ATTR_TAGS] = [_t[ATTR_NAME] for _t in _cxn.exec.Tag.filter({ATTR_CASE: _case_id})]
+                _case[ATTR_ATTACHMENTS] = [_a[ATTR_URL] for _a in _cxn.TestCase.list_attachments(_case_id)]
+                _case[ATTR_TAGS] = [_t[ATTR_NAME] for _t in _cxn.Tag.filter({ATTR_CASE: _case_id})]
                 _case[ATTR_PROPERTIES] = {}
-                for _prop in _cxn.exec.TestCase.properties({ATTR_CASE: _case_id}):
+                for _prop in _cxn.TestCase.properties({ATTR_CASE: _case_id}):
                     _case[ATTR_PROPERTIES][_prop[ATTR_NAME]] = _prop[ATTR_VALUE]
             _plan[ATTR_CASES] = _cases
         return _full_plan
@@ -806,16 +806,16 @@ def read_tcms_run_tree(plans, build):
         _filter = {f'{ATTR_PLAN}__in': [_p[ATTR_ID] for _p in plans]}
         if build is not None:
             _filter[ATTR_BUILD] = build[ATTR_ID]
-        _runs = _remove_unsupported_attrs(_cxn.exec.TestRun.filter(_filter), _SUPPORTED_ATTRS[TCMS_CLASS_TEST_RUN])
+        _runs = _remove_unsupported_attrs(_cxn.TestRun.filter(_filter), _SUPPORTED_ATTRS[TCMS_CLASS_TEST_RUN])
         for _run in _runs:
             _run[ATTR_PROPERTIES] = []
             _run[ATTR_TAGS] = []
-            _run[ATTR_EXECUTIONS] = [_e[ATTR_ID] for _e in _cxn.exec.TestExecution.filter({ATTR_RUN: _run[ATTR_ID]})]
+            _run[ATTR_EXECUTIONS] = [_e[ATTR_ID] for _e in _cxn.TestExecution.filter({ATTR_RUN: _run[ATTR_ID]})]
         _runs_dict = dict([(_r[ATTR_ID], _r) for _r in _runs])
         _run_ids = [_r[ATTR_ID] for _r in _runs]
-        for _prop in _cxn.exec.TestRun.properties({f'{ATTR_RUN}__in': _run_ids}):
+        for _prop in _cxn.TestRun.properties({f'{ATTR_RUN}__in': _run_ids}):
             _runs_dict[_prop[ATTR_RUN]][ATTR_PROPERTIES].append({_prop[ATTR_NAME]: _prop[ATTR_VALUE]})
-        for _tag in _cxn.exec.Tag.filter({f'{ATTR_RUN}__in': _run_ids}):
+        for _tag in _cxn.Tag.filter({f'{ATTR_RUN}__in': _run_ids}):
             _runs_dict[_tag[ATTR_RUN]][ATTR_TAGS].append(_tag[ATTR_NAME])
         return _runs
     except Exception as _e:
@@ -834,12 +834,12 @@ def read_test_entity_with_id(entity_type, entity_id):
     try:
         _cxn = TcmsInterface.connection()
         if entity_type == ENTITY_TYPE_PLAN:
-            _plans = _cxn.exec.TestPlan.filter({ATTR_ID: entity_id})
+            _plans = _cxn.TestPlan.filter({ATTR_ID: entity_id})
             if len(_plans) == 0:
                 raise IssaiException(E_TCMS_PLAN_UNKNOWN, entity_id)
             return _remove_unsupported_attrs(_plans[0], _SUPPORTED_ATTRS[TCMS_CLASS_TEST_PLAN])
         # test case
-        _cases = _cxn.exec.TestCase.filter({ATTR_ID: entity_id})
+        _cases = _cxn.TestCase.filter({ATTR_ID: entity_id})
         if len(_cases) == 0:
             raise IssaiException(E_TCMS_TEST_CASE_UNKNOWN, entity_id)
         _case = _remove_unsupported_attrs(_cases[0], _SUPPORTED_ATTRS[TCMS_CLASS_TEST_CASE])
@@ -862,10 +862,10 @@ def read_product_for_test_entity(entity_type, entity):
     try:
         _cxn = TcmsInterface.connection()
         if entity_type == ENTITY_TYPE_PLAN:
-            return _cxn.exec.Product.filter({ATTR_ID: entity[ATTR_PRODUCT]})[0]
+            return _cxn.Product.filter({ATTR_ID: entity[ATTR_PRODUCT]})[0]
         # test case
-        _category = _cxn.exec.Category.filter({ATTR_ID: entity[ATTR_CATEGORY]})[0]
-        return _cxn.exec.Product.filter({ATTR_ID: _category[ATTR_PRODUCT]})[0]
+        _category = _cxn.Category.filter({ATTR_ID: entity[ATTR_CATEGORY]})[0]
+        return _cxn.Product.filter({ATTR_ID: _category[ATTR_PRODUCT]})[0]
     except Exception as _e:
         raise IssaiException(E_TCMS_FIND_OBJECT_FAILED, TCMS_CLASS_PRODUCT, str(_e))
 
@@ -880,7 +880,7 @@ def read_environment_properties(env):
     """
     _cxn = TcmsInterface.connection()
     _properties = {}
-    for _p in _cxn.exec.Environment.properties({ATTR_ENVIRONMENT: env[ATTR_ID]}):
+    for _p in _cxn.Environment.properties({ATTR_ENVIRONMENT: env[ATTR_ID]}):
         _properties[_p[ATTR_NAME]] = _p[ATTR_VALUE]
     return _properties
 
@@ -1004,9 +1004,9 @@ def find_matching_cases(pattern, product_id):
     """
     try:
         _cxn = TcmsInterface.connection()
-        _category_ids = [_c[ATTR_ID] for _c in _cxn.exec.Category.filter({ATTR_PRODUCT: product_id})]
+        _category_ids = [_c[ATTR_ID] for _c in _cxn.Category.filter({ATTR_PRODUCT: product_id})]
         _filter = {f'{ATTR_CATEGORY}__in': _category_ids, f'{ATTR_SUMMARY}__iregex': pattern}
-        return _remove_unsupported_attrs(_cxn.exec.TestCase.filter(_filter), _SUPPORTED_ATTRS[TCMS_CLASS_TEST_CASE])
+        return _remove_unsupported_attrs(_cxn.TestCase.filter(_filter), _SUPPORTED_ATTRS[TCMS_CLASS_TEST_CASE])
     except Exception as _e:
         raise IssaiException(E_TCMS_FIND_OBJECT_FAILED, TCMS_CLASS_TEST_CASE, str(_e))
 
@@ -1023,7 +1023,7 @@ def find_matching_plans(pattern, product_id, version_id):
     try:
         _cxn = TcmsInterface.connection()
         _filter = {ATTR_PRODUCT: product_id, ATTR_PRODUCT_VERSION: version_id, f'{ATTR_NAME}__iregex': pattern}
-        return _remove_unsupported_attrs(_cxn.exec.TestPlan.filter(_filter), _SUPPORTED_ATTRS[TCMS_CLASS_TEST_PLAN])
+        return _remove_unsupported_attrs(_cxn.TestPlan.filter(_filter), _SUPPORTED_ATTRS[TCMS_CLASS_TEST_PLAN])
     except Exception as _e:
         raise IssaiException(E_TCMS_FIND_OBJECT_FAILED, TCMS_CLASS_TEST_PLAN, str(_e))
 
@@ -1038,9 +1038,9 @@ def update_execution(execution_id, attr_values, comment):
     """
     try:
         _cxn = TcmsInterface.connection()
-        _cxn.exec.TestExecution.update(execution_id, attr_values)
+        _cxn.TestExecution.update(execution_id, attr_values)
         if len(comment) > 0:
-            _cxn.exec.TestExecution.add_comment(execution_id, comment)
+            _cxn.TestExecution.add_comment(execution_id, comment)
     except Exception as _e:
         raise IssaiException(E_TCMS_UPDATE_OBJECT_FAILED, TCMS_CLASS_TEST_EXECUTION, execution_id, str(_e))
 
@@ -1054,7 +1054,7 @@ def update_run(run_id, attr_values):
     """
     try:
         _cxn = TcmsInterface.connection()
-        _cxn.exec.TestRun.update(run_id, attr_values)
+        _cxn.TestRun.update(run_id, attr_values)
     except Exception as _e:
         raise IssaiException(E_TCMS_UPDATE_OBJECT_FAILED, TCMS_CLASS_TEST_RUN, run_id, str(_e))
 
@@ -1072,11 +1072,11 @@ def upload_entity_attachment(class_id, entity_id, file_name, file_contents):
     try:
         _cxn = TcmsInterface.connection()
         if class_id == TCMS_CLASS_ID_TEST_CASE:
-            _cxn.exec.TestCase.add_attachment(entity_id, file_name, file_contents)
+            _cxn.TestCase.add_attachment(entity_id, file_name, file_contents)
         elif class_id == TCMS_CLASS_ID_TEST_PLAN:
-            _cxn.exec.TestPlan.add_attachment(entity_id, file_name, file_contents)
+            _cxn.TestPlan.add_attachment(entity_id, file_name, file_contents)
         elif class_id == TCMS_CLASS_ID_TEST_RUN:
-            _cxn.exec.TestRun.add_attachment(entity_id, file_name, file_contents)
+            _cxn.TestRun.add_attachment(entity_id, file_name, file_contents)
         else:
             raise IssaiException(E_TCMS_ATTACHMENTS_NOT_SUPPORTED, tcms_class_name_for_id(class_id))
     except IssaiException:
@@ -1089,7 +1089,7 @@ def upload_entity_attachment(class_id, entity_id, file_name, file_contents):
 def _find_tcms_object(rpc_cxn, class_id, filter_attributes):
     """
     Reads TCMS object matching specified attributes from TCMS.
-    :param TCMS rpc_cxn: the XML-RPC connection handle
+    :_param tcms_api._ConnectionProxy rpc_cxn: the XML-RPC connection handle
     :param int class_id: the TCMS class ID
     :param dict filter_attributes: the filter attributes
     :returns: TCMS object; None, if no matching object is found
@@ -1108,7 +1108,7 @@ def _find_tcms_object(rpc_cxn, class_id, filter_attributes):
 def _find_tcms_objects(rpc_cxn, class_id, filter_attributes):
     """
     Reads TCMS objects matching specified attributes from TCMS.
-    :param TCMS rpc_cxn: the XML-RPC connection handle
+    :_param tcms_api._ConnectionProxy rpc_cxn: the XML-RPC connection handle
     :param int class_id: the TCMS class ID
     :param dict filter_attributes: the filter attributes
     :returns: TCMS objects found
@@ -1117,44 +1117,44 @@ def _find_tcms_objects(rpc_cxn, class_id, filter_attributes):
     """
     _objects = []
     if class_id == TCMS_CLASS_ID_BUILD:
-        _objects = rpc_cxn.exec.Build.filter(filter_attributes)
+        _objects = rpc_cxn.Build.filter(filter_attributes)
     elif class_id == TCMS_CLASS_ID_CATEGORY:
-        _objects = rpc_cxn.exec.Category.filter(filter_attributes)
+        _objects = rpc_cxn.Category.filter(filter_attributes)
     elif class_id == TCMS_CLASS_ID_CLASSIFICATION:
-        _objects = rpc_cxn.exec.Classification.filter(filter_attributes)
+        _objects = rpc_cxn.Classification.filter(filter_attributes)
     elif class_id == TCMS_CLASS_ID_COMPONENT:
-        _objects = rpc_cxn.exec.Component.filter(filter_attributes)
+        _objects = rpc_cxn.Component.filter(filter_attributes)
     elif class_id == TCMS_CLASS_ID_ENVIRONMENT:
         # not supported prior to TCMS server version 12.1
         # noinspection PyBroadException
         try:
-            _objects = rpc_cxn.exec.Environment.filter(filter_attributes)
+            _objects = rpc_cxn.Environment.filter(filter_attributes)
         except BaseException:
             return []
     elif class_id == TCMS_CLASS_ID_PLAN_TYPE:
-        _objects = rpc_cxn.exec.PlanType.filter(filter_attributes)
+        _objects = rpc_cxn.PlanType.filter(filter_attributes)
     elif class_id == TCMS_CLASS_ID_PRIORITY:
-        _objects = rpc_cxn.exec.Priority.filter(filter_attributes)
+        _objects = rpc_cxn.Priority.filter(filter_attributes)
     elif class_id == TCMS_CLASS_ID_PRODUCT:
-        _objects = rpc_cxn.exec.Product.filter(filter_attributes)
+        _objects = rpc_cxn.Product.filter(filter_attributes)
     elif class_id == TCMS_CLASS_ID_TAG:
-        _objects = rpc_cxn.exec.Tag.filter(filter_attributes)
+        _objects = rpc_cxn.Tag.filter(filter_attributes)
     elif class_id == TCMS_CLASS_ID_TEST_CASE:
-        _objects = rpc_cxn.exec.TestCase.filter(filter_attributes)
+        _objects = rpc_cxn.TestCase.filter(filter_attributes)
     elif class_id == TCMS_CLASS_ID_TEST_CASE_STATUS:
-        _objects = rpc_cxn.exec.TestCaseStatus.filter(filter_attributes)
+        _objects = rpc_cxn.TestCaseStatus.filter(filter_attributes)
     elif class_id == TCMS_CLASS_ID_TEST_EXECUTION:
-        _objects = rpc_cxn.exec.TestExecution.filter(filter_attributes)
+        _objects = rpc_cxn.TestExecution.filter(filter_attributes)
     elif class_id == TCMS_CLASS_ID_TEST_EXECUTION_STATUS:
-        _objects = rpc_cxn.exec.TestExecutionStatus.filter(filter_attributes)
+        _objects = rpc_cxn.TestExecutionStatus.filter(filter_attributes)
     elif class_id == TCMS_CLASS_ID_TEST_PLAN:
-        _objects = rpc_cxn.exec.TestPlan.filter(filter_attributes)
+        _objects = rpc_cxn.TestPlan.filter(filter_attributes)
     elif class_id == TCMS_CLASS_ID_TEST_RUN:
-        _objects = rpc_cxn.exec.TestRun.filter(filter_attributes)
+        _objects = rpc_cxn.TestRun.filter(filter_attributes)
     elif class_id == TCMS_CLASS_ID_USER:
-        _objects = rpc_cxn.exec.User.filter(filter_attributes)
+        _objects = rpc_cxn.User.filter(filter_attributes)
     elif class_id == TCMS_CLASS_ID_VERSION:
-        _objects = rpc_cxn.exec.Version.filter(filter_attributes)
+        _objects = rpc_cxn.Version.filter(filter_attributes)
     else:
         _msg = localized_message(E_TCMS_INVALID_CLASS_ID, class_id)
         raise IssaiException(E_INTERNAL_ERROR, _msg)
@@ -1165,7 +1165,7 @@ def _find_tcms_objects(rpc_cxn, class_id, filter_attributes):
 def _read_objects_by_name(rpc_cxn, product, class_id, name_attribute, object_names):
     """
     Reads all objects with specified TCMS class and IDs.
-    :param TCMS rpc_cxn: the XML-RPC connection handle
+    :_param tcms_api._ConnectionProxy rpc_cxn: the XML-RPC connection handle
     :param dict product: the TCMS product
     :param int class_id: the TCMS class ID
     :param str name_attribute: the attribute that holds the name of objects of specified TCMS class
@@ -1179,43 +1179,43 @@ def _read_objects_by_name(rpc_cxn, product, class_id, name_attribute, object_nam
         if len(_versions) == 0:
             return {}
         _filter[f'{ATTR_VERSION}__in'] = [_v[ATTR_ID] for _v in _versions]
-        _objects = rpc_cxn.exec.Build.filter(_filter)
+        _objects = rpc_cxn.Build.filter(_filter)
     elif class_id == TCMS_CLASS_ID_CATEGORY:
         _filter[ATTR_PRODUCT] = product[ATTR_ID]
-        _objects = rpc_cxn.exec.Category.filter(_filter)
+        _objects = rpc_cxn.Category.filter(_filter)
     elif class_id == TCMS_CLASS_ID_CLASSIFICATION:
-        _objects = rpc_cxn.exec.Classification.filter(_filter)
+        _objects = rpc_cxn.Classification.filter(_filter)
     elif class_id == TCMS_CLASS_ID_COMPONENT:
         _filter[ATTR_PRODUCT] = product[ATTR_ID]
-        _objects = rpc_cxn.exec.Component.filter(_filter)
+        _objects = rpc_cxn.Component.filter(_filter)
     elif class_id == TCMS_CLASS_ID_ENVIRONMENT:
-        # _objects = _cxn.exec.Environment.filter(_filter)
+        # _objects = _cxn.Environment.filter(_filter)
         _objects = []
     elif class_id == TCMS_CLASS_ID_PLAN_TYPE:
-        _objects = rpc_cxn.exec.PlanType.filter(_filter)
+        _objects = rpc_cxn.PlanType.filter(_filter)
     elif class_id == TCMS_CLASS_ID_PRIORITY:
-        _objects = rpc_cxn.exec.Priority.filter(_filter)
+        _objects = rpc_cxn.Priority.filter(_filter)
     elif class_id == TCMS_CLASS_ID_PRODUCT:
-        _objects = rpc_cxn.exec.Product.filter(_filter)
+        _objects = rpc_cxn.Product.filter(_filter)
     elif class_id == TCMS_CLASS_ID_TAG:
-        _objects = rpc_cxn.exec.Tag.filter(_filter)
+        _objects = rpc_cxn.Tag.filter(_filter)
     elif class_id == TCMS_CLASS_ID_TEST_CASE:
-        _objects = rpc_cxn.exec.TestCase.filter(_filter)
+        _objects = rpc_cxn.TestCase.filter(_filter)
     elif class_id == TCMS_CLASS_ID_TEST_CASE_STATUS:
-        _objects = rpc_cxn.exec.TestCaseStatus.filter(_filter)
+        _objects = rpc_cxn.TestCaseStatus.filter(_filter)
     elif class_id == TCMS_CLASS_ID_TEST_EXECUTION:
-        _objects = rpc_cxn.exec.TestExecution.filter(_filter)
+        _objects = rpc_cxn.TestExecution.filter(_filter)
     elif class_id == TCMS_CLASS_ID_TEST_EXECUTION_STATUS:
-        _objects = rpc_cxn.exec.TestExecutionStatus.filter(_filter)
+        _objects = rpc_cxn.TestExecutionStatus.filter(_filter)
     elif class_id == TCMS_CLASS_ID_TEST_PLAN:
-        _objects = rpc_cxn.exec.TestPlan.filter(_filter)
+        _objects = rpc_cxn.TestPlan.filter(_filter)
     elif class_id == TCMS_CLASS_ID_TEST_RUN:
-        _objects = rpc_cxn.exec.TestRun.filter(_filter)
+        _objects = rpc_cxn.TestRun.filter(_filter)
     elif class_id == TCMS_CLASS_ID_USER:
-        _objects = rpc_cxn.exec.User.filter(_filter)
+        _objects = rpc_cxn.User.filter(_filter)
     elif class_id == TCMS_CLASS_ID_VERSION:
         _filter[ATTR_PRODUCT] = product[ATTR_ID]
-        _objects = rpc_cxn.exec.Version.filter(_filter)
+        _objects = rpc_cxn.Version.filter(_filter)
     else:
         _msg = localized_message(E_TCMS_INVALID_CLASS_ID, class_id)
         raise IssaiException(E_INTERNAL_ERROR, _msg)

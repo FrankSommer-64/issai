@@ -51,6 +51,13 @@ class IssaiException(Exception):
         """
         super().__init__(exception_id, args)
 
+    def id(self):
+        """
+        :returns: exception ID
+        :rtype: str
+        """
+        return self.args[0]
+
     def __str__(self):
         """
         Converts this exception to a localized string.

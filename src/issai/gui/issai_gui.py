@@ -42,42 +42,42 @@ import sys
 from PySide6.QtCore import QDir
 from PySide6.QtWidgets import QApplication, QMessageBox
 
+from issai.core import ISSAI_IMAGES_DIR
 from issai.core.messages import (localized_label, localized_message, I_GUI_CONFIG_PROBLEM, I_GUI_CONFIG_WARNING,
-                                 L_MBOX_TITLE_INFO, L_MBOX_TITLE_WARNING)
-from issai.core.config import load_runtime_configs, master_config
+                                 I_GUI_CREATE_CONFIG_ROOT, L_MBOX_TITLE_INFO, L_MBOX_TITLE_WARNING)
+from issai.core.config import config_root_path, create_config_root, load_runtime_configs
+from issai.core.issai_exception import IssaiException
 from issai.gui.mainwindow import MainWindow
 
 
-_IMAGES_DIR = 'images'
-
-
 def gui_main():
+    """
+    Main function for Issai GUI.
+    """
     try:
-        _images_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), _IMAGES_DIR)
-        QDir.addSearchPath(_IMAGES_DIR, _images_path)
+        _images_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ISSAI_IMAGES_DIR)
+        QDir.addSearchPath(ISSAI_IMAGES_DIR, _images_path)
         app = QApplication(sys.argv)
-        _master_config = master_config()
+        try:
+            _config_root_path = config_root_path()
+        except IssaiException as _e:
+            _buttons = QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel
+            _text = localized_message(I_GUI_CREATE_CONFIG_ROOT)
+            _rc = _show_mbox(QMessageBox.Icon.Information, L_MBOX_TITLE_INFO, str(_e), _text, _buttons)
+            if _rc == QMessageBox.StandardButton.Cancel:
+                return
+            create_config_root()
+        _master_config, _product_configs, _problems, _warnings = load_runtime_configs()
         if _master_config is not None:
             os.environ.update(_master_config.environment_variables())
-        _product_configs, _problems, _warnings = load_runtime_configs()
         if len(_problems) > 0 or len(_warnings) > 0:
             if len(_problems) > 0:
-                _icon = QMessageBox.Icon.Warning
-                _title_id = L_MBOX_TITLE_WARNING
-                _info_text_id = I_GUI_CONFIG_PROBLEM
                 _text = '%s%s%s%s' % (os.linesep.join(_problems), os.linesep, os.linesep, os.linesep.join(_warnings))
+                _show_mbox(QMessageBox.Icon.Warning, L_MBOX_TITLE_WARNING, I_GUI_CONFIG_PROBLEM,
+                           _text, QMessageBox.StandardButton.Ok)
             else:
-                _icon = QMessageBox.Icon.Information
-                _title_id = L_MBOX_TITLE_INFO
-                _info_text_id = I_GUI_CONFIG_WARNING
-                _text = os.linesep.join(_warnings)
-            mbox = QMessageBox()
-            mbox.setIcon(_icon)
-            mbox.setWindowTitle(localized_label(_title_id))
-            mbox.setText(localized_message(_info_text_id))
-            mbox.setInformativeText(_text)
-            mbox.setStandardButtons(QMessageBox.StandardButton.Ok)
-            mbox.exec()
+                _show_mbox(QMessageBox.Icon.Information, L_MBOX_TITLE_INFO, I_GUI_CONFIG_WARNING,
+                           os.linesep.join(_warnings), QMessageBox.StandardButton.Ok)
         main_win = MainWindow(_product_configs)
         main_win.show()
         app.aboutToQuit.connect(main_win.save_settings)
@@ -86,6 +86,19 @@ def gui_main():
         print()
         print(e)
         sys.exit(1)
+
+
+def _show_mbox(icon, title_id, info_text_id, text, buttons):
+    """
+    Shows message box.
+    """
+    _mbox = QMessageBox()
+    _mbox.setIcon(icon)
+    _mbox.setWindowTitle(localized_label(title_id))
+    _mbox.setText(localized_message(info_text_id))
+    _mbox.setInformativeText(text)
+    _mbox.setStandardButtons(buttons)
+    return _mbox.exec()
 
 
 if __name__ == "__main__":
