@@ -441,7 +441,10 @@ class EditorSystemGroupTab(EditorGroupTab):
         if _attr_type == META_TYPE_BOOLEAN:
             _attr_widget = QCheckBox()
             if attr_value is not None:
-                _attr_widget.setChecked(attr_value)
+                if isinstance(attr_value, tomlkit.items.Bool):
+                    _attr_widget.setChecked(attr_value.unwrap())
+                elif isinstance(attr_value, str):
+                    _attr_widget.setChecked(bool(attr_value))
         elif _attr_type.startswith(META_TYPE_ENUM):
             _enum_values = _attr_type[2:].split(',')
             _attr_widget = QComboBox()
@@ -892,9 +895,9 @@ class ConfigEditor(QDialog):
                         if isinstance(_v, tomlkit.items.Table):
                             _f.write(f'[{_k}]{os.linesep}')
                             for _ak, _av in _v.items():
-                                _f.write(f'{_ak} = {_av.unwrap()}{os.linesep}')
+                                _f.write(f'{_ak} = {_python_value_of(_av)}{os.linesep}')
                         else:
-                            _f.write(f'{_k} = {_v.unwrap()}{os.linesep}')
+                            _f.write(f'{_k} = {_python_value_of(_v)}{os.linesep}')
                 else:
                     # plain TOML (issai configuration files)
                     tomlkit.dump(config_data, _f)
@@ -1006,6 +1009,17 @@ def sorted_metadata_items(metadata):
     return _sorted_items
 
 
+def _python_value_of(toml_value):
+    """
+    :param tomlkit.items.Item toml_value: the TOML value
+    :returns: Python value of specified TOML value
+    """
+    try:
+        return toml_value.unwrap()
+    except BaseException:
+        return toml_value
+
+
 def _toml_value_of(widget, attr_desc):
     """
     :param QWidget widget: the widget holding the GUI value
@@ -1013,7 +1027,7 @@ def _toml_value_of(widget, attr_desc):
     :returns: TOML value of specified widget
     """
     if isinstance(widget, QCheckBox):
-        return tomlkit.boolean(widget.isChecked())
+        return tomlkit.boolean(str(widget.isChecked()).lower())
     if isinstance(widget, QComboBox):
         return tomlkit.string(widget.currentText())
     if isinstance(widget, QLineEdit):
@@ -1108,7 +1122,12 @@ _META_XML_RPC = {META_KEY_ALLOWED_IN_MASTER: True,
                                    META_KEY_ATTR_QUALIFIED_NAME: CFG_PAR_TCMS_XML_RPC_PASSWORD,
                                    META_KEY_ATTR_TYPE: META_TYPE_STR_PASSWORD,
                                    META_KEY_ATTR_DEFAULT_VALUE: '',
-                                   META_KEY_OPT: False}
+                                   META_KEY_OPT: False},
+                                  {META_KEY_ATTR_NAME: CFG_PAR_TCMS_XML_RPC_USE_KERBEROS[len(CFG_GROUP_TCMS)+1:],
+                                   META_KEY_ATTR_QUALIFIED_NAME: CFG_PAR_TCMS_XML_RPC_USE_KERBEROS,
+                                   META_KEY_ATTR_TYPE: META_TYPE_BOOLEAN,
+                                   META_KEY_ATTR_DEFAULT_VALUE: False,
+                                   META_KEY_OPT: True}
                                   ]
                  }
 

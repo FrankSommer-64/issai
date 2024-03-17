@@ -66,8 +66,8 @@ def gui_main():
             _rc = _show_mbox(QMessageBox.Icon.Information, L_MBOX_TITLE_INFO, str(_e), _text, _buttons)
             if _rc == QMessageBox.StandardButton.Cancel:
                 return
-            create_config_root()
-        _master_config, _product_configs, _problems, _warnings = load_runtime_configs()
+            _config_root_path = create_config_root()
+        _master_config, _product_configs, _problems, _warnings = load_runtime_configs(_config_root_path)
         if _master_config is not None:
             os.environ.update(_master_config.environment_variables())
         if len(_problems) > 0 or len(_warnings) > 0:

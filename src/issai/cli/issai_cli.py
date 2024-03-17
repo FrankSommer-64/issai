@@ -42,7 +42,7 @@ from issai.core import *
 from issai.cli.common import (CLI_ACTION_EXPORT, CLI_ACTION_IMPORT, CLI_ACTION_RUN, CLI_ENTITY_REF_KIND_FILE,
                               detail_action_for_export, detail_action_for_import, detail_action_for_run,
                               options_for, parse_arguments_for_action)
-from issai.core.config import master_config, product_config
+from issai.core.config import config_root_path, master_config, product_config
 from issai.core.exporter import export_case, export_plan, export_product
 from issai.core.importer import import_file
 from issai.core.runner import run_offline_plan, run_tcms_plan
@@ -59,12 +59,13 @@ def export_main():
         _options = options_for(_args, _action)
         _options[OPTION_VERSION] = _action.version()
         _options[OPTION_BUILD] = _action.build()
-        _master_cfg = master_config()
+        _config_path = config_root_path()
+        _master_cfg = master_config(_config_path)
         _task_monitor = TaskMonitor()
         _entity_type = _action.entity_type()
         _ref_kind = _action.entity_ref_kind()
         _output_path = os.path.abspath(_args.output_path)
-        _local_config = product_config(_action.product_name(), _master_cfg)
+        _local_config = product_config(_config_path, _action.product_name(), _master_cfg)
         if _entity_type == ENTITY_TYPE_PRODUCT:
             _result = export_product(_action.product_name(), _options, _local_config, _output_path, _task_monitor)
         elif _entity_type == ENTITY_TYPE_PLAN:
@@ -87,13 +88,14 @@ def import_main():
         _options = options_for(_args, _action)
         _options[OPTION_VERSION] = _action.version()
         _options[OPTION_BUILD] = _action.build()
-        _master_cfg = master_config()
+        _config_path = config_root_path()
+        _master_cfg = master_config(_config_path)
         _task_monitor = TaskMonitor()
         _entity_type = _action.entity_type()
         _ref_kind = _action.entity_ref_kind()
         _input_file_path = os.path.abspath(_args.input_file)
         _output_path = os.path.abspath(_args.output_path)
-        _local_config = product_config(_action.product_name(), _master_cfg)
+        _local_config = product_config(_config_path, _action.product_name(), _master_cfg)
         _result = import_file(_action.entity(), _options, _local_config, _input_file_path, _task_monitor)
     except Exception as e:
         print()
@@ -111,17 +113,18 @@ def run_main():
         _options = options_for(_args, _action)
         _options[OPTION_VERSION] = _action.version()
         _options[OPTION_BUILD] = _action.build()
-        _master_cfg = master_config()
+        _config_path = config_root_path()
+        _master_cfg = master_config(_config_path)
         _task_monitor = TaskMonitor()
         _ref_kind = _action.entity_ref_kind()
         if _ref_kind == CLI_ENTITY_REF_KIND_FILE:
             # test plan specified by name of file containing exported data
             _attachment_path = os.path.join(os.path.dirname(_action.entity_ref()), ATTACHMENTS_ROOT_DIR)
-            _local_config = product_config(_action.product_name(), _master_cfg)
+            _local_config = product_config(_config_path, _action.product_name(), _master_cfg)
             _result = run_offline_plan(_action.entity(), _options, _local_config, _attachment_path, _task_monitor)
         else:
             # test plan specified by TCMS ID or name
-            _local_config = product_config(_action.product_name(), _master_cfg)
+            _local_config = product_config(_config_path, _action.product_name(), _master_cfg)
             _result = run_tcms_plan(_action.entity(), _options, _local_config, _task_monitor)
     except Exception as e:
         print()

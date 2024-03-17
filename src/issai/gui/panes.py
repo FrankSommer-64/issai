@@ -44,7 +44,7 @@ from PySide6.QtWidgets import (QFileDialog, QFrame, QGroupBox, QWidget, QLabel, 
                                QGridLayout, QFormLayout, QCheckBox)
 from PySide6.QtCore import Qt, QDir
 
-from issai.core.config import master_config, product_config
+from issai.core.config import config_root_path, master_config, product_config
 from issai.core.tcms import *
 from issai.gui.dialogs import ProgressDialog
 from issai.gui.settings import GuiSettings
@@ -194,7 +194,7 @@ class FileActionPane(QGroupBox):
                                                        T_OPT_IMP_ATTACHMENTS, False)
             if self.__entity_type in (ENTITY_TYPE_PRODUCT, ENTITY_TYPE_PLAN):
                 self.__env_option = _create_option(_options_box_layout, L_INCLUDE_ENVIRONMENTS,
-                                                           T_OPT_IMP_ENVIRONMENTS, False)
+                                                   T_OPT_IMP_ENVIRONMENTS, False)
             if self.__entity_type in (ENTITY_TYPE_CASE, ENTITY_TYPE_PLAN):
                 self.__auto_create_option = _create_option(_options_box_layout, L_AUTO_CREATE_MASTER_DATA,
                                                            T_OPT_AUTO_CREATE_MASTER_DATA, False)
@@ -279,8 +279,9 @@ class FileActionPane(QGroupBox):
                                         localized_message(I_GUI_NO_BUILD_SELECTED), QMessageBox.StandardButton.Ok)
                 return
             try:
+                _config_path = config_root_path()
                 _product = self.__entity_data.objects_of_class(TCMS_CLASS_ID_PRODUCT)
-                _local_cfg = product_config(_product[ATTR_NAME], master_config())
+                _local_cfg = product_config(_config_path, _product[ATTR_NAME], master_config(_config_path))
             except IssaiException as _e:
                 QMessageBox.critical(self, localized_label(L_MBOX_TITLE_ERROR), str(_e), QMessageBox.StandardButton.Ok)
                 return
@@ -617,7 +618,7 @@ class TcmsActionPane(QGroupBox):
         if _product is None and _version is None:
             QMessageBox.critical(self, localized_label(L_MBOX_TITLE_ERROR),
                                  localized_message(E_GUI_NEITHER_PRODUCT_NOR_VERSION_SELECTED),
-                                  QMessageBox.StandardButton.Ok)
+                                 QMessageBox.StandardButton.Ok)
             return
         if _product is None:
             QMessageBox.critical(self, localized_label(L_MBOX_TITLE_ERROR),
@@ -736,7 +737,8 @@ class TcmsActionPane(QGroupBox):
                                     localized_message(I_GUI_NO_BUILD_SELECTED), QMessageBox.StandardButton.Ok)
             return
         try:
-            _local_cfg = product_config(self.__product_combo.currentText(), master_config())
+            _config_path = config_root_path()
+            _local_cfg = product_config(_config_path, self.__product_combo.currentText(), master_config(_config_path))
         except IssaiException as _e:
             QMessageBox.critical(self, localized_label(L_MBOX_TITLE_ERROR), str(_e), QMessageBox.StandardButton.Ok)
             return
