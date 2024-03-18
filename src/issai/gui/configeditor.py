@@ -385,7 +385,9 @@ class EditorSystemGroupTab(EditorGroupTab):
             if self.attr_descriptors.get(_attr_name)[META_KEY_OPT]:
                 _remove_button = self.create_remove_attr_button(_attr_name, self.remove_system_attr)
                 self.attr_table.setCellWidget(_row, 0, _remove_button)
-            self.attr_table.setCellWidget(_row, 1, QLabel(_attr_name))
+            _name_label = QLabel(_attr_name)
+            _name_label.setToolTip(localized_label(self.attr_descriptors[_attr_name][META_KEY_COMMENT]))
+            self.attr_table.setCellWidget(_row, 1, _name_label)
             self.attr_widgets[_attr_name] = self._attr_value_widget_for(_attr_name, _attr_value)
             self.attr_table.setCellWidget(_row, 2, self.attr_widgets[_attr_name])
             _row += 1
@@ -441,8 +443,8 @@ class EditorSystemGroupTab(EditorGroupTab):
         if _attr_type == META_TYPE_BOOLEAN:
             _attr_widget = QCheckBox()
             if attr_value is not None:
-                if isinstance(attr_value, tomlkit.items.Bool):
-                    _attr_widget.setChecked(attr_value.unwrap())
+                if isinstance(attr_value, (bool, tomlkit.items.Bool)):
+                    _attr_widget.setChecked(_python_value_of(attr_value))
                 elif isinstance(attr_value, str):
                     _attr_widget.setChecked(bool(attr_value))
         elif _attr_type.startswith(META_TYPE_ENUM):
@@ -492,7 +494,12 @@ class EditorSystemGroupTab(EditorGroupTab):
         _displayed_attrs = self.attribute_names()
         _hidden_attrs = _supported_attrs - _displayed_attrs
         selection_combo.clear()
-        selection_combo.addItems(sorted(_hidden_attrs))
+        _index = 0
+        for _attr_name in sorted(_hidden_attrs):
+            selection_combo.addItem(_attr_name)
+            _tool_tip = localized_label(self.attr_descriptors[_attr_name][META_KEY_COMMENT])
+            selection_combo.setItemData(_index, _tool_tip, Qt.ItemDataRole.ToolTipRole)
+            _index += 1
         selection_combo.setCurrentIndex(-1)
 
     def _add_attr_clicked(self):
@@ -511,7 +518,9 @@ class EditorSystemGroupTab(EditorGroupTab):
         _new_row_count = _row + 1 if _hidden_attr_count == 1 else _row + 2
         self.attr_table.setRowCount(_new_row_count)
         self.attr_table.setCellWidget(_row, 0, _remove_button)
-        self.attr_table.setCellWidget(_row, 1, QLabel(_attr_name))
+        _name_label = QLabel(_attr_name)
+        _name_label.setToolTip(localized_label(self.attr_descriptors[_attr_name][META_KEY_COMMENT]))
+        self.attr_table.setCellWidget(_row, 1, _name_label)
         self.attr_table.setCellWidget(_row, 2, self.attr_widgets[_attr_name])
         if _hidden_attr_count > 1:
             _attr_selection_combo = self._create_attr_selection_combo()
@@ -746,7 +755,6 @@ class ConfigEditor(QDialog):
         for _k, _v in self.__config_data.items():
             if isinstance(_v, tomlkit.items.Table):
                 for _ak, _av in _v.items():
-                    _guis = _gui_values[qualified_attr_name_for(_k, _ak)]
                     if _av != _gui_values[qualified_attr_name_for(_k, _ak)]:
                         return True
             else:
@@ -861,7 +869,10 @@ class ConfigEditor(QDialog):
                                 _m = re.match(_attr_pattern, _line)
                                 if _m:
                                     _attr_key = tomlkit.key(_attr_name)
-                                    _attr = tomlkit.string(_m.group(1))
+                                    if _a[META_KEY_ATTR_TYPE] == META_TYPE_BOOLEAN:
+                                        _attr = tomlkit.boolean(_m.group(1).lower())
+                                    else:
+                                        _attr = tomlkit.string(_m.group(1))
                                     _qualified_attr_name = qualified_attr_name_for(_current_group_name, _attr_name)
                                     _comment_prefix = f'a{_qualified_attr_name} '
                                     if _current_group is None:
@@ -954,14 +965,15 @@ class ConfigEditor(QDialog):
         return _data
 
 
-def master_config_editor(parent):
+def master_config_editor(parent, config_path):
     """
     :param QWidget parent: the parent widget
+    :param str config_path: the Issai configuration root path
     :returns: Dialog window to edit Issai master configuration file
     :rtype: ConfigEditor
     :raises IssaiException: if the editor can't be created
     """
-    _master_config_file_path = os.path.join(full_path_of(ISSAI_CONFIG_PATH), ISSAI_MASTER_CONFIG_FILE_NAME)
+    _master_config_file_path = os.path.join(config_path, ISSAI_MASTER_CONFIG_FILE_NAME)
     return ConfigEditor(parent, localized_label(L_DLG_TITLE_MASTER_CONFIG_EDITOR), config_meta_data(),
                         _master_config_file_path, _FILE_TYPE_MASTER_CONFIG)
 
@@ -1014,6 +1026,7 @@ def _python_value_of(toml_value):
     :param tomlkit.items.Item toml_value: the TOML value
     :returns: Python value of specified TOML value
     """
+    # noinspection PyBroadException
     try:
         return toml_value.unwrap()
     except BaseException:
@@ -1075,7 +1088,7 @@ def _gui_value_of(toml_value):
     if isinstance(toml_value, tomlkit.items.InlineTable):
         _items = ','.join([f'{_k}={_v}' for _k, _v in toml_value.unwrap().items()])
         return f'{{{_items}}}'
-    return toml_value.unwrap()
+    return _python_value_of(toml_value)
 
 
 _MINIMUM_EDITOR_HEIGHT = 400
@@ -1112,21 +1125,25 @@ _META_XML_RPC = {META_KEY_ALLOWED_IN_MASTER: True,
                                    META_KEY_ATTR_QUALIFIED_NAME: CFG_PAR_TCMS_XML_RPC_URL,
                                    META_KEY_ATTR_TYPE: META_TYPE_STR_NORMAL,
                                    META_KEY_ATTR_DEFAULT_VALUE: 'https://localhost/xml-rpc/',
+                                   META_KEY_COMMENT: L_CFG_PAR_TCMS_XML_RPC_URL,
                                    META_KEY_OPT: False},
                                   {META_KEY_ATTR_NAME: CFG_PAR_TCMS_XML_RPC_USERNAME[len(CFG_GROUP_TCMS)+1:],
                                    META_KEY_ATTR_QUALIFIED_NAME: CFG_PAR_TCMS_XML_RPC_USERNAME,
                                    META_KEY_ATTR_TYPE: META_TYPE_STR_NORMAL,
                                    META_KEY_ATTR_DEFAULT_VALUE: '',
+                                   META_KEY_COMMENT: L_CFG_PAR_TCMS_XML_RPC_USERNAME,
                                    META_KEY_OPT: False},
                                   {META_KEY_ATTR_NAME: CFG_PAR_TCMS_XML_RPC_PASSWORD[len(CFG_GROUP_TCMS)+1:],
                                    META_KEY_ATTR_QUALIFIED_NAME: CFG_PAR_TCMS_XML_RPC_PASSWORD,
                                    META_KEY_ATTR_TYPE: META_TYPE_STR_PASSWORD,
                                    META_KEY_ATTR_DEFAULT_VALUE: '',
+                                   META_KEY_COMMENT: L_CFG_PAR_TCMS_XML_RPC_PASSWORD,
                                    META_KEY_OPT: False},
                                   {META_KEY_ATTR_NAME: CFG_PAR_TCMS_XML_RPC_USE_KERBEROS[len(CFG_GROUP_TCMS)+1:],
                                    META_KEY_ATTR_QUALIFIED_NAME: CFG_PAR_TCMS_XML_RPC_USE_KERBEROS,
                                    META_KEY_ATTR_TYPE: META_TYPE_BOOLEAN,
                                    META_KEY_ATTR_DEFAULT_VALUE: False,
+                                   META_KEY_COMMENT: L_CFG_PAR_TCMS_XML_RPC_USE_KERBEROS,
                                    META_KEY_OPT: True}
                                   ]
                  }

@@ -115,6 +115,7 @@ l-attribute Attribute
 l-auto-create-master-data Create missing master data
 l-cancel Cancel
 l-close Close
+l-create Create
 l-dry-run Dry run
 l-entity Entity
 l-export-entity Export {0}
@@ -136,14 +137,17 @@ l-ok OK
 l-options Options
 l-output-path Output path
 l-product Product
+l-product-name Product name
 l-recent Recent
 l-remove-group Remove group
+l-repository-path Repository path
 l-run Run
 l-run-descendant-plans Run descendant test plans
 l-run-entity Run {0}
 l-save Save
 l-select Select
 l-select-group Select group
+l-select-path Select path
 l-store-result Store result in TCMS
 l-summary Summary
 l-test-case Test Case
@@ -162,11 +166,13 @@ l-dlg-title-export-product Export product {0}
 l-dlg-title-import-file Import {0}
 l-dlg-title-lru-entities Recently used test entities
 l-dlg-title-master-config-editor Issai master configuration
+l-dlg-title-first-product No products configured
 l-dlg-title-product-config-editor Product configuration [{0}]
 l-dlg-title-product-selection Select product
 l-dlg-title-run-plan Run test plan
 l-dlg-title-select-export-output-path Select output directory for export
 l-dlg-title-select-import-file Select import file
+l-dlg-title-select-product-repo-path Select product repository path
 l-dlg-title-xml-rpc-editor XML RPC credentials
 l-main-win-default-title Issai
 l-mbox-info-discard-changes Discard changes ?
@@ -217,6 +223,10 @@ l-cfg-par-tcms-label-scheme Labeling scheme for test runs and executions: 'none'
 l-cfg-par-tcms-execution-states Mapping of standard test execution statuses to customized names
 l-cfg-par-tcms-result-attachments Regular expression patterns for attachment files to be uploaded after test execution
 l-cfg-par-tcms-spec-attachments Regular expression patterns for attachment files to be downloaded prior to test execution
+l-cfg-par-tcms-xml-rpc-password The password for the TCMS username to use for connections to TCMS.
+l-cfg-par-tcms-xml-rpc-url The TCMS server URL, must be terminated by slash.
+l-cfg-par-tcms-xml-rpc-username The TCMS username to use for connections to TCMS.
+l-cfg-par-tcms-xml-rpc-use-kerberos Indicates whether to use Kerberos instead password authentication for connections to TCMS.
 l-cfg-par-testing-root-path Root path for intermediate files of all test activities on local machine
 
 t-opt-auto-create-master-data Check to create missing master data in TCMS automatically
@@ -250,6 +260,7 @@ i-gui-attribute-exists Attribute {0} already defined.
 i-gui-config-problem Problems in Issai configuration detected:
 i-gui-config-warning Warnings in Issai configuration detected:
 i-gui-create-config-root OK to create Issai configuration directory, Cancel to terminate application.
+i-gui-create-first-product Do you want to create an initial product configuration ?
 i-gui-export-case-successful Test case {0} successfully exported.
 i-gui-export-plan-successful Test plan {0} successfully exported.
 i-gui-export-product-successful Product {0} successfully exported.

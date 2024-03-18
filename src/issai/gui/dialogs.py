@@ -38,10 +38,11 @@ Dialog windows for the Issai GUI.
 
 import math
 import os.path
+from pathlib import Path
 import time
 
 from PySide6.QtWidgets import (QWidget, QLabel, QComboBox, QProgressBar, QListWidget, QDialog, QFileDialog, QPushButton,
-                               QMessageBox, QGridLayout, QVBoxLayout, QGroupBox, QListWidgetItem)
+                               QMessageBox, QGridLayout, QVBoxLayout, QGroupBox, QListWidgetItem, QLineEdit)
 from PySide6.QtCore import qVersion, QDir, QThreadPool, Qt, QPoint
 from PySide6.QtGui import QPainter, QBrush, QColor, QPen, QRadialGradient, QPixmap
 
@@ -191,6 +192,80 @@ class IssaiProductSelectionDialog(QDialog):
         :rtype: str
         """
         return self.__products_combo_box.currentText()
+
+
+class NoProductConfiguredDialog(QDialog):
+    """
+    Dialog window to enter name and repository path for the first product.
+    """
+    def __init__(self, parent):
+        """
+        Constructor.
+        :param QWidget parent: the parent widget
+        """
+        super().__init__(parent)
+        self.setWindowTitle(localized_label(L_DLG_TITLE_FIRST_PRODUCT))
+        _dlg_layout = QGridLayout()
+        _dlg_layout.setSpacing(10)
+        _info_label = QLabel(localized_label(I_GUI_CREATE_FIRST_PRODUCT))
+        _dlg_layout.addWidget(_info_label, 0, 0, 1, 2)
+        _products_name_label = QLabel(localized_label(L_PRODUCT_NAME))
+        _products_name_label.setStyleSheet(_STYLE_BOLD_TEXT)
+        _dlg_layout.addWidget(_products_name_label, 1, 0)
+        self.__product_name = QLineEdit()
+        _dlg_layout.addWidget(self.__product_name, 1, 1)
+        _repo_path_label = QLabel(localized_label(L_REPOSITORY_PATH))
+        _repo_path_label.setStyleSheet(_STYLE_BOLD_TEXT)
+        _dlg_layout.addWidget(_repo_path_label, 2, 0)
+        self.__path_selection_button = QPushButton(localized_label(L_SELECT_PATH))
+        self.__path_selection_button.clicked.connect(self.select_path)
+        _dlg_layout.addWidget(self.__path_selection_button, 2, 1)
+        self.__create_button = QPushButton(localized_label(L_CREATE))
+        self.__create_button.setStyleSheet(_STYLE_BOLD_TEXT)
+        self.__create_button.clicked.connect(self.create_product)
+        _dlg_layout.addWidget(self.__create_button, 3, 0)
+        _cancel_button = QPushButton(localized_label(L_CANCEL))
+        _cancel_button.setStyleSheet(_STYLE_BOLD_TEXT)
+        _cancel_button.clicked.connect(self.reject)
+        _dlg_layout.addWidget(_cancel_button, 3, 1)
+        self.setLayout(_dlg_layout)
+
+    def selected_product_name(self):
+        """
+        :returns: product name
+        :rtype: str
+        """
+        return self.__product_name.text()
+
+    def selected_repository_path(self):
+        """
+        :returns: Issai name of selected product
+        :rtype: str
+        """
+        return self.__path_selection_button.text()
+
+    def select_path(self):
+        """
+        Called when path selection button has been clicked.
+        """
+        _dlg = QFileDialog(self, localized_label(L_DLG_TITLE_SELECT_PRODUCT_REPO_PATH), str(Path.home()))
+        _dlg.setOptions(QFileDialog.Option.DontUseNativeDialog)
+        _dlg.setFilter(QDir.AllDirs | QDir.Hidden)
+        _dlg.setAcceptMode(QFileDialog.AcceptMode.AcceptOpen)
+        _dlg.setFileMode(QFileDialog.FileMode.Directory)
+        if _dlg.exec():
+            self.__path_selection_button.setText(_dlg.selectedFiles()[0])
+        _dlg.close()
+
+    def create_product(self):
+        """
+        Called when create button has been clicked.
+        """
+        if len(self.__product_name.text()) == 0:
+            return
+        if self.__path_selection_button.text() == localized_label(L_SELECT_PATH):
+            return
+        self.accept()
 
 
 class ProgressDialog(QDialog):
@@ -363,7 +438,7 @@ def exception_box(icon, reason, question, buttons, default_button):
     """
     Creates and returns a message box in reaction to an exception.
     :param QMessageBox.Icon icon: the severity icon
-    :param Exception reason: the reason for the message box
+    :param BaseException reason: the reason for the message box
     :param str question: the localized question to ask
     :param QMessageBox.StandardButtons buttons: the buttons to choose from
     :param QMessageBox.StandardButton default_button: the default button

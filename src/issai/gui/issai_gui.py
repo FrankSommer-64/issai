@@ -78,7 +78,7 @@ def gui_main():
             else:
                 _show_mbox(QMessageBox.Icon.Information, L_MBOX_TITLE_INFO, I_GUI_CONFIG_WARNING,
                            os.linesep.join(_warnings), QMessageBox.StandardButton.Ok)
-        main_win = MainWindow(_product_configs)
+        main_win = MainWindow(_config_root_path, _product_configs)
         main_win.show()
         app.aboutToQuit.connect(main_win.save_settings)
         sys.exit(app.exec())

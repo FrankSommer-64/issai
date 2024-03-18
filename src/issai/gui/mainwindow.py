@@ -39,7 +39,7 @@ Main window of Issai GUI.
 import os.path
 
 from PySide6.QtGui import QAction
-from PySide6.QtWidgets import QApplication, QMainWindow, QMenuBar, QMessageBox, QWidget
+from PySide6.QtWidgets import QApplication, QDialog, QMainWindow, QMenuBar, QMessageBox, QWidget
 from tomlkit import load
 
 from issai.core import *
@@ -48,8 +48,8 @@ from issai.core.issai_exception import IssaiException
 from issai.core.messages import *
 from issai.core.resourcemanager import container_status
 from issai.core.tcms import find_tcms_objects
-from issai.core.util import full_path_of
-from issai.gui.dialogs import AboutDialog, IssaiProductSelectionDialog, select_entity_file, select_output_dir
+from issai.gui.dialogs import (AboutDialog, IssaiProductSelectionDialog, NoProductConfiguredDialog,
+                               exception_box, select_entity_file, select_output_dir)
 from issai.gui.panes import TcmsActionPane, FileActionPane
 from issai.gui.settings import GuiSettings
 from issai.gui.configeditor import master_config_editor, product_config_editor, xml_rpc_credentials_editor
@@ -59,12 +59,14 @@ class MainWindow(QMainWindow):
     """
     Main window.
     """
-    def __init__(self, local_config):
+    def __init__(self, config_path, local_config):
         """
         Constructor.
+        :param str config_path: the Issai configuration root path
         :param list local_config: information about products supported on local platform
         """
         super().__init__()
+        self.__config_path = config_path
         self.__local_config = local_config
         self.__settings = GuiSettings.load()
         self.setGeometry(self.__settings.win_geometry())
@@ -151,7 +153,7 @@ class MainWindow(QMainWindow):
         Update Issai default settings.
         """
         try:
-            _dlg = master_config_editor(self)
+            _dlg = master_config_editor(self, self.__config_path)
             _dlg.exec()
         except IssaiException as _e:
             pass
@@ -160,10 +162,30 @@ class MainWindow(QMainWindow):
         """
         Update Issai product settings.
         """
-        _products = [f for f in os.scandir(full_path_of(ISSAI_CONFIG_PATH)) if os.path.isdir(f)]
+        _products = [f for f in os.scandir(self.__config_path) if os.path.isdir(f)]
         if len(_products) == 0:
-            QMessageBox.information(self, localized_label(L_MBOX_TITLE_INFO), localized_label(I_NO_PRODUCTS),
-                                    QMessageBox.StandardButton.Ok)
+            _dlg = NoProductConfiguredDialog(self)
+            if _dlg.exec() == QDialog.DialogCode.Accepted:
+                _product_name = _dlg.selected_product_name()
+                _repo_path = _dlg.selected_repository_path()
+                # noinspection PyBroadException
+                try:
+                    _product_path = os.path.join(self.__config_path, _product_name)
+                    _product_config_file_path = os.path.join(_product_path, ISSAI_PRODUCT_CONFIG_FILE_NAME)
+                    os.makedirs(_product_path, 0o755, True)
+                    _my_path = os.path.dirname(__file__)
+                    _product_template = os.path.abspath(os.path.join(_my_path, '..', '..', '..', ISSAI_TEMPLATES_DIR,
+                                                                     ISSAI_PRODUCT_CONFIG_FILE_NAME))
+                    with open(_product_template, 'r') as _f:
+                        _template_data = _f.read()
+                    _template_data = _template_data.replace('%PRODUCTNAME%', _product_name)
+                    _template_data = _template_data.replace('%REPOSITORYPATH%', _repo_path)
+                    with open(_product_config_file_path, 'w') as _f:
+                        _f.write(_template_data)
+                except BaseException as _e:
+                    _mbox = exception_box(QMessageBox.Icon.Critical, _e, '',
+                                          QMessageBox.StandardButton.Ok, QMessageBox.StandardButton.Ok)
+                    _mbox.exec()
             return
         try:
             _dlg = product_config_editor(self, _products)

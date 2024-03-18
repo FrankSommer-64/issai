@@ -412,8 +412,8 @@ class LocalConfig(dict):
         :rtype: str|bool|dict|list
         """
         if dotted_key.find('.') < 0:
-            _val = self.get(dotted_key).unwrap()
-            return default_value if _val is None else _val
+            _val = self.get(dotted_key)
+            return default_value if _val is None else _val.unwrap()
         _node = self
         _key_parts = dotted_key.split('.')
         for _key_part in _key_parts:
