@@ -280,6 +280,7 @@ i-gui-progress-task-running Background task running...
 i-gui-progress-task-started Task started at {0}
 i-gui-progress-upload-file Uploaded attachment file {0} for {1} ID {2}
 w-gui-read-config-data-failed Could not read configuration data from file {0}. {1}.
+w-gui-write-config-loses-comments Writing configuration will lose comments currently present in file. Proceed ?
 w-gui-write-gui-configuration-failed Could not write GUI configuration to file {0}. {1}.
 
 e-run-case-script-missing No script defined for test case '{0}'.

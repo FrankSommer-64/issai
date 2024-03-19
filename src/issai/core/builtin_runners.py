@@ -80,7 +80,7 @@ def py_unit_test(runtime_env, venv_path, *modules):
                 _overall_rc = -1
             _overall_stdout = '%s%s' % (_overall_stdout, _result.stdout.decode('utf-8'))
             _overall_stderr = '%s%s' % (_overall_stderr, _result.stderr.decode('utf-8'))
-    if re.search('^FAILED', _overall_stderr, re.MULTILINE|re.DOTALL):
+    if re.search('^FAILED', _overall_stderr, re.MULTILINE | re.DOTALL):
         _overall_rc = -1
     return _overall_rc, _overall_stdout, _overall_stderr
 

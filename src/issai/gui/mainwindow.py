@@ -189,7 +189,8 @@ class MainWindow(QMainWindow):
             return
         try:
             _dlg = product_config_editor(self, _products)
-            _dlg.exec()
+            if _dlg is not None:
+                _dlg.exec()
         except IssaiException as _e:
             pass
 

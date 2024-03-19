@@ -128,7 +128,7 @@ def read_message_codes(file_path):
     _dup_ids = []
     _pattern = re.compile(MSG_CODE_DEF_PATTERN)
     _file_name = os.path.basename(file_path)
-    _rc = 0
+    _duplicates_status = 0
     with open(file_path, 'r') as _f:
         _lines = _f.readlines()
     _line_nr = 0
@@ -152,21 +152,23 @@ def read_message_codes(file_path):
     if len(_dup_codes) > 0:
         print(f'Duplicate message codes in file {_file_name}:')
         print('  %s' % ','.join(_dup_codes))
-        _rc = 1
+        _duplicates_status = 1
     if len(_dup_ids) > 0:
         print(f'Duplicate message IDs in file {_file_name}:')
         print('  %s' % ','.join(_dup_ids))
-        _rc = 1
-    return _rc, _msg_codes
+        _duplicates_status = 1
+    return _duplicates_status, _msg_codes
 
 
-def read_localized_messages(file_path, rc):
+def read_localized_messages(file_path, overall_status):
     """
     Reads all localized messages defined in specified file.
     :param str file_path: the file name including full path
+    :param int overall_status: the current overall status code
     :return: return code and all localized messages found; message ID as key, localized message text as value
     :rtype: tuple[int,dict]
     """
+    _duplicates_code = overall_status
     _msgs = {}
     _dup_ids = []
     _file_name = os.path.basename(file_path)
@@ -190,8 +192,8 @@ def read_localized_messages(file_path, rc):
     if len(_dup_ids) > 0:
         print(f'Duplicate message IDs in file {_file_name}:')
         print('  %s' % ','.join(_dup_ids))
-        rc = 1
-    return rc, _msgs
+        _duplicates_code = 1
+    return _duplicates_code, _msgs
 
 
 def check_localized_messages(messages, localized_messages, localized_messages_file_path, rc):

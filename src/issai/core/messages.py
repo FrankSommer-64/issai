@@ -374,6 +374,7 @@ I_GUI_PROGRESS_TASK_RUNNING = 'i-gui-progress-task-running'
 I_GUI_PROGRESS_TASK_STARTED = 'i-gui-progress-task-started'
 I_GUI_PROGRESS_UPLOAD_FILE = 'i-gui-progress-upload-file'
 W_GUI_READ_CONFIG_DATA_FAILED = 'w-gui-read-config-data-failed'
+W_GUI_WRITE_CONFIG_LOSES_COMMENTS = 'w-gui-write-config-loses-comments'
 W_GUI_WRITE_GUI_CONFIGURATION_FAILED = 'w-gui-write-gui-configuration-failed'
 
 # CLI

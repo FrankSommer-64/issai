@@ -39,8 +39,8 @@ Dialog window to edit configuration data based on TOML files.
 import tomlkit
 from PySide6.QtCore import QObject, Qt, Signal
 from PySide6.QtWidgets import (QTabWidget, QAbstractScrollArea, QGroupBox, QWidget, QLineEdit, QComboBox, QDialog,
-                               QHBoxLayout, QVBoxLayout, QPushButton, QMessageBox, QCheckBox, QSizePolicy, QMenu,
-                               QTableWidget, QHeaderView, QLabel)
+                               QHBoxLayout, QVBoxLayout, QPushButton, QMessageBox, QCheckBox, QSizePolicy,
+                               QTableWidget, QHeaderView, QLabel, QTabBar, QStyle)
 
 from issai.core.config import *
 from issai.core.tcms import *
@@ -65,16 +65,35 @@ class EditorTabFolder(QTabWidget):
         self.__addition_tab = None
         self.__signals = EditorSignals()
         self.setStyleSheet(_TAB_FOLDER_STYLE)
+        self.setTabsClosable(True)
+        self.tabCloseRequested.connect(self._tab_close_requested)
         _missing_group_names = []
         for _group_name, _group_meta in sorted_metadata_items(meta_data):
             _group_data = group_data_of(config_data, _group_name)
-            if _group_data is None or len(_group_data.keys()) == 0:
+            if _group_data is None or (len(_group_data.keys()) == 0 and len(_group_name) == 0):
                 if file_type != _FILE_TYPE_MASTER_CONFIG or _group_meta[META_KEY_ALLOWED_IN_MASTER]:
                     _missing_group_names.append(_group_name)
                 continue
             self._insert_tab(_group_name, _group_meta, _group_data)
         if len(_missing_group_names) > 0:
             self._append_addition_tab(_missing_group_names)
+
+    def _tab_close_requested(self, index):
+        """
+        Called when the close icon on a tab has been clicked.
+        :param int index: index of tab to close
+        """
+        _group_name = self.tabText(index)
+        if not _group_name.startswith('['):
+            return
+        _group_name = _group_name[1:-1]
+        _rc = QMessageBox.question(self, localized_label(L_MBOX_TITLE_INFO),
+                                   localized_message(L_MBOX_INFO_REMOVE_GROUP, _group_name))
+        if _rc == QMessageBox.StandardButton.Yes:
+            self.removeTab(index)
+            if self.__addition_tab is None:
+                self._append_addition_tab([_group_name])
+            self.__signals.group_removed.emit(_group_name)
 
     def group_names(self):
         """
@@ -150,29 +169,6 @@ class EditorTabFolder(QTabWidget):
         if _is_last_group:
             self._remove_addition_tab()
 
-    def mouseReleaseEvent(self, event):
-        """
-        Called when right mouse button was clicked on the tab.
-        Shows popup menu with possibility to remove the tab.
-        :param QMouseEvent event: the mouse click event
-        """
-        if event.button() == Qt.RightButton:
-            _tab = self.current_tab()
-            if _tab.is_removable():
-                _group_name = self.tabBar().tabText(self.currentIndex())[1:-1]
-                _menu = QMenu()
-                _menu.addAction(localized_label(L_REMOVE_GROUP))
-                if _menu.exec_(event.globalPos()):
-                    _rc = QMessageBox.question(self, localized_label(L_MBOX_TITLE_INFO),
-                                               localized_message(L_MBOX_INFO_REMOVE_GROUP, _group_name))
-                    if _rc == QMessageBox.StandardButton.Yes:
-                        self.__signals.group_removed.emit(_group_name)
-                        self.removeTab(self.currentIndex())
-                        if self.__addition_tab is None:
-                            self._append_addition_tab([_group_name])
-            return
-        super().mouseReleaseEvent(event)
-
     def _insert_tab(self, group_name, group_meta, group_data, index=-1):
         """
         Inserts a new tab item for a group. Tab header is group name enclosed in brackets.
@@ -185,7 +181,11 @@ class EditorTabFolder(QTabWidget):
             _tab = EditorCustomGroupTab(self, group_name, group_meta, group_data)
         else:
             _tab = EditorSystemGroupTab(self, group_name, group_meta, group_data)
-        self.insertTab(index, _tab, f'[{group_name}]')
+        _tab_index = self.insertTab(index, _tab, f'[{group_name}]')
+        if not group_meta[META_KEY_OPT]:
+            _tab_bar = self.tabBar()
+            _style_hint = _tab_bar.style().styleHint(QStyle.StyleHint.SH_TabBar_CloseButtonPosition, None, _tab_bar)
+            _tab_bar.setTabButton(_tab_index, QTabBar.ButtonPosition(_style_hint), None)
 
     def _append_addition_tab(self, missing_group_names):
         """
@@ -194,7 +194,10 @@ class EditorTabFolder(QTabWidget):
         """
         if self.__addition_tab is None:
             self.__addition_tab = EditorAdditionTab(self, missing_group_names)
-            self.addTab(self.__addition_tab, _ADDITION_WIDGET_TEXT)
+            _tab_index = self.addTab(self.__addition_tab, _ADDITION_WIDGET_TEXT)
+            _tab_bar = self.tabBar()
+            _style_hint = _tab_bar.style().styleHint(QStyle.StyleHint.SH_TabBar_CloseButtonPosition, None, _tab_bar)
+            _tab_bar.setTabButton(_tab_index, QTabBar.ButtonPosition(_style_hint), None)
             self.__signals.group_removed.connect(self.__addition_tab.group_removed)
 
     def _remove_addition_tab(self):
@@ -267,7 +270,7 @@ class EditorTab(QWidget):
         return True
 
 
-class EditorGroupTab(QWidget):
+class EditorGroupTab(EditorTab):
     """
     Base class for tab items managing a single group.
     """
@@ -285,6 +288,14 @@ class EditorGroupTab(QWidget):
         self.setLayout(QVBoxLayout())
         self.attr_table = self.create_attr_table()
         self.attr_descriptors = {}
+
+    def name_widget(self, row):
+        """
+        :returns: widget containing the attribute name of specified table row
+        :rtype: QLabel
+        """
+        _widget = self.attr_table.cellWidget(row, 1)
+        return _widget if isinstance(_widget, QLabel) else None
 
     def attribute_names(self):
         """
@@ -410,8 +421,8 @@ class EditorSystemGroupTab(EditorGroupTab):
         :param str attr_name: the attribute name
         """
         for _row in range(0, self.attr_table.rowCount()):
-            _name_cell = self.attr_table.cellWidget(_row, 1)
-            if _name_cell is None or _name_cell.text() != attr_name:
+            _name_widget = self.name_widget(_row)
+            if _name_widget is None or _name_widget.text() != attr_name:
                 continue
             del self.attr_widgets[attr_name]
             self.attr_table.removeRow(_row)
@@ -422,6 +433,7 @@ class EditorSystemGroupTab(EditorGroupTab):
         else:
             self._fill_attr_selection_combo(_attr_selection_combo)
         self.attr_table.resizeColumnToContents(1)
+        self.attr_table.clearSelection()
 
     def _addition_line_combo(self):
         """
@@ -500,7 +512,7 @@ class EditorSystemGroupTab(EditorGroupTab):
             _tool_tip = localized_label(self.attr_descriptors[_attr_name][META_KEY_COMMENT])
             selection_combo.setItemData(_index, _tool_tip, Qt.ItemDataRole.ToolTipRole)
             _index += 1
-        selection_combo.setCurrentIndex(-1)
+        selection_combo.setCurrentIndex(0)
 
     def _add_attr_clicked(self):
         """
@@ -529,6 +541,7 @@ class EditorSystemGroupTab(EditorGroupTab):
             self.attr_table.setCellWidget(_row, 0, EditorGroupTab.create_add_attr_button(self._add_attr_clicked))
             self.attr_table.setCellWidget(_row, 1, _attr_selection_combo)
         self.attr_table.resizeColumnToContents(1)
+        self.attr_table.clearSelection()
 
     def _addition_attr_selected(self, attr_name):
         """
@@ -609,8 +622,8 @@ class EditorCustomGroupTab(EditorGroupTab):
         :param str attr_name: the attribute name
         """
         for _row in range(0, self.attr_table.rowCount()):
-            _name_cell = self.attr_table.cellWidget(_row, 1)
-            if _name_cell is None or _name_cell.text() != attr_name:
+            _name_widget = self.name_widget(_row)
+            if _name_widget is None or _name_widget.text() != attr_name:
                 continue
             del self.attr_widgets[attr_name]
             self.attr_table.removeRow(_row)
@@ -648,6 +661,13 @@ class EditorAdditionTab(EditorTab):
         _tab_layout.addWidget(_add_button, alignment=Qt.AlignmentFlag.AlignHCenter)
         _tab_layout.addStretch()
         self.setLayout(_tab_layout)
+
+    def is_removable(self):
+        """
+        :returns: True, if tab can be removed from the folder, i.e. it manages an optional group.
+        :rtype: bool
+        """
+        return False
 
     def group_removed(self, group_name):
         """
@@ -696,7 +716,7 @@ class ConfigEditor(QDialog):
         super().__init__(parent)
         self.setMinimumSize(_MINIMUM_EDITOR_WIDTH, _MINIMUM_EDITOR_HEIGHT)
         try:
-            _config_data = ConfigEditor._read_config_file(metadata, file_path, file_type)
+            _config_data, _comments_found = ConfigEditor._read_config_file(metadata, file_path, file_type)
         except IssaiException as _e:
             _msg_box = exception_box(QMessageBox.Icon.Warning, _e,
                                      localized_label(L_MBOX_INFO_USE_DEFAULT_CONFIG),
@@ -705,10 +725,12 @@ class ConfigEditor(QDialog):
             if _msg_box.exec() == QMessageBox.StandardButton.Cancel:
                 raise
             _config_data = ConfigEditor._default_configuration(metadata, file_type)
+            _comments_found = False
         self.__config_data = _config_data
         self.__meta_data = metadata
         self.__file_path = file_path
         self.__file_type = file_type
+        self.__file_has_comments = _comments_found
         self.setWindowTitle(title)
         _layout = QVBoxLayout()
         self.__tab_folder = EditorTabFolder(self, _config_data, metadata, file_type)
@@ -793,6 +815,12 @@ class ConfigEditor(QDialog):
         Writes configuration data to file, if they were changed and closes the dialog window.
         """
         if self._data_has_been_changed():
+            if self.__file_has_comments:
+                _rc = QMessageBox.warning(self, localized_label(L_MBOX_TITLE_WARNING),
+                                          localized_message(W_GUI_WRITE_CONFIG_LOSES_COMMENTS),
+                                          QMessageBox.StandardButton.Ok, QMessageBox.StandardButton.Cancel)
+                if _rc != QMessageBox.StandardButton.Ok:
+                    return
             _rc = QMessageBox.StandardButton.Yes
             while _rc != QMessageBox.StandardButton.No:
                 _rc = QMessageBox.StandardButton.No
@@ -829,11 +857,12 @@ class ConfigEditor(QDialog):
         :param dict metadata: the metadata describing supported attributes and their types
         :param str file_path: the name of the file containing the data to edit including path
         :param int file_type: the file type (master config, product config, XML-RPC credentials)
-        :rtype: tomlkit.TOMLDocument
+        :rtype: tuple[tomlkit.TOMLDocument, bool]
         :raises IssaiException: if file is malformed
         """
+        _comments_found = False
         if not os.path.isfile(file_path):
-            return ConfigEditor._default_configuration(metadata, file_type)
+            return ConfigEditor._default_configuration(metadata, file_type), _comments_found
         # noinspection PyBroadException
         try:
             _data = tomlkit.document()
@@ -841,7 +870,6 @@ class ConfigEditor(QDialog):
                 # XML-RPC credentials file - TOML with unquoted string values
                 _current_group = None
                 _current_group_name = ''
-                _comment_prefix = 'd '
                 with open(file_path, 'r') as _f:
                     _line = _f.readline()
                     while _line:
@@ -849,9 +877,8 @@ class ConfigEditor(QDialog):
                         if len(_line) == 0:
                             _line = _f.readline()
                             continue
-                        _m = re.match(r'\s*#(.*)', _line)
-                        if _m:
-                            _data.add(tomlkit.comment(f'{_comment_prefix}{_m.group(1)}'))
+                        if re.match(r'\s*#.*', _line):
+                            _comments_found = True
                             _line = _f.readline()
                             continue
                         for _group_name, _group_meta in metadata.items():
@@ -874,7 +901,6 @@ class ConfigEditor(QDialog):
                                     else:
                                         _attr = tomlkit.string(_m.group(1))
                                     _qualified_attr_name = qualified_attr_name_for(_current_group_name, _attr_name)
-                                    _comment_prefix = f'a{_qualified_attr_name} '
                                     if _current_group is None:
                                         _data.append(_attr_key, _attr)
                                     else:
@@ -884,10 +910,13 @@ class ConfigEditor(QDialog):
             else:
                 # plain TOML (issai configuration files)
                 with open(file_path, 'r') as _f:
-                    _data = tomlkit.load(_f)
+                    _contents = _f.read()
+                    if re.search(r'^\s*#.*$', _contents, re.MULTILINE | re.DOTALL):
+                        _comments_found = True
+                    _data = tomlkit.loads(_contents)
                     validate_config_structure(_data, file_path, file_type == _FILE_TYPE_PRODUCT_CONFIG)
             ConfigEditor._fill_mandatory_attributes(_data, metadata, file_type)
-            return _data
+            return _data, _comments_found
         except Exception as _e:
             raise IssaiException(W_GUI_READ_CONFIG_DATA_FAILED, file_path, _e)
 
@@ -988,7 +1017,7 @@ def product_config_editor(parent, products):
     """
     _sel_dlg = IssaiProductSelectionDialog(parent, products)
     if _sel_dlg.exec() == 0:
-        return
+        return None
     _product_config_dir_path = _sel_dlg.selected_product_config_path()
     _product_config_file_path = os.path.join(_product_config_dir_path, ISSAI_PRODUCT_CONFIG_FILE_NAME)
     _dlg_title = localized_message(L_DLG_TITLE_PRODUCT_CONFIG_EDITOR, os.path.basename(_product_config_dir_path))
