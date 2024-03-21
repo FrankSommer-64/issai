@@ -174,7 +174,7 @@ class MainWindow(QMainWindow):
                     _product_config_file_path = os.path.join(_product_path, ISSAI_PRODUCT_CONFIG_FILE_NAME)
                     os.makedirs(_product_path, 0o755, True)
                     _my_path = os.path.dirname(__file__)
-                    _product_template = os.path.abspath(os.path.join(_my_path, '..', '..', '..', ISSAI_TEMPLATES_DIR,
+                    _product_template = os.path.abspath(os.path.join(_my_path, '..', ISSAI_TEMPLATES_DIR,
                                                                      ISSAI_PRODUCT_CONFIG_FILE_NAME))
                     with open(_product_template, 'r') as _f:
                         _template_data = _f.read()

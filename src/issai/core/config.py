@@ -550,8 +550,8 @@ def create_config_root():
         _config_path = ISSAI_CONFIG_PATH
     _config_path = full_path_of(_config_path)
     os.makedirs(_config_path, 0o755, True)
-    _master_template = os.path.abspath(os.path.join(__file__, '..', '..', '..', '..',
-                                                    ISSAI_TEMPLATES_DIR, ISSAI_MASTER_CONFIG_FILE_NAME))
+    _my_path = os.path.dirname(__file__)
+    _master_template = os.path.abspath(os.path.join(_my_path, '..', ISSAI_TEMPLATES_DIR, ISSAI_MASTER_CONFIG_FILE_NAME))
     shutil.copy(_master_template, _config_path)
     return _config_path
 
