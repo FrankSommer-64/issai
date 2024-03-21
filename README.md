@@ -66,8 +66,8 @@ For automated tasks, Issai's command line interface can be used:
 ## Roadmap
 
 - [ ] v0.7 full functionality to run tests
-- [ ] v0.8 GUI settings
-- [ ] v0.9 complete system test
+- [ ] v0.8 full functionality for import and export, CI integration
+- [ ] v0.9 Windows support, localization, complete system test
 
 See the [open issues](https://github.com/FrankSommer-64/issai/issues) for a full list of proposed features (and known issues).
 

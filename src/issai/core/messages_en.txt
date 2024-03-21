@@ -139,7 +139,6 @@ l-output-path Output path
 l-product Product
 l-product-name Product name
 l-recent Recent
-l-remove-group Remove group
 l-repository-path Repository path
 l-run Run
 l-run-descendant-plans Run descendant test plans
@@ -285,7 +284,6 @@ w-gui-write-gui-configuration-failed Could not write GUI configuration to file {
 
 e-run-case-script-missing No script defined for test case '{0}'.
 i-download-attachments Downloading attachments for '{0}'.
-i-no-products No products configured locally.
 
 # dry run
 i-dry-run-upload-attachment Will upload {0} attachment file {1}.

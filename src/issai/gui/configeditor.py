@@ -471,7 +471,7 @@ class EditorSystemGroupTab(EditorGroupTab):
             if _attr_type == META_TYPE_STR_PASSWORD:
                 _attr_widget.setEchoMode(QLineEdit.EchoMode.Password)
             if attr_value is not None:
-                _attr_widget.setText(attr_value)
+                _attr_widget.setText(_gui_value_of(attr_value))
         return _attr_widget
 
     def _create_attr_addition_row(self):

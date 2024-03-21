@@ -4,6 +4,7 @@ debugpy
 idna
 pip
 PySide6
+pytest
 requests
 setuptools
 tcms-api

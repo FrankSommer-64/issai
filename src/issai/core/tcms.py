@@ -501,7 +501,6 @@ def read_tcms_environments():
             _e[ATTR_PROPERTIES] = []
         _env_ids = [_e[ATTR_ID] for _e in _envs]
         for _prop in _cxn.Environment.properties({}):
-            print(_prop)
             _envs_dict[_prop[ATTR_ENVIRONMENT]][ATTR_PROPERTIES].append({_prop[ATTR_NAME]: _prop[ATTR_VALUE]})
         return _envs
     except Exception as _e:

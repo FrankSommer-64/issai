@@ -35,7 +35,7 @@ Package with core functions
 """
 
 # Package version
-VERSION = '0.5'
+VERSION = '0.6'
 
 ATTACHMENTS_CASE_DIR = 'case'
 ATTACHMENTS_ENTITY_DIR = 'entity'
