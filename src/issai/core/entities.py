@@ -868,18 +868,6 @@ class TestCaseEntity(SpecificationEntity):
         super().__init__(ENTITY_TYPE_CASE, case_id, case_summary)
 
     @staticmethod
-    def from_tcms(case):
-        """
-        Creates a test case from TCMS data.
-        :param dict case: the TCMS test case data
-        :returns: created test case
-        :rtype: TestCaseEntity
-        """
-        _case = TestCaseEntity(case[ATTR_ID], case[ATTR_SUMMARY])
-        # TODO
-        return _case
-
-    @staticmethod
     def from_toml(case_id, case_summary, toml_data):
         """
         Creates a test case from TOML data.
@@ -1166,24 +1154,6 @@ class PlanResultEntity(ResultEntity):
         _attachments[TCMS_CLASS_ID_TEST_RUN] = {}
         _attachments[TCMS_CLASS_ID_TEST_RUN][self.entity_id()] = self.output_files()
         return _attachments
-
-    def result_status(self, passed_id, failed_id, error_id):
-        """
-        Returns all attachment file URLs referenced by this entity. Returned is a dictionary with TCMS class ID as
-        top level key, followed by sub-key entity ID, then list of file names.
-        :returns: overall execution status for all contained test cases
-        :rtype: int
-        """
-        # TODO change to internal error codes, remove parameter
-        _overall_status = passed_id
-        for _case_result_entity in self[ATTR_TEST_CASE_RESULTS].values():
-            for _case_result in _case_result_entity[ATTR_TEST_CASE_RESULTS].values():
-                _case_status = _case_result[ATTR_STATUS]
-                if _case_status == error_id:
-                    return error_id
-                if _case_status == failed_id:
-                    _overall_status = failed_id
-        return _overall_status
 
     def add_plan_result(self, result):
         """

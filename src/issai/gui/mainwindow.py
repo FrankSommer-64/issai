@@ -373,4 +373,4 @@ class MainWindow(QMainWindow):
 
 
 _MAIN_WINDOW_MARGIN = 16
-_MAIN_WINDOW_STYLE = 'border-image: url(images:issai-aq.jpg)'
+_MAIN_WINDOW_STYLE = f'border-image: url({ISSAI_ASSETS_DIR}:issai-aq.jpg)'

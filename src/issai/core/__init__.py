@@ -49,7 +49,7 @@ ISSAI_CONFIG_PATH = '~/.config/issai'
 ISSAI_GUI_SETTINGS_FILE_NAME = 'gui_settings.toml'
 ISSAI_MASTER_CONFIG_FILE_NAME = 'master.toml'
 ISSAI_PRODUCT_CONFIG_FILE_NAME = 'product.toml'
-ISSAI_IMAGES_DIR = 'images'
+ISSAI_ASSETS_DIR = 'assets'
 ISSAI_TEMPLATES_DIR = 'templates'
 TCMS_XML_RPC_CREDENTIALS_FILE_PATH = '~/.tcms.conf'
 

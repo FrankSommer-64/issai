@@ -42,7 +42,7 @@ import sys
 from PySide6.QtCore import QDir
 from PySide6.QtWidgets import QApplication, QMessageBox
 
-from issai.core import ISSAI_IMAGES_DIR
+from issai.core import ISSAI_ASSETS_DIR
 from issai.core.messages import (localized_label, localized_message, I_GUI_CONFIG_PROBLEM, I_GUI_CONFIG_WARNING,
                                  I_GUI_CREATE_CONFIG_ROOT, L_MBOX_TITLE_INFO, L_MBOX_TITLE_WARNING)
 from issai.core.config import config_root_path, create_config_root, load_runtime_configs
@@ -55,8 +55,8 @@ def gui_main():
     Main function for Issai GUI.
     """
     try:
-        _images_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ISSAI_IMAGES_DIR)
-        QDir.addSearchPath(ISSAI_IMAGES_DIR, _images_path)
+        _images_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ISSAI_ASSETS_DIR)
+        QDir.addSearchPath(ISSAI_ASSETS_DIR, _images_path)
         app = QApplication(sys.argv)
         try:
             _config_root_path = config_root_path()

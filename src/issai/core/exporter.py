@@ -75,7 +75,7 @@ def export_case(case, options, local_config, output_path, task_monitor):
     _product = read_product_for_test_entity(ENTITY_TYPE_CASE, _case)
     _case_id = _case[ATTR_ID]
     _case_name = _case[ATTR_SUMMARY]
-    _export_entity = TestCaseEntity.from_tcms(_case)
+    _export_entity = TestCaseEntity(_case_id, _case_name)
     _export_entity.fill_product_data(_product)
     _classification = find_tcms_object(TCMS_CLASS_ID_CLASSIFICATION, {ATTR_ID: _product[ATTR_CLASSIFICATION]})
     _export_entity.add_master_data(ATTR_PRODUCT_CLASSIFICATIONS, _classification)
