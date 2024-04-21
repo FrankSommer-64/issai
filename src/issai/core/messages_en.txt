@@ -83,16 +83,20 @@ i-dry-run-imp-execution-updated Will update TestExecution #{0} for TestCase '{1}
 i-dry-run-imp-run-updated Will update TestRun #{0} for TestPlan '{1}' with values {2}.
 
 # runner
+e-run-assistant-failed Assistant '{0}' for action {1} failed: {2}.
+e-run-plan-failed Execution of test plan '{0}' failed.
 e-run-source-path-missing Path for source files is not defined, configuration parameter '{0}' is missing.
 e-run-source-path-invalid Path for source files '{0}' does not exist.
 e-run-working-path-missing Working path is not defined, configuration parameter '{0}' is missing.
 e-run-working-path-invalid Working path '{0}' does not exist.
 e-run-cannot-create-test-run Cannot create test run for plan '{0}'. Local configuration doesn't allow TCMS write access.
+i-run-assistant-succeeded Assistant '{0}' for action {1} executed.
 i-run-case-not-automated Test case not automated.
-i-run-entity-not-for-local-arch {0} not suitable for local CPU architecture.
-i-run-entity-not-for-local-os {0} not suitable for local operating system.
-i-run-entity-skipped {0} skipped.
+i-run-entity-not-for-local-arch Entity not suitable for local CPU architecture '{0}'.
+i-run-entity-not-for-local-os Entity not suitable for local operating system '{0}.
+i-run-entity-skipped {0} '{1}' skipped: {2}.
 i-run-plan-not-active Test plan not active.
+i-run-plan-tag-mismatch Test plan tagged with '{0}', but local platform is '{1}'.
 i-run-running-case Executing test case '{0}'.
 i-run-running-plan Executing test plan '{0}'.
 
@@ -114,6 +118,7 @@ l-add Add
 l-attribute Attribute
 l-auto-create-master-data Create missing master data
 l-cancel Cancel
+l-cleanup cleanup
 l-close Close
 l-create Create
 l-dry-run Dry run
@@ -132,6 +137,7 @@ l-include-executions Include executions
 l-include-history Include history
 l-include-plan-tree Include child plans
 l-include-runs Include runs and executions
+l-init initialization
 l-name Name
 l-ok OK
 l-options Options
@@ -283,9 +289,13 @@ w-gui-write-config-loses-comments Writing configuration will lose comments curre
 w-gui-write-gui-configuration-failed Could not write GUI configuration to file {0}. {1}.
 
 e-run-case-script-missing No script defined for test case '{0}'.
+i-download-attachment Downloading attachment file '{0}'.
 i-download-attachments Downloading attachments for '{0}'.
 
 # dry run
+e-dry-run-run-assistant-failed Assistant '{0}' for action {1} will fail: {2}.
+i-dry-run-download-attachment Will download attachment file '{0}'.
+i-dry-run-download-attachments Will download attachment files for '{0}'.
 i-dry-run-upload-attachment Will upload {0} attachment file {1}.
 i-dry-run-imp-md-exact-match {0} '{1}' exists with same ID {2} in TCMS.
 i-dry-run-imp-md-ref-changed Will use different ID {0} for {1} '{2}' instead of ID {3}.
@@ -297,6 +307,9 @@ i-dry-run-imp-run-created Will create TestRun for TestPlan '{0}' and Build ID {1
 i-dry-run-imp-run-skipped Will not import TestRun for TestPlan '{0}' and Build ID {1}, using existing TestRun with ID {2}.
 i-dry-run-imp-user-exact-match User '{0}' exists with same ID {1} in TCMS.
 i-dry-run-imp-user-repl-current Will use current user '{0}' for username '{1}'.
+i-dry-run-run-assistant-succeeded Will execute assistant '{0}' for action {1}.
+i-dry-run-run-entity-skipped Will skip {0} '{1}': {2}.
+i-dry-run-run-running-plan Will execute test plan '{0}'.
 
 e-attachment-missing Error: Attachment file {0} does not exist.
 e-dry-run-imp-md-no-match Error: Cannot create non-existing {0} '{1}' in TCMS, auto create option not set.

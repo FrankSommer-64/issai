@@ -38,7 +38,7 @@ Localized message support.
 
 import os
 
-from issai.core import ENTITY_TYPE_CASE, ENTITY_TYPE_PLAN, ENTITY_TYPE_PLAN_RESULT
+from issai.core import ASSISTANT_ACTION_INIT, ENTITY_TYPE_CASE, ENTITY_TYPE_PLAN, ENTITY_TYPE_PLAN_RESULT
 from issai.core.util import platform_locale
 
 
@@ -83,6 +83,7 @@ E_BACKGROUND_TASK_ABORTED = 'e-background-task-aborted'
 E_BACKGROUND_TASK_FAILED = 'e-background-task-failed'
 E_CONTAINER_NOT_RUNNABLE = 'e-container-not-runnable'
 E_DIR_NOT_EMPTY = 'e-dir-not-empty'
+I_DOWNLOAD_ATTACHMENT = 'i-download-attachment'
 I_DOWNLOAD_ATTACHMENTS = 'i-download-attachments'
 E_DOWNLOAD_ATTACHMENT_FAILED = 'e-download-attachment-failed'
 E_INTERNAL_ERROR = 'e-internal-error'
@@ -126,12 +127,17 @@ E_IMP_USER_NO_MATCH = 'e-imp-user-no-match'
 E_IMP_USER_NOT_FOUND = 'e-imp-user-not-found'
 
 # runner related
+E_RUN_ASSISTANT_FAILED = 'e-run-assistant-failed'
 E_RUN_CANNOT_CREATE_TEST_RUN = 'e-run-cannot-create-test-run'
 E_RUN_CASE_SCRIPT_MISSING = 'e-run-case-script-missing'
+E_RUN_PLAN_FAILED = 'e-run-plan-failed'
 E_RUN_SOURCE_PATH_MISSING = 'e-run-source-path-missing'
 E_RUN_SOURCE_PATH_INVALID = 'e-run-source-path-invalid'
 E_RUN_WORKING_PATH_MISSING = 'e-run-working-path-missing'
 E_RUN_WORKING_PATH_INVALID = 'e-run-working-path-invalid'
+I_DRY_RUN_RUN_ENTITY_SKIPPED = 'i-dry-run-run-entity-skipped'
+I_DRY_RUN_RUN_RUNNING_PLAN = 'i-dry-run-run-running-plan'
+I_RUN_ASSISTANT_SUCCEEDED = 'i-run-assistant-succeeded'
 I_RUN_CASE_NOT_AUTOMATED = 'i-run-case-not-automated'
 I_RUN_ENTITY_NOT_FOR_LOCAL_ARCH = 'i-run-entity-not-for-local-arch'
 I_RUN_ENTITY_NOT_FOR_LOCAL_OS = 'i-run-entity-not-for-local-os'
@@ -200,6 +206,8 @@ I_CLEAR_EXPORT_ATTACHMENTS = 'i-clear-export-attachments'
 I_CLEAR_EXPORT_FILE = 'i-clear-export-file'
 I_CLEAR_EXPORT_OUTPUT = 'i-clear-export-output'
 
+I_DRY_RUN_DOWNLOAD_ATTACHMENT = 'i-dry-run-download-attachment'
+I_DRY_RUN_DOWNLOAD_ATTACHMENTS = 'i-dry-run-download-attachments'
 I_DRY_RUN_UPLOAD_ATTACHMENT = 'i-dry-run-upload-attachment'
 I_DRY_RUN_IMP_MD_EXACT_MATCH = 'i-dry-run-imp-md-exact-match'
 I_DRY_RUN_IMP_MD_REF_CHANGED = 'i-dry-run-imp-md-ref-changed'
@@ -220,6 +228,7 @@ L_ADD = 'l-add'
 L_ATTRIBUTE = 'l-attribute'
 L_AUTO_CREATE_MASTER_DATA = 'l-auto-create-master-data'
 L_CANCEL = 'l-cancel'
+L_CLEANUP = 'l-cleanup'
 L_CLOSE = 'l-close'
 L_CREATE = 'l-create'
 L_DRY_RUN = 'l-dry-run'
@@ -238,6 +247,7 @@ L_INCLUDE_EXECUTIONS = 'l-include-executions'
 L_INCLUDE_HISTORY = 'l-include-history'
 L_INCLUDE_PLAN_TREE = 'l-include-plan-tree'
 L_INCLUDE_RUNS = 'l-include-runs'
+L_INIT = 'l-init'
 L_NAME = 'l-name'
 L_OK = 'l-ok'
 L_OPTIONS = 'l-options'
@@ -488,6 +498,15 @@ def lower_case_entity_type_name(entity_type):
     :rtype: str
     """
     return entity_type_name(entity_type).lower()
+
+
+def assistant_action_name(action):
+    """
+    :param int action: the action ID
+    :returns: localized action name
+    :rtype: str
+    """
+    return localized_label(L_INIT) if action == ASSISTANT_ACTION_INIT else localized_label(L_CLEANUP)
 
 
 class MessageTable(dict):

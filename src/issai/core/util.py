@@ -44,8 +44,8 @@ import subprocess
 from issai.core import PLATFORM_ARCH_PREFIX, PLATFORM_OS_PREFIX
 
 
-_OS_TAG_FMT = '%s.%%s' % PLATFORM_OS_PREFIX
-_ARCH_TAG_FMT = '%s.%%s' % PLATFORM_ARCH_PREFIX
+_OS_TAG_FMT = '%s%%s' % PLATFORM_OS_PREFIX
+_ARCH_TAG_FMT = '%s%%s' % PLATFORM_ARCH_PREFIX
 
 
 def full_path_of(path_spec):

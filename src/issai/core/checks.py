@@ -115,10 +115,11 @@ _ENTITY_ATTRIBUTES = {
                               ATTR_STOP_DATE: (datetime, True), ATTR_EXECUTION: (int, False),
                               ATTR_OUTPUT_FILES: (list, False), ATTR_START_DATE: (datetime, True),
                               ATTR_STATUS: (str, True), ATTR_TESTER_NAME: (str, True)},
-    RESULT_TYPE_PLAN_RESULT: {ATTR_CASE_RESULTS: (list, False), ATTR_CHILD_PLAN_RESULTS: (list, False),
-                              ATTR_NOTES: (str, True), ATTR_OUTPUT_FILES: (list, True), ATTR_PLAN: (int, False),
+    RESULT_TYPE_PLAN_RESULT: {ATTR_BUILD: (str, False), ATTR_CASE_RESULTS: (list, False),
+                              ATTR_CHILD_PLAN_RESULTS: (list, False), ATTR_NOTES: (str, True),
+                              ATTR_OUTPUT_FILES: (list, True), ATTR_PLAN: (int, False),
                               ATTR_PLAN_NAME: (str, True), ATTR_RUN: (int, False), ATTR_START_DATE: (datetime, True),
-                              ATTR_STOP_DATE: (datetime, True), ATTR_SUMMARY: (str, True)}
+                              ATTR_STOP_DATE: (datetime, True), ATTR_SUMMARY: (str, True), ATTR_VERSION: (str, False)}
 }
 
 # TOML master data types

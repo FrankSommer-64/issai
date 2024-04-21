@@ -897,11 +897,12 @@ class TestPlanEntity(SpecificationEntity):
     def run_id(self):
         """
         Returns ID of test run associated with test plan.
-        :returns: test run ID
+        :returns: test run ID; -1, if there is no associated test run
         :rtype: int
-        :raises IssaiException: if there is no associated test run
         """
-        return self.get_part(ATTR_TEST_PLANS, -1)[ATTR_RUN]
+        _plan = self.get_part(ATTR_TEST_PLANS, -1)
+        _run_id = _plan.get(ATTR_RUN)
+        return -1 if _run_id is None else _run_id
 
     def plan_child_ids(self, plan_id):
         """
@@ -1285,6 +1286,19 @@ class Result(dict):
         verify_entity_attr_write(self.__result_type, attribute_name, attribute_value)
         self[attribute_name] = attribute_value
 
+    def append_attr_value(self, attribute_name, attribute_value):
+        """
+        Appends value for specified attribute name.
+        :param str attribute_name: the attribute name
+        :param Any attribute_value: the attribute value
+        """
+        verify_entity_attr_write(self.__result_type, attribute_name, attribute_value)
+        _current_value = self[attribute_name]
+        if len(_current_value) == 0:
+            self[attribute_name] = attribute_value
+        else:
+            self[attribute_name] = f'{_current_value}{os.linesep}{attribute_value}'
+
     def mark_start(self):
         """
         Marks the timestamp when the execution of the entity was started.
@@ -1342,14 +1356,18 @@ class PlanResult(Result):
     Test plan result used within test runner.
     """
 
-    def __init__(self, run_id, plan_id, plan_name):
+    def __init__(self, plan_id, plan_name, run_id, version=None, build=None):
         """
         Constructor.
-        :param int run_id: the test run TCMS ID
         :param int plan_id: the test plan TCMS ID
         :param str plan_name: the test plan name
+        :param int run_id: the test run TCMS ID
+        :param str|None version: the software version value; None for child plan result
+        :param str|None build: the build name; None for child plan result
         """
         super().__init__(RESULT_TYPE_PLAN_RESULT)
+        self[ATTR_VERSION] = version
+        self[ATTR_BUILD] = build
         self[ATTR_RUN] = run_id
         self[ATTR_PLAN] = plan_id
         self[ATTR_PLAN_NAME] = plan_name
@@ -1395,7 +1413,7 @@ class PlanResult(Result):
     def result_status(self):
         """
         :returns: overall execution status for all contained test cases
-        :rtype: str
+        :rtype: int
         """
         _overall_status = RESULT_STATUS_ID_PASSED
         for _pr in self.plan_results():
@@ -1406,6 +1424,22 @@ class PlanResult(Result):
                 if _case_status == RESULT_STATUS_ID_FAILED:
                     _overall_status = RESULT_STATUS_ID_FAILED
         return _overall_status
+
+    @staticmethod
+    def from_entity(entity, plan_id, version=None, build=None):
+        """
+        Creates a plan result from a test plan entity.
+        :param Entity entity: the test plan entity
+        :param int plan_id: the test plan TCMS ID
+        :param str version: the version value
+        :param str build: the build name
+        :returns: the plan result
+        :rtype: PlanResult
+        """
+        _plan = entity.get_part(ATTR_TEST_PLANS, plan_id)
+        _runs = _plan.get(ATTR_RUNS)
+        _run_id = -1 if _runs is None or len(_runs) != 1 else _runs[0]
+        return PlanResult(_plan[ATTR_ID], _plan[ATTR_NAME], _run_id, version, build)
 
 
 class MasterData(dict):

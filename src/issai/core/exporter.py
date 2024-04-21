@@ -92,7 +92,7 @@ def export_case(case, options, local_config, output_path, task_monitor):
 
     _fetch_referenced_master_data(_export_entity, task_monitor)
     if _include_attachments:
-        download_attachments(_export_entity, output_path, task_monitor)
+        download_attachments(_export_entity, output_path, task_monitor, False)
     _write_output_file(_export_entity, os.path.join(output_path, f'testcase_{_case_id}.toml'), task_monitor)
 
     return TaskResult(0, localized_message(I_GUI_EXPORT_CASE_SUCCESSFUL, _case_name))
@@ -157,7 +157,7 @@ def export_plan(plan, options, local_config, output_path, task_monitor):
 
     _fetch_referenced_master_data(_export_entity, task_monitor)
     if _include_attachments:
-        download_attachments(_export_entity, output_path, task_monitor)
+        download_attachments(_export_entity, output_path, task_monitor, False)
     _write_output_file(_export_entity, os.path.join(output_path, f'testplan_{_plan_id}.toml'), task_monitor)
 
     return TaskResult(0, localized_message(I_GUI_EXPORT_PLAN_SUCCESSFUL, _plan_name))
@@ -222,7 +222,7 @@ def export_product(product_name, options, local_config, output_path, task_monito
 
     _fetch_referenced_master_data(_export_entity, task_monitor)
     if options.get(OPTION_INCLUDE_ATTACHMENTS):
-        download_attachments(_export_entity, output_path, task_monitor)
+        download_attachments(_export_entity, output_path, task_monitor, False)
     _write_output_file(_export_entity, os.path.join(output_path, f'{product_name}.toml'), task_monitor)
 
     return TaskResult(0, localized_message(I_GUI_EXPORT_PRODUCT_SUCCESSFUL, product_name))

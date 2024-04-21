@@ -220,15 +220,15 @@ def run_tcms_plan(plan, options, local_config, task_monitor):
     # download attachments, if applicable
     _attachments = _plan_entity.attachments()
     if len(_attachments) > 0:
-        # TODO  download_patterns_match
         _att_patterns = local_config.get_list_value(CFG_PAR_TCMS_SPEC_ATTACHMENTS)
         if _att_patterns is not None:
-            download_attachments(_plan_entity, _working_path, task_monitor, _att_patterns)
+            download_attachments(_plan_entity, _working_path, task_monitor, options.get(OPTION_DRY_RUN), _att_patterns)
     _env_vars[ENVA_ATTACHMENTS_PATH] = os.path.join(_working_path, ATTACHMENTS_ROOT_DIR)
     _env_vars[ENVA_ISSAI_USERNAME] = TcmsInterface.current_user()[ATTR_USERNAME]
     # run test plan
-    _exe_table = ExecutableTable(local_config)
-    _plan_result = _run_plan(_plan_entity, [-1], _exe_table, local_config, _env_vars, task_monitor)[0]
+    _plan_result = _run_ancestor_plan(_plan_entity, options, local_config, _env_vars, task_monitor)
+    # _exe_table = ExecutableTable(local_config)
+    # _plan_result = _run_plan(_plan_entity, [-1], _exe_table, local_config, _env_vars, task_monitor)[0]
     _att_patterns = local_config.get_list_value(CFG_PAR_TCMS_RESULT_ATTACHMENTS)
     # store test result
     store_plan_results(_plan_result, _plan_entity, local_config, _att_patterns, _working_path,
@@ -279,65 +279,108 @@ def run_offline_plan(plan_entity, options, local_config, attachment_path, task_m
                                        _plan_result.get_attr_value(ATTR_NOTES)))
 
 
-def _run_plan(plan_entity, plan_ids, executable_table, local_config, env_vars, task_monitor):
+def _run_ancestor_plan(plan_entity, options, local_config, env_vars, task_monitor):
+    """
+    Runs a top level test plan.
+    :param TestPlanEntity plan_entity: the test plan, eventually including descendants
+    :param LocalConfig local_config: the local issai product configuration
+    :param dict env_vars: the environment variables to use in test execution
+    :param TaskMonitor task_monitor: the progress handler
+    :returns: execution result; None, if plan is not runnable
+    :rtype: PlanResult
+    """
+    _plan_id = plan_entity.entity_id()
+    _plan_name = plan_entity.entity_name()
+    _run_id = plan_entity.run_id()
+    _version = plan_entity.master_data_of_type(ATTR_PRODUCT_VERSIONS)[0]
+    _build = plan_entity.master_data_of_type(ATTR_PRODUCT_BUILDS)[0]
+    _dry_run = options.get(OPTION_DRY_RUN)
+    _exe_table = ExecutableTable(local_config)
+    _result = PlanResult.from_entity(plan_entity, -1, _version, _build)
+    _result.mark_start()
+    # TODO environment handling (check for test matrix)
+    # noinspection PyBroadException
+    try:
+        # skip plan, if not runnable
+        if _skip_entity_on_local_machine(plan_entity, ENTITY_TYPE_PLAN, _plan_id, task_monitor, _dry_run):
+            return None
+        # eventually run initialization for top level plan
+        _run_assistant(CFG_PAR_RUNNER_ENTITY_ASSISTANT, ASSISTANT_ACTION_INIT, _exe_table, local_config, env_vars,
+                       task_monitor, _dry_run)
+        # run plan
+        _result = _run_plan(plan_entity, _plan_id, _exe_table, local_config, env_vars, task_monitor, _dry_run)
+        # eventually run cleanup for top level plan
+        _run_assistant(CFG_PAR_RUNNER_ENTITY_ASSISTANT, ASSISTANT_ACTION_CLEANUP, _exe_table, local_config, env_vars,
+                       task_monitor, _dry_run)
+    except BaseException as _e:
+        # we'll land here in case of assistant errors only
+        _result.append_attr_value(ATTR_SUMMARY, localized_message(E_RUN_PLAN_FAILED, _plan_name))
+        _result.append_attr_value(ATTR_NOTES, str(_e))
+    _result.mark_end()
+    return _result
+
+
+def _run_plan(plan_entity, plan_id, executable_table, local_config, env_vars, task_monitor, dry_run):
     """
     Runs a test plan.
     :param TestPlanEntity plan_entity: the test plan, eventually including descendants
-    :param list plan_ids: the TCMS IDs of all siblings in the test plan
+    :param int plan_id: the TCMS ID of the test plan
     :param ExecutableTable executable_table: the table holding the functions and scripts to execute
     :param LocalConfig local_config: the local issai product configuration
     :param dict env_vars: the environment variables to use in test execution
     :param TaskMonitor task_monitor: the progress handler
-    :returns: execution results
-    :rtype: list
+    :param bool dry_run: indicates whether simulated run is active
+    :returns: execution result
+    :rtype: PlanResult
     """
-    # run entity assistant for top level test plan
-    if len(plan_ids) == 1 and plan_ids[0] == -1:
-        _run_assistant(CFG_PAR_RUNNER_ENTITY_ASSISTANT, ASSISTANT_ACTION_INIT, executable_table,
-                       local_config, env_vars)
-    _results = []
-    _child_ids = []
-    _essential_props = _essential_properties_for(local_config, ENTITY_TYPE_PLAN)
-    for _plan_id in plan_ids:
-        if _plan_id < 0:
-            _plan_id = plan_entity.entity_id()
-        _plan = plan_entity.get_part(ATTR_TEST_PLANS, _plan_id)
-        task_monitor.log(False, I_RUN_RUNNING_PLAN, _plan[ATTR_NAME])
-        _plan_result = PlanResult(_plan[ATTR_RUN], _plan_id, _plan[ATTR_NAME])
-        _results.append(_plan_result)
-        _plan_result.mark_start()
-        # check whether test plan is runnable on local machine
-        if _skip_entity_on_local_machine(ENTITY_TYPE_PLAN, plan_entity.is_plan_active(_plan_id),
-                                         plan_entity.get_plan_tags(_plan_id), _plan_result):
-            _plan_result.mark_end()
-            return _results
-        # add plan properties to runtime environment
+    if plan_id < 0:
+        _version = plan_entity.master_data_of_type(ATTR_PRODUCT_VERSIONS)[0]
+        _build = plan_entity.master_data_of_type(ATTR_PRODUCT_BUILDS)[0]
+        plan_id = plan_entity.entity_id()
+    else:
+        _version = None
+        _build = None
+    _result = PlanResult.from_entity(plan_entity, plan_id, _version, _build)
+    _result.mark_start()
+    _plan = plan_entity.get_part(ATTR_TEST_PLANS, plan_id)
+    task_monitor.log(dry_run, I_RUN_RUNNING_PLAN, _plan[ATTR_NAME])
+    # noinspection PyBroadException
+    try:
+        # add issai relevant plan properties to runtime environment
+        _essential_props = _essential_properties_for(local_config, ENTITY_TYPE_PLAN)
         _plan_env = env_vars.copy()
-        for _prop_k, _prop_v in plan_entity.get_plan_properties(_plan_id, _essential_props).items():
+        for _prop_k, _prop_v in plan_entity.get_plan_properties(plan_id, _essential_props).items():
             _plan_env[_prop_k] = str(_prop_v)
-        # invoke plan setup function
-        _run_assistant(CFG_PAR_RUNNER_PLAN_ASSISTANT, ASSISTANT_ACTION_INIT, executable_table,
-                       local_config, _plan_env)
+        # run initialization for plan
+        _run_assistant(CFG_PAR_RUNNER_PLAN_ASSISTANT, ASSISTANT_ACTION_INIT, executable_table, local_config, _plan_env,
+                       task_monitor, dry_run)
         # run all test cases in plan
         for _case_id in _plan[ATTR_CASES]:
-            _case_result = _run_case(plan_entity, _case_id, executable_table, local_config, _plan_env, task_monitor)
-            _plan_result.add_case_result(_case_result)
-        # invoke plan cleanup function
-        _run_assistant(CFG_PAR_RUNNER_PLAN_ASSISTANT, ASSISTANT_ACTION_CLEANUP, executable_table,
-                       local_config, _plan_env)
-        _child_ids.extend(plan_entity.plan_child_ids(_plan_id))
-        _plan_result.mark_end()
-    if len(_child_ids) > 0:
-        _child_results = _run_plan(plan_entity, _child_ids, executable_table, local_config, env_vars, task_monitor)
-        for i in range(0, len(_child_ids)):
-            _results[i].add_plan_result(_child_results[i])
-    if len(plan_ids) == 1 and plan_ids[0] == -1:
-        _run_assistant(CFG_PAR_RUNNER_ENTITY_ASSISTANT, ASSISTANT_ACTION_CLEANUP, executable_table,
-                       local_config, env_vars)
-    return _results
+            # skip case, if not runnable
+            if _skip_entity_on_local_machine(plan_entity, ENTITY_TYPE_CASE, _case_id, task_monitor, dry_run):
+                continue
+            _case_result = _run_case(plan_entity, _case_id, executable_table, local_config, _plan_env,
+                                     task_monitor, dry_run)
+            _result.add_case_result(_case_result)
+        # eventually run child plans
+        for _child_id in plan_entity.plan_child_ids(plan_id):
+            if _skip_entity_on_local_machine(plan_entity, ENTITY_TYPE_PLAN, _child_id, task_monitor, dry_run):
+                continue
+            _child_result = _run_plan(plan_entity, _child_id, executable_table, local_config, _plan_env,
+                                      task_monitor, dry_run)
+            _result.add_plan_result(_child_result)
+        # run cleanup for plan
+        _run_assistant(CFG_PAR_RUNNER_PLAN_ASSISTANT, ASSISTANT_ACTION_CLEANUP, executable_table, local_config, _plan_env,
+                       task_monitor, dry_run)
+    except BaseException as _e:
+        _result.append_attr_value(ATTR_SUMMARY, localized_message(E_RUN_PLAN_FAILED, _plan[ATTR_NAME]))
+        _result.append_attr_value(ATTR_NOTES, str(_e))
+    finally:
+        _result.mark_end()
+    return _result
 
 
-def _run_case(plan_entity, case_id, executable_table, local_config, runtime_env, task_monitor):
+def _run_case(plan_entity, case_id, executable_table, local_config, runtime_env, task_monitor, dry_run):
     """
     Runs a single test case.
     :param TestPlanEntity plan_entity: the test plan, eventually including descendants
@@ -346,6 +389,7 @@ def _run_case(plan_entity, case_id, executable_table, local_config, runtime_env,
     :param LocalConfig local_config: the local issai product configuration
     :param dict runtime_env: the environment variables to use in test execution
     :param TaskMonitor task_monitor: the progress handler
+    :param bool dry_run: indicates whether simulated run is active
     :returns: execution result
     :rtype: CaseResult
     """
@@ -449,6 +493,9 @@ def plan_entity_from_tcms(plan, options, local_config, task_monitor):
     _plan_cases = read_tcms_cases(False, _full_plan, True, False)
     _plan_entity.add_tcms_cases(_plan_cases)
     _plan_entity.add_tcms_executions(read_tcms_executions([_build], False, _plan_cases), True)
+    _env = options.get(OPTION_ENVIRONMENT)
+    if _env is not None:
+        _plan_entity.add_environments([_env])
     return _plan_entity
 
 
@@ -553,37 +600,45 @@ def _tags_exclude_platform_arch(tags):
     return platform_architecture_tag() not in _arch_tags
 
 
-def _skip_entity_on_local_machine(entity_type, runnable_flag, entity_tags, result):
+def _skip_entity_on_local_machine(entity, entity_type, entity_id, task_monitor, dry_run):
     """
-    Checks whether given test plan or case is runnable on local machine. Enters reason into specified result, if entity
-    is not runnable.
+    Checks whether given test plan or case is runnable on local machine.
     :param int entity_type: the entity type (test plan or case)
     :param bool runnable_flag: the entities' active status (for test plans) or automated status (for test cases)
     :param list entity_tags: the entity tags
-    :param ResultContainer result: the entity result
+    :param TaskMonitor task_monitor: the progress handler
+    :param bool dry_run: indicates whether simulated run is active
     :returns: True, if entity is not runnable on local machine
     :rtype: bool
     """
-    _entity_name = entity_type_name(entity_type)
-    if not runnable_flag:
-        result[ATTR_SUMMARY] = localized_message(I_RUN_ENTITY_SKIPPED, _entity_name)
-        if entity_type == ENTITY_TYPE_PLAN:
-            result[ATTR_NOTES] = localized_message(I_RUN_PLAN_NOT_ACTIVE)
-        else:
-            result[ATTR_NOTES] = localized_message(I_RUN_CASE_NOT_AUTOMATED)
+    _entity_type_name = entity_type_name(entity_type)
+    if entity_type == ENTITY_TYPE_PLAN:
+        _plan = entity.get_part(ATTR_TEST_PLANS, entity_id)
+        _entity_name = _plan[ATTR_NAME]
+        _entity_runnable = _plan[ATTR_IS_ACTIVE]
+        _entity_tags = _plan[ATTR_TAGS]
+    else:
+        _case = entity.get_part(ATTR_TEST_CASES, entity_id)
+        _entity_name = _case[ATTR_SUMMARY]
+        _entity_runnable = _case[ATTR_IS_AUTOMATED]
+        _entity_tags = _case[ATTR_TAGS]
+    if not _entity_runnable:
+        _reason_id = I_RUN_PLAN_NOT_ACTIVE if entity_type == ENTITY_TYPE_PLAN else I_RUN_CASE_NOT_AUTOMATED
+        _reason_msg = localized_message(_reason_id)
+        task_monitor.log(dry_run, I_RUN_ENTITY_SKIPPED, _entity_type_name, _entity_name, _reason_msg)
         return True
-    if _tags_exclude_platform_os(entity_tags):
-        result[ATTR_SUMMARY] = localized_message(I_RUN_ENTITY_SKIPPED, _entity_name)
-        result[ATTR_NOTES] = localized_message(I_RUN_ENTITY_NOT_FOR_LOCAL_OS, _entity_name)
+    if _tags_exclude_platform_os(_entity_tags):
+        _reason_msg = localized_message(I_RUN_ENTITY_NOT_FOR_LOCAL_OS, platform_os_tag())
+        task_monitor.log(dry_run, I_RUN_ENTITY_SKIPPED, _entity_type_name, _entity_name, _reason_msg)
         return True
-    if _tags_exclude_platform_arch(entity_tags):
-        result[ATTR_SUMMARY] = localized_message(I_RUN_ENTITY_SKIPPED, _entity_name)
-        result[ATTR_NOTES] = localized_message(I_RUN_ENTITY_NOT_FOR_LOCAL_ARCH, _entity_name)
+    if _tags_exclude_platform_arch(_entity_tags):
+        _reason_msg = localized_message(I_RUN_ENTITY_NOT_FOR_LOCAL_ARCH, platform_architecture_tag())
+        task_monitor.log(dry_run, I_RUN_ENTITY_SKIPPED, _entity_type_name, _entity_name, _reason_msg)
         return True
     return False
 
 
-def _run_assistant(name, action, executable_table, local_config, runtime_env):
+def _run_assistant(name, action, executable_table, local_config, runtime_env, task_monitor, dry_run):
     """
     Executes test entity initialization or cleanup function/script.
     :param str name: the assistant's name, i.e. its TOML key in the runner section of product configuration
@@ -591,13 +646,24 @@ def _run_assistant(name, action, executable_table, local_config, runtime_env):
     :param ExecutableTable executable_table: the table holding the functions and scripts to execute
     :param LocalConfig local_config: the local configuration
     :param dict runtime_env: the runtime environment to use
+    :param TaskMonitor task_monitor: the progress handler
+    :param bool dry_run: indicates whether simulated run is active
     :raises IssaiException: if the assistant fails
     """
     _assistant = local_config.get(name)
     if _assistant is None:
         return
-    _executable = executable_table.executable_for(_assistant)
-    _executable.run(runtime_env, action)
+    _action_name = assistant_action_name(action)
+    try:
+        _executable = executable_table.executable_for(_assistant)
+        if not dry_run:
+            _executable.run(runtime_env, action)
+        task_monitor.log(dry_run, I_RUN_ASSISTANT_SUCCEEDED, _assistant, _action_name)
+    except IssaiException as _e:
+        task_monitor.log(dry_run, E_RUN_ASSISTANT_FAILED, _assistant, _action_name, str(_e))
+        if dry_run:
+            return
+        raise
 
 
 def _essential_properties_for(local_config, entity_type):

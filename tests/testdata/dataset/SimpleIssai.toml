@@ -1,0 +1,465 @@
+# Complete product to execute system tests for labeling scheme "none".
+# "Managed" entities are always executed with option 'update TCMS', "Unmanaged" entities without
+entity-type = "product"
+entity-name = "SimpleIssai"
+entity-id = 201
+
+[master-data]
+case-categories = [
+    {id = 101, name = "--default--", product = 201, description = ""},
+]
+case-components = [
+    {id = 101, name = "cli", product = 201, initial_owner = 3, initial_qa_contact = 3, description = "Issai command line interface", cases = []},
+    {id = 102, name = "core", product = 201, initial_owner = 3, initial_qa_contact = 3, description = "Issai core", cases = []},
+    {id = 103, name = "gui", product = 201, initial_owner = 3, initial_qa_contact = 3, description = "Issai graphical user interface", cases = []},
+]
+case-priorities = [
+    {id = 101, value = "high", is_active = true},
+]
+case-statuses = [
+    {id = 101, name = "PROPOSED", description = "", is_confirmed = false},
+    {id = 102, name = "CONFIRMED", description = "", is_confirmed = true},
+]
+execution-statuses = [
+    {id = 101, name = "ERROR", weight = -20, icon = "fa fa-minus-circle", color = "#cc0000"},
+    {id = 102, name = "FAILED", weight = -30, icon = "fa fa-times-circle-o", color = "#cc0000"},
+    {id = 103, name = "IDLE", weight = 0, icon = "fa fa-question-circle-o", color = "#72767B"},
+    {id = 104, name = "PASSED", weight = 20, icon = "fa fa-check-circle-o", color = "#92d400"},
+]
+plan-types = [
+    {id = 101, name = "Integration", description = ""},
+    {id = 102, name = "System", description = ""},
+]
+product-builds = [
+    {id = 101, is_active = true, name = "unspecified", version = 101},
+]
+product-classifications = [
+    {id = 101, name = "Application"},
+]
+product-versions = [
+    {id = 101, product = 201, value = "unspecified"},
+]
+tcms-users = [
+    {email = "", first_name = "Master", id = 101, is_active = true, is_staff = true, is_superuser = true, last_name = "De Desaster", username = "tmadmin"},
+    {email = "", first_name = "Human", id = 102, is_active = true, is_staff = true, is_superuser = false, last_name = "Tester", username = "tester"},
+]
+
+[product]
+id = 201
+name = "SimpleIssai"
+description = "Product to test Issai without versions and builds other than default."
+classification = 101
+
+[[environments]]
+id = 301
+name = "SimpleIssaiSystemTest"
+description = "Settings for system tests of product SimpleIssai"
+properties = [{LANG = "en"}]
+
+[[test-plans]]
+# options: update-tcms=False
+# expected result: PASSED
+id = 1001
+name = "UnmanagedEmptyPlan-Active-WithRun"
+text = "Empty active test plan with test run, without any test cases."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = []
+cases = []
+runs = [3001]
+
+[[test-plans]]
+# options: update-tcms=False
+# expected result: FAILED
+# reason: run does not exist
+id = 1002
+name = "UnmanagedEmptyPlan-Active-NoRun"
+text = "Empty active test plan without test run and test cases."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = []
+cases = []
+runs = []
+
+[[test-plans]]
+# options: update-tcms=False
+# expected result: -
+# reason: inactive plans are skipped
+id = 1003
+name = "UnmanagedEmptyPlan-Inactive-WithRun"
+text = "Empty inactive test plan with test run, without any test cases."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = []
+cases = []
+runs = [3003]
+
+[[test-plans]]
+# options: update-tcms=False
+# expected result: -
+# reason: inactive plans are skipped
+id = 1004
+name = "UnmanagedEmptyPlan-Inactive-NoRun"
+text = "Empty inactive test plan without test run and test cases."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = []
+cases = []
+runs = []
+
+[[test-plans]]
+# options: update-tcms=False
+# expected result: PASSED/-
+# reason: -/plans not matching tagged operating system are skipped
+id = 1005
+name = "UnmanagedEmptyPlan-OsLinux-WithRun"
+text = "Empty active test plan with test run, without any test cases. Tagged with os.linux"
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = ["os.linux"]
+cases = []
+runs = [3005]
+
+[[test-plans]]
+# options: update-tcms=False
+# expected result: FAILED/-
+# reason: run does not exist/plans not matching tagged operating system are skipped
+id = 1006
+name = "UnmanagedEmptyPlan-OsLinux-NoRun"
+text = "Empty inactive test plan without test run and test cases."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = ["os.linux"]
+cases = []
+runs = []
+
+[[test-plans]]
+# options: update-tcms=False
+# expected result: PASSED/-
+# reason: -/plans not matching tagged operating system are skipped
+id = 1007
+name = "UnmanagedEmptyPlan-OsWindows-WithRun"
+text = "Empty active test plan with test run, without any test cases. Tagged with os.linux"
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = ["os.windows"]
+cases = []
+runs = [3007]
+
+[[test-plans]]
+# options: update-tcms=False
+# expected result: FAILED/-
+# reason: run does not exist/plans not matching tagged operating system are skipped
+id = 1008
+name = "UnmanagedEmptyPlan-OsWindows-NoRun"
+text = "Empty inactive test plan without test run and test cases."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = ["os.windows"]
+cases = []
+runs = []
+
+[[test-plans]]
+# options: update-tcms=False
+# expected result: PASSED
+id = 1010
+name = "UnmanagedSinglePlan-WithRun-ManualCasesOnly-WithExecutions"
+text = "Unmanaged test plan with three manual test cases.\nTest run for default build exists.\nAll test executions exist."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = []
+cases = [2901, 2902, 2903]
+runs = [3010]
+
+[[test-plans]]
+# options: update-tcms=False
+# expected result: PASSED
+id = 1011
+name = "UnmanagedSinglePlan-WithRun-ManualCasesOnly-NoExecutions"
+text = "Unmanaged test plan with three manual test cases.\nTest run for default build exists.\nNo test executions exist."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = []
+cases = [2904, 2905, 2906]
+runs = [3011]
+
+[[test-runs]]
+id = 3001
+summary = "UnmanagedEmptyPlan-Active-WithRun"
+notes = ""
+plan = 1001
+build = 101
+manager = 101
+default_tester = 102
+properties = []
+tags = []
+executions = []
+
+[[test-runs]]
+id = 3003
+summary = "UnmanagedEmptyPlan-Inactive-WithRun"
+notes = ""
+plan = 1003
+build = 101
+manager = 101
+default_tester = 102
+properties = []
+tags = []
+executions = []
+
+[[test-runs]]
+id = 3005
+summary = "UnmanagedEmptyPlan-OsLinux-WithRun"
+notes = ""
+plan = 1005
+build = 101
+manager = 101
+default_tester = 102
+properties = []
+tags = []
+executions = []
+
+[[test-runs]]
+id = 3007
+summary = "UnmanagedEmptyPlan-OsWindows-WithRun"
+notes = ""
+plan = 1007
+build = 101
+manager = 101
+default_tester = 102
+properties = []
+tags = []
+executions = []
+
+[[test-runs]]
+id = 3010
+summary = "UnmanagedSinglePlan-WithRun-ManualCasesOnly-WithExecutions"
+notes = ""
+plan = 1010
+build = 101
+manager = 101
+default_tester = 102
+properties = []
+tags = []
+executions = [4901, 4902, 4903]
+
+[[test-runs]]
+id = 3011
+summary = "UnmanagedSinglePlan-WithRun-ManualCasesOnly-NoExecutions"
+notes = ""
+plan = 1011
+build = 101
+manager = 101
+default_tester = 102
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 2901
+is_automated = false
+arguments = ""
+summary = "SimpleIssai-ManualCase01"
+notes = ""
+text = "Manual test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [4901]
+
+[[test-cases]]
+id = 2902
+is_automated = false
+arguments = ""
+summary = "SimpleIssai-ManualCase02"
+notes = ""
+text = "Manual test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [4902]
+
+[[test-cases]]
+id = 2903
+is_automated = false
+arguments = ""
+summary = "SimpleIssai-ManualCase03"
+notes = ""
+text = "Manual test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [4903]
+
+[[test-cases]]
+id = 2904
+is_automated = false
+arguments = ""
+summary = "SimpleIssai-ManualCase04"
+notes = ""
+text = "Manual test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 2905
+is_automated = false
+arguments = ""
+summary = "SimpleIssai-ManualCase05"
+notes = ""
+text = "Manual test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 2906
+is_automated = false
+arguments = ""
+summary = "SimpleIssai-ManualCase06"
+notes = ""
+text = "Manual test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-executions]]
+id = 4901
+assignee = 102
+run = 3010
+case = 2901
+build = 101
+status = 103
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+
+[[test-executions]]
+id = 4902
+assignee = 102
+run = 3010
+case = 2902
+build = 101
+status = 103
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+
+[[test-executions]]
+id = 4903
+assignee = 102
+run = 3010
+case = 2903
+build = 101
+status = 103
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+
