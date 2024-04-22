@@ -84,6 +84,7 @@ i-dry-run-imp-run-updated Will update TestRun #{0} for TestPlan '{1}' with value
 
 # runner
 e-run-assistant-failed Assistant '{0}' for action {1} failed: {2}.
+e-run-invalid-env-property-value Invalid value for environment property '{0}'.
 e-run-plan-failed Execution of test plan '{0}' failed.
 e-run-source-path-missing Path for source files is not defined, configuration parameter '{0}' is missing.
 e-run-source-path-invalid Path for source files '{0}' does not exist.
@@ -94,10 +95,11 @@ i-run-assistant-succeeded Assistant '{0}' for action {1} executed.
 i-run-case-not-automated Test case not automated.
 i-run-entity-not-for-local-arch Entity not suitable for local CPU architecture '{0}'.
 i-run-entity-not-for-local-os Entity not suitable for local operating system '{0}.
-i-run-entity-skipped {0} '{1}' skipped: {2}.
+i-run-entity-skipped {0} '{1}' skipped: {2}
 i-run-plan-not-active Test plan not active.
 i-run-plan-tag-mismatch Test plan tagged with '{0}', but local platform is '{1}'.
 i-run-running-case Executing test case '{0}'.
+i-run-running-env Running test for environment properties {0}.
 i-run-running-plan Executing test plan '{0}'.
 
 # entities
@@ -308,7 +310,8 @@ i-dry-run-imp-run-skipped Will not import TestRun for TestPlan '{0}' and Build I
 i-dry-run-imp-user-exact-match User '{0}' exists with same ID {1} in TCMS.
 i-dry-run-imp-user-repl-current Will use current user '{0}' for username '{1}'.
 i-dry-run-run-assistant-succeeded Will execute assistant '{0}' for action {1}.
-i-dry-run-run-entity-skipped Will skip {0} '{1}': {2}.
+i-dry-run-run-entity-skipped Will skip {0} '{1}': {2}
+i-dry-run-run-running-env Will run for environment properties {0}.
 i-dry-run-run-running-plan Will execute test plan '{0}'.
 
 e-attachment-missing Error: Attachment file {0} does not exist.

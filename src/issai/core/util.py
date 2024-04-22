@@ -100,7 +100,7 @@ def platform_locale():
     """
     Determines locale setting for current platform.
     Returns None, if locale cannot be determined.
-    :returns: two-character platform locale (en, fr, de, ...)
+    :returns: two-character platform locale (e.g. 'en')
     :rtype: str
     """
     # noinspection PyBroadException
@@ -129,3 +129,75 @@ def platform_locale():
     except Exception:
         pass
     return None
+
+
+class PropertyMatrix:
+    """
+    Iterable for property combinations as used in environments.
+    """
+
+    def __init__(self):
+        """
+        Constructor
+        """
+        super().__init__()
+        self.count = 0
+        self.names = []
+        self.values = []
+        self.indexes = []
+
+    def add(self, property_name, property_values):
+        """
+        Adds a property to the matrix.
+        :param str property_name: the property name
+        :param list property_values: the property values
+        """
+        if len(property_values) == 0:
+            return
+        self.names.append(property_name)
+        self.values.append(property_values)
+        self.indexes.append(-1)
+        self.count += 1
+
+    def is_empty(self):
+        """
+        :returns: True, if matrix contains no elements
+        :rtype: bool
+        """
+        return self.count == 0
+
+    def _increment_index(self, property_nr):
+        """
+        Increments internal index to access next element.
+        :param int property_nr: the property number
+        :raises StopIteration: if all elements have been consumed
+        """
+        _index = self.indexes[property_nr]
+        if _index < 0:
+            for _i in range(0, self.count):
+                self.indexes[_i] = 0
+            return
+        if _index >= len(self.values[property_nr]) - 1:
+            if property_nr == 0:
+                raise StopIteration
+            self.indexes[property_nr] = 0
+            self._increment_index(property_nr - 1)
+            return
+        self.indexes[property_nr] += 1
+
+    def __iter__(self):
+        """
+        :returns: Iterator over the matrix
+        """
+        return self
+
+    def __next__(self):
+        """
+        :returns: next element
+        :rtype: list[tuple]
+        :raises StopIteration: if all elements have been consumed
+        """
+        if self.count == 0:
+            raise StopIteration
+        self._increment_index(self.count - 1)
+        return [(self.names[_i], self.values[_i][self.indexes[_i]]) for _i in range(0, self.count)]

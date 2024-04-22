@@ -51,7 +51,7 @@ from issai.core.tcms import (create_run_from_plan, find_tcms_objects, read_envir
                              read_test_entity_with_id, read_product_for_test_entity, read_tcms_cases,
                              read_tcms_executions, read_tcms_plan,
                              read_tcms_run_tree, TcmsInterface, update_execution, update_run)
-from issai.core.util import platform_architecture_tag, platform_os_tag, shell_cmd
+from issai.core.util import platform_architecture_tag, platform_os_tag, shell_cmd, PropertyMatrix
 
 
 class Executable:
@@ -211,6 +211,9 @@ def run_tcms_plan(plan, options, local_config, task_monitor):
         raise IssaiException(E_RUN_WORKING_PATH_INVALID, _working_path)
     _version = options.get(OPTION_VERSION)
     _build = options.get(OPTION_BUILD)
+    _env_opt = options.get(OPTION_ENVIRONMENT)
+    if _env_opt is not None:
+        _env_opt[ATTR_PROPERTIES] = read_environment_properties(_env_opt)
     # create TestPlan entity from TCMS data
     _plan_entity = plan_entity_from_tcms(plan, options, local_config, task_monitor)
     task_monitor.set_operation_count(_plan_entity.runnable_case_count() + 1)
@@ -296,9 +299,9 @@ def _run_ancestor_plan(plan_entity, options, local_config, env_vars, task_monito
     _build = plan_entity.master_data_of_type(ATTR_PRODUCT_BUILDS)[0]
     _dry_run = options.get(OPTION_DRY_RUN)
     _exe_table = ExecutableTable(local_config)
+    _env_opt = options.get(OPTION_ENVIRONMENT)
     _result = PlanResult.from_entity(plan_entity, -1, _version, _build)
     _result.mark_start()
-    # TODO environment handling (check for test matrix)
     # noinspection PyBroadException
     try:
         # skip plan, if not runnable
@@ -308,7 +311,25 @@ def _run_ancestor_plan(plan_entity, options, local_config, env_vars, task_monito
         _run_assistant(CFG_PAR_RUNNER_ENTITY_ASSISTANT, ASSISTANT_ACTION_INIT, _exe_table, local_config, env_vars,
                        task_monitor, _dry_run)
         # run plan
-        _result = _run_plan(plan_entity, _plan_id, _exe_table, local_config, env_vars, task_monitor, _dry_run)
+        _prop_matrix = PropertyMatrix()
+        if _env_opt is not None:
+            for _prop_name, _prop_val in _env_opt[ATTR_PROPERTIES].items():
+                _val = _parse_env_property(_prop_name, _prop_val)
+                if isinstance(_val, list):
+                    _prop_matrix.add(_prop_name, _val)
+                else:
+                    env_vars[_prop_name] = _val
+        if _prop_matrix.is_empty():
+            _result = _run_plan(plan_entity, _plan_id, _exe_table, local_config, env_vars, task_monitor, _dry_run)
+        else:
+            for _props in _prop_matrix:
+                _prop_infos = []
+                for _enva_name, _enva_value in _props:
+                    env_vars[_enva_name] = _enva_value
+                    _prop_infos.append(f'{_enva_name}="{_enva_value}"')
+                task_monitor.log(_dry_run, I_RUN_RUNNING_ENV, ','.join(_prop_infos))
+                _res = _run_plan(plan_entity, _plan_id, _exe_table, local_config, env_vars, task_monitor, _dry_run)
+                _result.append_attr_value(ATTR_NOTES, _res[ATTR_NOTES])
         # eventually run cleanup for top level plan
         _run_assistant(CFG_PAR_RUNNER_ENTITY_ASSISTANT, ASSISTANT_ACTION_CLEANUP, _exe_table, local_config, env_vars,
                        task_monitor, _dry_run)
@@ -697,3 +718,21 @@ def _fill_essential_props(property_set, local_config, cfg_par):
     if _props is not None:
         for _p in _props:
             property_set.add(_p)
+
+
+def _parse_env_property(prop_name, prop_val):
+    """
+    Parses environment property value.
+    :param str prop_val: the property value as defined in TCMS
+    :return: the parsed value
+    :rtype: str|list
+    :raises IssaiException: if property value is invalid
+    """
+    prop_val = prop_val.strip()
+    if not prop_val.startswith('['):
+        return prop_val
+    if not prop_val.endswith(']'):
+        raise IssaiException(E_RUN_INVALID_ENV_PROPERTY_VALUE, prop_name)
+    prop_val = prop_val[1:-1].strip().replace(r'\,', '&&&comma;;;')
+    _prop_values = prop_val.split(',')
+    return [_val.replace('&&&comma;;;', ',').strip() for _val in _prop_values]
