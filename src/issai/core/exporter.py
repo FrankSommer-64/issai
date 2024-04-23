@@ -69,7 +69,7 @@ def export_case(case, options, local_config, output_path, task_monitor):
     if _include_attachments:
         _op_count += 1
     task_monitor.set_operation_count(_op_count)
-    task_monitor.log(False, I_EXP_FETCH_CASE, case[ATTR_NAME])
+    task_monitor.log(I_EXP_FETCH_CASE, case[ATTR_NAME])
     task_monitor.operations_processed(1)
     _case = read_tcms_case(case[ATTR_ID], _include_executions, _include_history)
     _product = read_product_for_test_entity(ENTITY_TYPE_CASE, _case)
@@ -85,14 +85,14 @@ def export_case(case, options, local_config, output_path, task_monitor):
     _export_entity.add_tcms_cases(_cases)
     # eventually fetch test executions
     if _include_executions:
-        task_monitor.log(False, I_EXP_FETCH_EXECUTIONS, _case_name)
+        task_monitor.log(I_EXP_FETCH_EXECUTIONS, _case_name)
         task_monitor.operations_processed(1)
         _builds = None if _build is None else [_build]
         _export_entity.add_tcms_executions(read_tcms_executions(_builds, _include_history, _cases))
 
     _fetch_referenced_master_data(_export_entity, task_monitor)
     if _include_attachments:
-        download_attachments(_export_entity, output_path, task_monitor, False)
+        download_attachments(_export_entity, output_path, task_monitor)
     _write_output_file(_export_entity, os.path.join(output_path, f'testcase_{_case_id}.toml'), task_monitor)
 
     return TaskResult(0, localized_message(I_GUI_EXPORT_CASE_SUCCESSFUL, _case_name))
@@ -136,7 +136,7 @@ def export_plan(plan, options, local_config, output_path, task_monitor):
     _export_entity.add_master_data(ATTR_PRODUCT_CLASSIFICATIONS, _classification)
 
     # fetch test plans and runs
-    task_monitor.log(False, I_EXP_FETCH_PLAN, _plan_name)
+    task_monitor.log(I_EXP_FETCH_PLAN, _plan_name)
     task_monitor.operations_processed(1)
     _plans = read_tcms_plan(plan, _include_tree, _include_runs)
     _export_entity.add_tcms_plans(_plans)
@@ -144,7 +144,7 @@ def export_plan(plan, options, local_config, output_path, task_monitor):
         _export_entity.add_tcms_runs(read_tcms_run_tree(_plans, _build))
 
     # fetch test cases and executions
-    task_monitor.log(False, I_EXP_FETCH_PLAN_CASES, _plan_name)
+    task_monitor.log(I_EXP_FETCH_PLAN_CASES, _plan_name)
     task_monitor.operations_processed(5)
     _cases = read_tcms_cases(False, _plans, _include_runs, _include_history)
     _export_entity.add_tcms_cases(_cases)
@@ -157,7 +157,7 @@ def export_plan(plan, options, local_config, output_path, task_monitor):
 
     _fetch_referenced_master_data(_export_entity, task_monitor)
     if _include_attachments:
-        download_attachments(_export_entity, output_path, task_monitor, False)
+        download_attachments(_export_entity, output_path, task_monitor)
     _write_output_file(_export_entity, os.path.join(output_path, f'testplan_{_plan_id}.toml'), task_monitor)
 
     return TaskResult(0, localized_message(I_GUI_EXPORT_PLAN_SUCCESSFUL, _plan_name))
@@ -190,7 +190,7 @@ def export_product(product_name, options, local_config, output_path, task_monito
         _op_count += 1
     task_monitor.set_operation_count(_op_count)
     # fetch product specific metadata from TCMS
-    task_monitor.log(False, I_EXP_FETCH_PRODUCT)
+    task_monitor.log(I_EXP_FETCH_PRODUCT)
     task_monitor.operations_processed(1)
     _product = find_tcms_object(TCMS_CLASS_ID_PRODUCT, {ATTR_NAME: product_name})
     _export_entity = ProductEntity.from_tcms(_product)
@@ -198,7 +198,7 @@ def export_product(product_name, options, local_config, output_path, task_monito
     _fetch_product_master_data(_export_entity, _product, options.get(OPTION_VERSION), options.get(OPTION_BUILD))
 
     # fetch test plans and runs from TCMS
-    task_monitor.log(False, I_EXP_FETCH_PLANS)
+    task_monitor.log(I_EXP_FETCH_PLANS)
     task_monitor.operations_processed(20)
     _export_entity.add_tcms_plans(read_tcms_plans(_export_entity.master_data_of_type(ATTR_PRODUCT_VERSIONS),
                                                   _include_runs))
@@ -206,7 +206,7 @@ def export_product(product_name, options, local_config, output_path, task_monito
         _export_entity.add_tcms_runs(read_tcms_runs(_export_entity.master_data_of_type(ATTR_PRODUCT_BUILDS)))
 
     # fetch test cases and executions from TCMS
-    task_monitor.log(False, I_EXP_FETCH_CASES)
+    task_monitor.log(I_EXP_FETCH_CASES)
     task_monitor.operations_processed(40)
     _filter_objects = _export_entity.master_data_of_type(ATTR_CASE_CATEGORIES) if _export_all_cases \
         else _export_entity.test_plans()
@@ -222,7 +222,7 @@ def export_product(product_name, options, local_config, output_path, task_monito
 
     _fetch_referenced_master_data(_export_entity, task_monitor)
     if options.get(OPTION_INCLUDE_ATTACHMENTS):
-        download_attachments(_export_entity, output_path, task_monitor, False)
+        download_attachments(_export_entity, output_path, task_monitor)
     _write_output_file(_export_entity, os.path.join(output_path, f'{product_name}.toml'), task_monitor)
 
     return TaskResult(0, localized_message(I_GUI_EXPORT_PRODUCT_SUCCESSFUL, product_name))
@@ -258,7 +258,7 @@ def _fetch_referenced_master_data(entity, task_monitor):
     :param TaskMonitor task_monitor: the progress handler
     :raises IssaiException: if an error during TCMS communication occurs
     """
-    task_monitor.log(False, I_EXP_FETCH_MASTER_DATA)
+    task_monitor.log(I_EXP_FETCH_MASTER_DATA)
     if not entity.holds_entity_with_type(ENTITY_TYPE_PRODUCT):
         _versions = find_tcms_objects(TCMS_CLASS_ID_VERSION, {'id__in': entity.referenced_version_ids()})
         entity.add_master_data(ATTR_PRODUCT_VERSIONS, _versions)
@@ -290,7 +290,7 @@ def _fetch_environments(entity, task_monitor):
     :param issai.core.task.TaskMonitor task_monitor: the progress handler
     :raises IssaiException: if an error during TCMS communication occurs
     """
-    task_monitor.log(False, I_EXP_FETCH_ENVIRONMENTS)
+    task_monitor.log(I_EXP_FETCH_ENVIRONMENTS)
     entity.add_environments(read_tcms_environments())
 
 
@@ -304,5 +304,5 @@ def _write_output_file(entity, output_file_path, task_monitor):
     :param TaskMonitor task_monitor: the progress handler
     :raises IOException: if write operation fails
     """
-    task_monitor.log(False, I_EXP_WRITE_OUTPUT_FILE, output_file_path)
+    task_monitor.log(I_EXP_WRITE_OUTPUT_FILE, output_file_path)
     entity.to_file(output_file_path)

@@ -1346,7 +1346,7 @@ class CaseResult(Result):
         self[ATTR_RUN] = run_id
         self[ATTR_CASE] = case_id
         self[ATTR_CASE_NAME] = case_summary
-        self[ATTR_STATUS] = RESULT_STATUS_IDLE
+        self[ATTR_STATUS] = RESULT_STATUS_ERROR
         self[ATTR_TESTER_NAME] = ''
         self[ATTR_COMMENT] = ''
 

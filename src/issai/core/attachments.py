@@ -61,7 +61,7 @@ def attachment_file_path(root_path, file_name, tcms_class_id, tcms_entity_id):
     return os.path.join(root_path, ATTACHMENTS_ROOT_DIR, _subdir, str(tcms_entity_id), file_name)
 
 
-def download_attachment(file_name_patterns, root_path, url, tcms_class_id, tcms_entity_id, task_monitor, dry_run):
+def download_attachment(file_name_patterns, root_path, url, tcms_class_id, tcms_entity_id, task_monitor):
     """
     Downloads a file attached to a test entity from TCMS.
     :param list[str] file_name_patterns: regular expression patterns attachment files must match to be downloaded
@@ -70,7 +70,6 @@ def download_attachment(file_name_patterns, root_path, url, tcms_class_id, tcms_
     :param int tcms_class_id: the TCMS entity class ID
     :param int tcms_entity_id: the TCMS entity ID
     :param TaskMonitor task_monitor: the progress handler
-    :param bool dry_run: indicates whether simulation mode is active
     :raises IssaiException: if download failed
     """
     try:
@@ -82,8 +81,8 @@ def download_attachment(file_name_patterns, root_path, url, tcms_class_id, tcms_
                     break
             return
         _full_file_path = attachment_file_path(root_path, _file_name, tcms_class_id, tcms_entity_id)
-        task_monitor.log(dry_run, I_DOWNLOAD_ATTACHMENT, _full_file_path)
-        if dry_run:
+        task_monitor.log(I_DOWNLOAD_ATTACHMENT, _full_file_path)
+        if task_monitor.is_dry_run():
             return
         os.makedirs(os.path.dirname(_full_file_path), exist_ok=True)
         r = requests.get(url)
@@ -93,7 +92,7 @@ def download_attachment(file_name_patterns, root_path, url, tcms_class_id, tcms_
         raise IssaiException(E_DOWNLOAD_ATTACHMENT_FAILED, url, _e)
 
 
-def download_attachments(entity, output_path, task_monitor, dry_run, file_name_patterns=()):
+def download_attachments(entity, output_path, task_monitor, file_name_patterns=()):
     """
     Downloads all attachments of specified entity. Files are stored under subdirectory
      "attachments/<entity-type>/<entity-id>".
@@ -101,19 +100,17 @@ def download_attachments(entity, output_path, task_monitor, dry_run, file_name_p
     :param Entity entity: the entity
     :param str output_path: the output path
     :param TaskMonitor task_monitor: the progress handler
-    :param bool dry_run: indicates whether simulation mode is active
     :param list[str] file_name_patterns: regular expression patterns attachment files must match to be downloaded
     :raises IssaiException: if download operation fails
     """
-    task_monitor.log(dry_run, I_DOWNLOAD_ATTACHMENTS, entity.entity_name())
+    task_monitor.log(I_DOWNLOAD_ATTACHMENTS, entity.entity_name())
     task_monitor.operations_processed(1)
     _attachments_path = os.path.join(output_path, ATTACHMENTS_ROOT_DIR)
     for _class_id, _objects in entity.attachments().items():
         for _object_id, _urls in _objects.items():
             for _url in _urls:
-                if not dry_run:
-                    download_attachment(file_name_patterns, output_path, _url, _class_id, _object_id,
-                                        task_monitor, dry_run)
+                if not task_monitor.is_dry_run():
+                    download_attachment(file_name_patterns, output_path, _url, _class_id, _object_id, task_monitor)
 
 
 def upload_attachment(root_path, file_name, file_entity_id, tcms_class_id, tcms_entity_id):

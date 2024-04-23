@@ -262,11 +262,7 @@ PLATFORM_OS_PREFIX = 'os.'
 RESULT_STATUS_ID_PASSED = 0
 RESULT_STATUS_ID_FAILED = 1
 RESULT_STATUS_ID_ERROR = 2
-RESULT_STATUS_ID_BLOCKED = 3
-RESULT_STATUS_ID_IDLE = 4
-RESULT_STATUS_IDLE = 'IDLE'
 RESULT_STATUS_PASSED = 'PASSED'
-RESULT_STATUS_BLOCKED = 'BLOCKED'
 RESULT_STATUS_ERROR = 'ERROR'
 RESULT_STATUS_FAILED = 'FAILED'
 
@@ -346,6 +342,19 @@ def data_type_for_tcms_class(class_id):
     :rtype: str
     """
     return _TCMS_CLASS_DATA_TYPES.get(class_id)
+
+
+def result_status_name(status_code):
+    """
+    :param int status_code: the status code
+    :returns: status name
+    :rtype: str
+    """
+    if status_code == RESULT_STATUS_ID_PASSED:
+        return RESULT_STATUS_PASSED
+    if status_code == RESULT_STATUS_ID_FAILED:
+        return RESULT_STATUS_FAILED
+    return RESULT_STATUS_ERROR
 
 
 def tcms_class_id_for_master_data_type(data_type):

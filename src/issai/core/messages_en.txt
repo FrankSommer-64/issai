@@ -72,11 +72,13 @@ e-imp-owning-object-mismatch Owning {0} '{1}' of {2} #{3} has different name '{4
 i-imp-execution-created Created TestExecution for TestCase '{0}' and TestRun ID {1}.
 i-imp-execution-skipped TestExecution '{0}' not imported, using existing TestExecution ID {2} of TestRun ID {1}.
 i-imp-execution-updated TestExecution {0} for TestCase '{1}' updated with values {2}.
+i-imp-md-exact-match {0} '{1}' exists with same ID {2} in TCMS.
 i-imp-run-created Created TestRun for TestPlan '{0}' and Build ID {1}.
 i-imp-run-updated TestRun {0} for TestPlan '{1}' updated with values {2}.
 i-imp-object-created Created {0} with name '{1}'.
 i-imp-object-skipped {0} '{1}' not imported, using existing object with ID {2}.
 i-imp-run-skipped TestRun '{0}' not imported, using existing TestRun ID {2} for build ID {1}.
+i-imp-user-exact-match User '{0}' exists with same ID {1} in TCMS.
 i-imp-user-repl-current Using current user '{0}' for username '{1}'.
 i-imp-md-ref-changed Using different ID {0} for {1} '{2}' instead of ID {3}.
 i-dry-run-imp-execution-updated Will update TestExecution #{0} for TestCase '{1}' with values {2}.
@@ -141,6 +143,7 @@ l-include-plan-tree Include child plans
 l-include-runs Include runs and executions
 l-init initialization
 l-name Name
+l-no-environment -none-
 l-ok OK
 l-options Options
 l-output-path Output path
@@ -293,6 +296,7 @@ w-gui-write-gui-configuration-failed Could not write GUI configuration to file {
 e-run-case-script-missing No script defined for test case '{0}'.
 i-download-attachment Downloading attachment file '{0}'.
 i-download-attachments Downloading attachments for '{0}'.
+i-upload-attachment Uploading {0} attachment file {1}.
 
 # dry run
 e-dry-run-run-assistant-failed Assistant '{0}' for action {1} will fail: {2}.

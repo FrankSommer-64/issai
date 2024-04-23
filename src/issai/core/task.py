@@ -40,7 +40,7 @@ import threading
 
 from issai.core import SEVERITY_ERROR, SEVERITY_INFO, TASK_SUCCEEDED
 from issai.core.issai_exception import IssaiException
-from issai.core.messages import localized_message, E_BACKGROUND_TASK_ABORTED
+from issai.core.messages import localized_message, message_id_exists, E_BACKGROUND_TASK_ABORTED
 
 
 class TaskResult:
@@ -88,6 +88,7 @@ class TaskMonitor:
         self.__operations_processed = 0
         self.__operation_share = 100.0
         self.__abort_requested = False
+        self.__dry_run = False
         self.__lock = threading.Lock()
 
     def errors_detected(self):
@@ -114,6 +115,20 @@ class TaskMonitor:
         """
         self.__operations_processed += no_of_operations
 
+    def is_dry_run(self):
+        """
+        :returns: True, if dry run mode is set; otherwise False
+        :rtype: bool
+        """
+        return self.__dry_run
+
+    def set_dry_run(self, mode):
+        """
+        Sets dry run mode.
+        :param bool mode: True for dry run mode; otherwise False
+        """
+        self.__dry_run = mode is not None and mode
+
     def request_abort(self):
         """
         Sets internal flag to abort the task.
@@ -133,19 +148,20 @@ class TaskMonitor:
         self.__lock.release()
         return _abort_requested
 
-    def log(self, dry_run, msg_id, *msg_args):
+    def log(self, msg_id, *msg_args):
         """
         Issues a localized progress message.
         Messages are shown in progress dialog window in Issai GUI, and on console in scripts.
-        :param bool dry_run: indicates whether dry-run option is active
         :param str msg_id: the message ID
         :param Any msg_args: the message arguments
         :rtype: None
         :raises IssaiException: if the user requested task abortion
         """
         _severity = msg_id[0]
-        if dry_run:
-            msg_id = '%s%s%s' % (msg_id[:2], _DRY_RUN_INFIX, msg_id[2:])
+        if self.__dry_run:
+            _dry_run_msg_id = '%s%s%s' % (msg_id[:2], _DRY_RUN_INFIX, msg_id[2:])
+            if message_id_exists(_dry_run_msg_id):
+                msg_id = _dry_run_msg_id
         _msg = localized_message(msg_id, *msg_args)
         self.log_text(_msg, _severity)
 

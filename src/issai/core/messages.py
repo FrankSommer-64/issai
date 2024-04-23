@@ -85,6 +85,7 @@ E_CONTAINER_NOT_RUNNABLE = 'e-container-not-runnable'
 E_DIR_NOT_EMPTY = 'e-dir-not-empty'
 I_DOWNLOAD_ATTACHMENT = 'i-download-attachment'
 I_DOWNLOAD_ATTACHMENTS = 'i-download-attachments'
+I_UPLOAD_ATTACHMENT = 'i-upload-attachment'
 E_DOWNLOAD_ATTACHMENT_FAILED = 'e-download-attachment-failed'
 E_INTERNAL_ERROR = 'e-internal-error'
 E_INVALID_ACTION = 'e-invalid-action'
@@ -115,6 +116,8 @@ E_IMP_ATTR_VALUE_INVALID = 'e-imp-attr-value-invalid'
 E_IMP_ATTR_MISMATCH = 'e-imp-attr-mismatch'
 E_IMP_ATTR_MISSING = 'e-imp-attr-missing'
 E_IMP_ATTR_AMBIGUOUS = 'e-imp-attr-ambiguous'
+I_IMP_MD_EXACT_MATCH = 'i-imp-md-exact-match'
+I_IMP_USER_EXACT_MATCH = 'i-imp-user-exact-match'
 W_IMP_ATTR_NOT_SUPPORTED = 'w-imp-attr-not-supported'
 
 E_IMP_MD_NO_MATCH = 'e-imp-md-no-match'
@@ -252,6 +255,7 @@ L_INCLUDE_PLAN_TREE = 'l-include-plan-tree'
 L_INCLUDE_RUNS = 'l-include-runs'
 L_INIT = 'l-init'
 L_NAME = 'l-name'
+L_NO_ENVIRONMENT = 'l-no-environment'
 L_OK = 'l-ok'
 L_OPTIONS = 'l-options'
 L_OUTPUT_PATH = 'l-output-path'
@@ -451,6 +455,16 @@ _DEFAULT_LOCALE = 'en'
 _EMSG_FW_CORRUPT = 'Framework installation is corrupt: %s.'
 _EMSG_NO_MSG_FILE_FOUND = 'Could not find localized message definition files'
 _EMSG_READ_MSG_FILE_FAILED = 'Could not read localized message definition file %s (%s)'
+
+
+def message_id_exists(msg_id):
+    """
+    :param str msg_id: the message ID
+    :returns: True, if specified message ID exists
+    :rtype: bool
+    """
+    global _MESSAGE_TABLE
+    return msg_id in _MESSAGE_TABLE
 
 
 def localized_message(msg_id, *args):

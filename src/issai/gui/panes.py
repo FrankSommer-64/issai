@@ -116,10 +116,10 @@ class FileActionPane(QGroupBox):
         else:
             _do_button_label = localized_label(L_RUN)
         _do_button = QPushButton(_do_button_label)
-        _do_button.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+        _do_button.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
         _do_button.setStyleSheet(_OPEN_BUTTON_STYLE)
         _do_button.clicked.connect(self._do_action)
-        _pane_layout.addWidget(_do_button, alignment=Qt.AlignCenter)
+        _pane_layout.addWidget(_do_button, alignment=Qt.AlignmentFlag.AlignCenter)
         self.setLayout(_pane_layout)
 
     @staticmethod
@@ -331,9 +331,9 @@ class TcmsActionPane(QGroupBox):
         else:
             _do_button = QPushButton(localized_message(L_RUN_ENTITY, lower_case_entity_type_name(entity_type)))
             _do_button.clicked.connect(self._run_entity)
-        _do_button.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+        _do_button.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
         _do_button.setStyleSheet(_OPEN_BUTTON_STYLE)
-        _pane_layout.addWidget(_do_button, alignment=Qt.AlignCenter)
+        _pane_layout.addWidget(_do_button, alignment=Qt.AlignmentFlag.AlignCenter)
         self.setLayout(_pane_layout)
         self._initialize_combos(products)
 
@@ -369,7 +369,7 @@ class TcmsActionPane(QGroupBox):
         self.__output_path_text.setStyleSheet(_OUTPUT_PATH_TEXT_STYLE)
         _output_selection_layout.addRow(_output_path_button, self.__output_path_text)
         _output_selection_box.setLayout(_output_selection_layout)
-        _output_selection_box.setAlignment(Qt.AlignTop)
+        _output_selection_box.setAlignment(Qt.AlignmentFlag.AlignTop)
         return _output_selection_box
 
     def _entity_selection_box(self):
@@ -394,7 +394,7 @@ class TcmsActionPane(QGroupBox):
         _layout.setSpacing(20)
         _product_combo_caption, self.__product_combo = _create_combo(self, self._product_selected, L_PRODUCT_COMBO)
         _layout.addRow(_product_combo_caption, self.__product_combo)
-        _layout.setAlignment(self.__product_combo, Qt.AlignLeft)
+        _layout.setAlignment(self.__product_combo, Qt.AlignmentFlag.AlignLeft)
         _layout.setContentsMargins(10, 24, 24, 10)
         return _layout
 
@@ -412,14 +412,14 @@ class TcmsActionPane(QGroupBox):
 
         _product_combo_caption, self.__product_combo = _create_combo(self, self._product_selected, L_PRODUCT_COMBO)
         _upper_layout.addRow(_product_combo_caption, self.__product_combo)
-        _upper_layout.setAlignment(self.__product_combo, Qt.AlignLeft)
+        _upper_layout.setAlignment(self.__product_combo, Qt.AlignmentFlag.AlignLeft)
         _version_combo_caption, self.__version_combo = _create_combo(self, self._version_selected, L_VERSION_COMBO)
         _upper_layout.addRow(_version_combo_caption, self.__version_combo)
-        _upper_layout.setAlignment(self.__version_combo, Qt.AlignLeft)
+        _upper_layout.setAlignment(self.__version_combo, Qt.AlignmentFlag.AlignLeft)
         if self.__action == ACTION_RUN_TCMS_PLAN:
             _build_combo_caption, self.__build_combo = _create_combo(self, None, L_BUILD_COMBO)
             _upper_layout.addRow(_build_combo_caption, self.__build_combo)
-            _upper_layout.setAlignment(self.__build_combo, Qt.AlignLeft)
+            _upper_layout.setAlignment(self.__build_combo, Qt.AlignmentFlag.AlignLeft)
         _layout.addLayout(_upper_layout)
 
         # lower part with test entity selection and result list
@@ -441,7 +441,7 @@ class TcmsActionPane(QGroupBox):
         _name_button.clicked.connect(self._name_button_clicked)
         _lower_layout.addWidget(_name_button, 0, 3)
         self.__name_text = QLineEdit()
-        self.__name_text.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.__name_text.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         self.__name_text.setStyleSheet(_INPUT_FIELD_STYLE)
         self.__name_text.editingFinished.connect(self._name_button_clicked)
         _lower_layout.addWidget(self.__name_text, 0, 4)
@@ -480,17 +480,19 @@ class TcmsActionPane(QGroupBox):
             self.__dry_run_option = _create_option(_options_box_layout, L_DRY_RUN, T_OPT_DRY_RUN, False)
             _env_combo_caption, self.__env_combo = _create_combo(self, None, L_ENV_COMBO)
             _options_box_layout.addRow(_env_combo_caption, self.__env_combo)
-            _options_box_layout.setAlignment(self.__env_combo, Qt.AlignLeft)
+            _options_box_layout.setAlignment(self.__env_combo, Qt.AlignmentFlag.AlignLeft)
+            self.__env_combo.addItem(localized_label(L_NO_ENVIRONMENT), None)
             for _env in find_tcms_objects(TCMS_CLASS_ID_ENVIRONMENT, {}):
                 self.__env_combo.addItem(_env[ATTR_NAME], _env)
+            self.__env_combo.setCurrentIndex(0)
             return _options_box
         if self.__entity_type == ENTITY_TYPE_PRODUCT:
             _version_combo_caption, self.__version_combo = _create_combo(self, self._version_selected, L_VERSION_COMBO)
             _options_box_layout.addRow(_version_combo_caption, self.__version_combo)
-            _options_box_layout.setAlignment(self.__version_combo, Qt.AlignLeft)
+            _options_box_layout.setAlignment(self.__version_combo, Qt.AlignmentFlag.AlignLeft)
         _build_combo_caption, self.__build_combo = _create_combo(self, None, L_BUILD_COMBO)
         _options_box_layout.addRow(_build_combo_caption, self.__build_combo)
-        _options_box_layout.setAlignment(self.__build_combo, Qt.AlignLeft)
+        _options_box_layout.setAlignment(self.__build_combo, Qt.AlignmentFlag.AlignLeft)
         if self.__entity_type == ENTITY_TYPE_PLAN:
             self.__tree_option = _create_option(_options_box_layout, L_INCLUDE_PLAN_TREE, T_OPT_EXP_PLAN_TREE, True)
             self.__runs_option = _create_option(_options_box_layout, L_INCLUDE_RUNS, T_OPT_EXP_RUNS, True)
@@ -689,7 +691,7 @@ class TcmsActionPane(QGroupBox):
         _preferred_path = self.__preferences.latest_output_dir()
         _dlg = QFileDialog(self, localized_label(L_DLG_TITLE_SELECT_EXPORT_OUTPUT_PATH), _preferred_path)
         _dlg.setOptions(QFileDialog.Option.DontUseNativeDialog)
-        _dlg.setFilter(QDir.AllDirs | QDir.Hidden)
+        _dlg.setFilter(QDir.Filter.AllDirs | QDir.Filter.Hidden)
         _dlg.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
         _dlg.setFileMode(QFileDialog.FileMode.Directory)
         if _dlg.exec():
