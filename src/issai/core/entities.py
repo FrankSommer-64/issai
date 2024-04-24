@@ -1333,23 +1333,21 @@ class CaseResult(Result):
     """
     Test case result used within test runner.
     """
-    def __init__(self, execution_id, run_id, case_id, case_summary):
+    def __init__(self, plan_id, case_id, case_summary):
         """
         Constructor.
-        :param int execution_id: the test execution TCMS ID
-        :param int run_id: the test run TCMS ID
         :param int case_id: the test case TCMS ID
         :param str case_summary: the test case summary
         """
         super().__init__(RESULT_TYPE_CASE_RESULT)
-        self[ATTR_EXECUTION] = execution_id
-        self[ATTR_RUN] = run_id
+        self[ATTR_EXECUTION] = -1
+        self[ATTR_RUN] = -1
+        self[ATTR_PLAN] = plan_id
         self[ATTR_CASE] = case_id
         self[ATTR_CASE_NAME] = case_summary
         self[ATTR_STATUS] = RESULT_STATUS_ERROR
         self[ATTR_TESTER_NAME] = ''
         self[ATTR_COMMENT] = ''
-
 
 class PlanResult(Result):
     """

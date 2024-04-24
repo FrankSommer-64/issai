@@ -86,6 +86,7 @@ i-dry-run-imp-run-updated Will update TestRun #{0} for TestPlan '{1}' with value
 
 # runner
 e-run-assistant-failed Assistant '{0}' for action {1} failed: {2}.
+e-run-case-failed Execution of test case '{0}' failed.
 e-run-invalid-env-property-value Invalid value for environment property '{0}'.
 e-run-plan-failed Execution of test plan '{0}' failed.
 e-run-source-path-missing Path for source files is not defined, configuration parameter '{0}' is missing.

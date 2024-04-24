@@ -54,11 +54,13 @@ class TestUtil(unittest.TestCase):
         # empty matrix
         _matrix = PropertyMatrix()
         self.assertTrue(_matrix.is_empty())
+        self.assertEqual('', _matrix.code())
         for _ in _matrix:
             self.assertTrue(False)
         # property without values must be ignored
         _matrix.add('NO_VALUE_PROP', [])
         self.assertTrue(_matrix.is_empty())
+        self.assertEqual('', _matrix.code())
         for _ in _matrix:
             self.assertTrue(False)
         # single property
@@ -69,11 +71,14 @@ class TestUtil(unittest.TestCase):
         _count = 0
         for _props in _matrix:
             _count += 1
+            _code_str = ''
             for _n, _v in _props:
                 _pstr = f'{_n}={_v}'
                 if _n not in _res:
                     _res[_n] = ''
                 _res[_n] = f'{_res[_n]}{_pstr}'
+                _code_str += f'_{_v}'
+            self.assertEqual(_code_str, _matrix.code())
         self.assertEqual(3, _count)
         self.assertEqual(1, len(_res))
         self.assertEqual('LANG=enLANG=deLANG=fr', _res['LANG'])
@@ -86,11 +91,14 @@ class TestUtil(unittest.TestCase):
         _count = 0
         for _props in _matrix:
             _count += 1
+            _code_str = ''
             for _n, _v in _props:
                 _pstr = f'{_n}={_v}'
                 if _n not in _res:
                     _res[_n] = ''
                 _res[_n] = f'{_res[_n]}{_pstr}'
+                _code_str += f'_{_v}'
+            self.assertEqual(_code_str, _matrix.code())
         self.assertEqual(9, _count)
         self.assertEqual(2, len(_res))
         self.assertEqual('LANG=enLANG=enLANG=enLANG=deLANG=deLANG=deLANG=frLANG=frLANG=fr', _res['LANG'])

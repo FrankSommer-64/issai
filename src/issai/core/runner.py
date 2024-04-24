@@ -326,7 +326,8 @@ def _run_ancestor_plan(plan_entity, options, local_config, env_vars, task_monito
                     env_vars[_enva_name] = _enva_value
                     _prop_infos.append(f'{_enva_name}="{_enva_value}"')
                 task_monitor.log(I_RUN_RUNNING_ENV, ','.join(_prop_infos))
-                _res = _run_plan(plan_entity, _plan_id, _exe_table, local_config, env_vars, task_monitor)
+                _res = _run_plan(plan_entity, _plan_id, _exe_table, local_config, env_vars, task_monitor,
+                                 _prop_matrix.code())
                 _result.append_attr_value(ATTR_NOTES, _res[ATTR_NOTES])
         # eventually run cleanup for top level plan
         _run_assistant(CFG_PAR_RUNNER_ENTITY_ASSISTANT, ASSISTANT_ACTION_CLEANUP, _plan_name,
@@ -339,7 +340,7 @@ def _run_ancestor_plan(plan_entity, options, local_config, env_vars, task_monito
     return _result
 
 
-def _run_plan(plan_entity, plan_id, executable_table, local_config, env_vars, task_monitor):
+def _run_plan(plan_entity, plan_id, executable_table, local_config, env_vars, task_monitor, matrix_code=''):
     """
     Runs a test plan.
     :param TestPlanEntity plan_entity: the test plan, eventually including descendants
@@ -348,6 +349,7 @@ def _run_plan(plan_entity, plan_id, executable_table, local_config, env_vars, ta
     :param LocalConfig local_config: the local issai product configuration
     :param dict env_vars: the environment variables to use in test execution
     :param TaskMonitor task_monitor: the progress handler
+    :param str matrix_code: the code string of all permuting properties
     :returns: execution result
     :rtype: PlanResult
     """
@@ -378,15 +380,15 @@ def _run_plan(plan_entity, plan_id, executable_table, local_config, env_vars, ta
             # skip case, if not runnable
             if _skip_entity_on_local_machine(plan_entity, ENTITY_TYPE_CASE, _case_id, task_monitor):
                 continue
-            _case_result = _run_case(plan_entity, _case_id, executable_table, local_config, _plan_env,
-                                     task_monitor)
+            _case_result = _run_case(plan_entity, plan_id, _case_id, executable_table, local_config, _plan_env,
+                                     task_monitor, matrix_code)
             _result.add_case_result(_case_result)
         # eventually run child plans
         for _child_id in plan_entity.plan_child_ids(plan_id):
             if _skip_entity_on_local_machine(plan_entity, ENTITY_TYPE_PLAN, _child_id, task_monitor):
                 continue
             _child_result = _run_plan(plan_entity, _child_id, executable_table, local_config, _plan_env,
-                                      task_monitor)
+                                      task_monitor, matrix_code)
             _result.add_plan_result(_child_result)
         # run cleanup for plan
         _run_assistant(CFG_PAR_RUNNER_PLAN_ASSISTANT, ASSISTANT_ACTION_CLEANUP, _plan_name,
@@ -399,60 +401,70 @@ def _run_plan(plan_entity, plan_id, executable_table, local_config, env_vars, ta
     return _result
 
 
-def _run_case(plan_entity, case_id, executable_table, local_config, runtime_env, task_monitor):
+def _run_case(plan_entity, plan_id, case_id, executable_table, local_config, runtime_env, task_monitor, matrix_code):
     """
     Runs a single test case.
     :param TestPlanEntity plan_entity: the test plan, eventually including descendants
+    :param int plan_id: the TCMS test plan ID
     :param int case_id: the TCMS test case ID
     :param ExecutableTable executable_table: the table holding the functions and scripts to execute
     :param LocalConfig local_config: the local issai product configuration
     :param dict runtime_env: the environment variables to use in test execution
     :param TaskMonitor task_monitor: the progress handler
+    :param str matrix_code: the code string of all permuting properties
     :returns: execution result
     :rtype: CaseResult
     """
     _case = plan_entity.get_part(ATTR_TEST_CASES, case_id)
-    _execution_id = _case[ATTR_EXECUTION]
-    _execution = plan_entity.get_part(ATTR_TEST_EXECUTIONS, _execution_id)
-    _run_id = _execution[ATTR_RUN]
+    _case_name = _case[ATTR_SUMMARY]
     task_monitor.log(I_RUN_RUNNING_CASE, _case[ATTR_SUMMARY])
-    _case_result = CaseResult(_execution_id, _run_id, case_id, _case[ATTR_SUMMARY])
-    _case_result.mark_start()
-    # check whether test case is runnable on local machine
-    if _skip_entity_on_local_machine(plan_entity, ENTITY_TYPE_CASE, _case[ATTR_ID], task_monitor):
-        _case_result.mark_end()
-        return _case_result
-    _script = _case[ATTR_SCRIPT]
-    if len(_script) == 0:
-        _case_result[ATTR_STATUS] = RESULT_STATUS_ERROR
-        _case_result[ATTR_COMMENT] = localized_message(E_RUN_CASE_SCRIPT_MISSING, _case[ATTR_SUMMARY])
-        _case_result.mark_end()
-        task_monitor.log(E_RUN_CASE_SCRIPT_MISSING, _case[ATTR_SUMMARY])
+    _result = CaseResult(plan_id, case_id, _case_name)
+    _result.mark_start()
+    # noinspection PyBroadException
+    try:
+        # skip case, if not runnable
+        if _skip_entity_on_local_machine(plan_entity, ENTITY_TYPE_CASE, case_id, task_monitor):
+            return
+        # automated test case must contain script
+        _script = _case[ATTR_SCRIPT]
+        if len(_script) == 0:
+            raise IssaiException(E_RUN_CASE_SCRIPT_MISSING, _case[ATTR_SUMMARY])
+        _executable = executable_table.executable_for(_script)
+        # add issai relevant case properties to runtime environment
+        _essential_props = _essential_properties_for(local_config, ENTITY_TYPE_CASE)
+        _case_env = runtime_env.copy()
+        for _prop_k, _prop_v in plan_entity.get_case_properties(case_id, _essential_props).items():
+            _case_env[_prop_k] = str(_prop_v)
+        # run initialization for case
+        _run_assistant(CFG_PAR_RUNNER_CASE_ASSISTANT, ASSISTANT_ACTION_INIT, _case_name,
+                       executable_table, local_config, _case_env, task_monitor)
+        # run test case
+        _args = _case[ATTR_ARGUMENTS]
+        _rc, _stdout, _stderr = _executable.run(runtime_env, _args)
+        _result.set_attr_value(ATTR_STATUS, result_status_name(_rc))
+        # save output to file
+        _case = plan_entity.get_part(ATTR_TEST_CASES, case_id)
+        _output_path = os.path.join(local_config.get_value(CFG_PAR_RUNNER_WORKING_PATH),
+                                    ATTACHMENTS_ROOT_DIR, ATTACHMENTS_RESULT_DIR, ATTACHMENTS_CASE_DIR,
+                                    f'{plan_id}_{case_id}')
+        os.makedirs(_output_path, exist_ok=True)
+        _output_file_path = os.path.join(_output_path, f'{local_config.output_log()}{matrix_code}')
+        with open(_output_file_path, 'w') as _output_file:
+            _output_file.write(_stdout)
+            _output_file.write(_stderr)
+            _output_file.close()
+        # run cleanup for case
+        _run_assistant(CFG_PAR_RUNNER_CASE_ASSISTANT, ASSISTANT_ACTION_CLEANUP, _case_name,
+                       executable_table, local_config, _case_env, task_monitor)
+    except BaseException as _e:
+        _result[ATTR_STATUS] = RESULT_STATUS_ERROR
+        _result.append_attr_value(ATTR_SUMMARY, localized_message(E_RUN_CASE_FAILED, _case_name))
+        _result.append_attr_value(ATTR_NOTES, str(_e))
+    finally:
+        _result.set_attr_value(ATTR_TESTER_NAME, runtime_env[ENVA_ISSAI_USERNAME])
         task_monitor.operations_processed(1)
-        return _case_result
-    # add case properties to runtime env
-    _case_env = runtime_env.copy()
-    _essential_props = _essential_properties_for(local_config, ENTITY_TYPE_CASE)
-    for _prop_k, _prop_v in plan_entity.get_case_properties(case_id, _essential_props).items():
-        _case[_prop_k] = str(_prop_v)
-    # run test case
-    _args = _case[ATTR_ARGUMENTS]
-    _executable = executable_table.executable_for(_script)
-    _rc, _stdout, _stderr = _executable.run(runtime_env, _args)
-    # save output to file
-    _case = plan_entity.get_part(ATTR_TEST_CASES, case_id)
-    _output_path = os.path.join(local_config.get_value(CFG_PAR_RUNNER_WORKING_PATH),
-                                ATTACHMENTS_ROOT_DIR, ATTACHMENTS_EXECUTION_DIR, str(_case[ATTR_EXECUTION]))
-    os.makedirs(_output_path, exist_ok=True)
-    _output_file_path = os.path.join(_output_path, local_config.output_log())
-    with open(_output_file_path, 'w') as _output_file:
-        _output_file.write(_stdout)
-        _output_file.write(_stderr)
-        _output_file.close()
-    _case_result.mark_end()
-    _case_result.set_attr_value(ATTR_STATUS, result_status_name(_rc))
-    _case_result.set_attr_value(ATTR_TESTER_NAME, runtime_env[ENVA_ISSAI_USERNAME])
-    return _case_result
+        _result.mark_end()
+    return _result
 
 
 def plan_entity_from_tcms(plan, options, local_config, task_monitor):

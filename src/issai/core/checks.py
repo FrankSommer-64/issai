@@ -112,7 +112,7 @@ def verify_master_data_attr(data_type, attr_name, attr_value):
 # Keys are attribute names, value indicates the data type and whether the attribute is writable after construction.
 _ENTITY_ATTRIBUTES = {
     RESULT_TYPE_CASE_RESULT: {ATTR_CASE: (int, False), ATTR_CASE_NAME: (str, False), ATTR_COMMENT: (str, True),
-                              ATTR_STOP_DATE: (datetime, True), ATTR_EXECUTION: (int, False),
+                              ATTR_STOP_DATE: (datetime, True), ATTR_EXECUTION: (int, True), ATTR_RUN: (int, True),
                               ATTR_OUTPUT_FILES: (list, False), ATTR_START_DATE: (datetime, True),
                               ATTR_STATUS: (str, True), ATTR_TESTER_NAME: (str, True)},
     RESULT_TYPE_PLAN_RESULT: {ATTR_BUILD: (str, False), ATTR_CASE_RESULTS: (list, False),
