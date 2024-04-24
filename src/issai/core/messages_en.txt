@@ -250,6 +250,9 @@ t-opt-imp-environments Check to import environments in file
 t-opt-run-descendant-plans Check to run all descendant test plans of selection
 t-opt-store-result Check to automatically store test results in TCMS after test execution
 t-opt-user-import Select how to deal with references to users that don't exist in TCMS
+t-search-case Enter a number to search a test case by its TCMS ID, otherwise it is searched by summary
+t-search-plan Enter a number to search a test plan by its TCMS ID, otherwise it is searched by name
+t-show-recent Click to select from most recently used entities
 
 e-gui-write-config-data-failed Could not write configuration data to file {0}. {1}.
 e-gui-no-id-specified No ID entered.

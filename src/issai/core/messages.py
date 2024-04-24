@@ -448,6 +448,9 @@ T_OPT_IMP_ENVIRONMENTS = 't-opt-imp-environments'
 T_OPT_RUN_DESCENDANT_PLANS = 't-opt-run-descendant-plans'
 T_OPT_STORE_RESULT = 't-opt-store-result'
 T_OPT_USER_IMPORT = 't-opt-user-import'
+T_SEARCH_CASE = 't-search-case'
+T_SEARCH_PLAN = 't-search-plan'
+T_SHOW_RECENT = 't-show-recent'
 
 # internal
 _MSG_FILE_NAME_FMT = 'messages_%s.txt'

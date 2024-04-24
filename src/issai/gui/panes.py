@@ -39,10 +39,11 @@ Central widget panes with functionality to select test entities, specify options
 import os.path
 import shutil
 
+from PySide6.QtCore import Qt, QDir
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (QFileDialog, QFrame, QGroupBox, QWidget, QLabel, QComboBox, QLineEdit, QListWidget,
                                QDialog, QVBoxLayout, QPushButton, QSizePolicy, QMessageBox, QDialogButtonBox,
                                QGridLayout, QFormLayout, QCheckBox)
-from PySide6.QtCore import Qt, QDir
 
 from issai.core.config import config_root_path, master_config, product_config
 from issai.core.tcms import *
@@ -314,10 +315,11 @@ class TcmsActionPane(QGroupBox):
         self.__runs_option = None
         self.__tree_option = None
         if entity_type == ENTITY_TYPE_PLAN:
-            self.__name_button_label = localized_label(L_NAME)
-            self.__find_by_id_fn = None
+            self.__search_button_label = localized_label(L_TEST_PLAN)
+            self.__search_tool_tip = localized_label(T_SEARCH_PLAN)
         elif entity_type == ENTITY_TYPE_CASE:
-            self.__name_button_label = localized_label(L_SUMMARY)
+            self.__search_button_label = localized_label(L_TEST_CASE)
+            self.__search_tool_tip = localized_label(T_SEARCH_CASE)
 
         _pane_layout = TcmsActionPane._create_layout()
         if action & ACTION_EXPORT != 0:
@@ -424,41 +426,31 @@ class TcmsActionPane(QGroupBox):
 
         # lower part with test entity selection and result list
         _lower_layout = QGridLayout()
-        _id_button = QPushButton(localized_label(L_ID))
-        _id_button.setStyleSheet(_SELECT_BUTTON_STYLE)
-        _id_button.clicked.connect(self._id_button_clicked)
-        _lower_layout.addWidget(_id_button, 0, 0)
-        self.__id_text = QLineEdit()
-        self.__id_text.setFixedWidth(_ID_FIELD_WIDTH)
-        self.__id_text.setStyleSheet(_INPUT_FIELD_STYLE)
-        self.__id_text.editingFinished.connect(self._id_button_clicked)
-        _lower_layout.addWidget(self.__id_text, 0, 1)
-        _sep = QFrame(self)
-        _sep.setFrameShape(QFrame.Shape.VLine)
-        _lower_layout.addWidget(_sep, 0, 2)
-        _name_button = QPushButton(self.__name_button_label)
-        _name_button.setStyleSheet(_SELECT_BUTTON_STYLE)
-        _name_button.clicked.connect(self._name_button_clicked)
-        _lower_layout.addWidget(_name_button, 0, 3)
-        self.__name_text = QLineEdit()
-        self.__name_text.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
-        self.__name_text.setStyleSheet(_INPUT_FIELD_STYLE)
-        self.__name_text.editingFinished.connect(self._name_button_clicked)
-        _lower_layout.addWidget(self.__name_text, 0, 4)
+        _search_button = QPushButton(QIcon(f'{ISSAI_ASSETS_DIR}/find-lens.png'), self.__search_button_label)
+        _search_button.setStyleSheet(_SELECT_BUTTON_STYLE)
+        _search_button.setToolTip(self.__search_tool_tip)
+        _search_button.clicked.connect(self._search_button_clicked)
+        _lower_layout.addWidget(_search_button, 0, 0)
+        self.__search_text = QLineEdit()
+        self.__search_text.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.__search_text.setStyleSheet(_INPUT_FIELD_STYLE)
+        self.__search_text.setToolTip(self.__search_tool_tip)
+        self.__search_text.returnPressed.connect(self._search_button_clicked)
+        _lower_layout.addWidget(self.__search_text, 0, 1)
         _sep2 = QFrame(self)
         _sep2.setFrameShape(QFrame.Shape.VLine)
-        _lower_layout.addWidget(_sep2, 0, 5)
+        _lower_layout.addWidget(_sep2, 0, 2)
         _recent_button = QPushButton(localized_label(L_RECENT))
         _recent_button.setStyleSheet(_SELECT_BUTTON_STYLE)
+        _recent_button.setToolTip(localized_label(T_SHOW_RECENT))
         _recent_button.clicked.connect(self._recent_button_clicked)
-        _lower_layout.addWidget(_recent_button, 0, 6)
+        _lower_layout.addWidget(_recent_button, 0, 3)
         self.__entities = QListWidget()
         self.__entities.setStyleSheet(_ENTITY_LIST_STYLE)
         self.__entities.clicked.connect(self._entity_selected)
-        _lower_layout.addWidget(self.__entities, 1, 0, 1, 9)
+        _lower_layout.addWidget(self.__entities, 1, 0, 1, 4)
 
         _layout.addLayout(_lower_layout)
-
         return _layout
 
     def _options_box(self):
@@ -577,26 +569,16 @@ class TcmsActionPane(QGroupBox):
         _id = int(item.data().split(' ')[0])
         self.__selected_entity = read_test_entity_with_id(self.__entity_type, _id)
 
-    def _id_button_clicked(self):
+    def _search_entity_by_id(self, tcms_id):
         """
-        Called when the user clicks the ID button to find an entity by its TCMS ID.
+        Search an entity by its TCMS ID and fill result table.
+        :param int tcms_id: the TCMS entity ID
+        :returns: True, if an entity with specified ID exists
+        :rtype: bool
         """
-        # clear name field
-        self.__name_text.clear()
-        _id = self.__id_text.text().strip()
-        if len(_id) == 0:
-            QMessageBox.information(self, localized_label(L_MBOX_TITLE_INFO),
-                                    localized_message(E_GUI_NO_ID_SPECIFIED), QMessageBox.StandardButton.Ok)
-            return
-        try:
-            _id = int(_id)
-        except ValueError:
-            QMessageBox.critical(self, localized_label(L_MBOX_TITLE_ERROR),
-                                 localized_message(E_GUI_ID_NOT_NUMERIC, _id), QMessageBox.StandardButton.Ok)
-            return
         # noinspection PyBroadException
         try:
-            self.__selected_entity = read_test_entity_with_id(self.__entity_type, _id)
+            self.__selected_entity = read_test_entity_with_id(self.__entity_type, tcms_id)
             _class_id = TCMS_CLASS_ID_TEST_CASE if self.__entity_type == ENTITY_TYPE_CASE else TCMS_CLASS_ID_TEST_PLAN
             _entity_product = find_product_for_tcms_object(_class_id, self.__selected_entity)
             self.__product_combo.setCurrentText(_entity_product[ATTR_NAME])
@@ -605,16 +587,21 @@ class TcmsActionPane(QGroupBox):
             self.__entities.clear()
             self.__entities.addItem(_entity_info)
             self.__entities.setCurrentRow(0)
+            return True
         except Exception as _e:
             QMessageBox.critical(self, localized_label(L_MBOX_TITLE_ERROR), str(_e), QMessageBox.StandardButton.Ok)
+            return False
 
-    def _name_button_clicked(self):
+    def _search_button_clicked(self):
         """
-        Called when the user clicks the name button to find an entity by its name.
+        Called when the user clicks the search button to find an entity by its ID or name.
         """
-        # clear ID field
-        self.__id_text.clear()
-        # product and version are always required
+        _search_text = self.__search_text.text().strip()
+        if _search_text.isdigit():
+            # search by ID first
+            if self._search_entity_by_id(int(_search_text)):
+                return
+        # search by name, then product and version are required
         _product = self.__product_combo.currentData()
         _version = self.__version_combo.currentData()
         if _product is None and _version is None:
@@ -630,15 +617,14 @@ class TcmsActionPane(QGroupBox):
             QMessageBox.critical(self, localized_label(L_MBOX_TITLE_ERROR),
                                  localized_message(E_GUI_NO_VERSION_SELECTED), QMessageBox.StandardButton.Ok)
             return
-        _pattern = self.__name_text.text().strip()
         _filter = {ATTR_PRODUCT_VERSION: _version[ATTR_ID]}
         try:
             _sorted_entities = []
             if self.__entity_type == ENTITY_TYPE_PLAN:
-                _tcms_entities = find_matching_plans(_pattern, _product[ATTR_ID], _version[ATTR_ID])
+                _tcms_entities = find_matching_plans(_search_text, _product[ATTR_ID], _version[ATTR_ID])
                 [_sorted_entities.append((_e[ATTR_NAME], _e[ATTR_ID])) for _e in _tcms_entities]
             else:
-                _tcms_entities = find_matching_cases(_pattern, _product[ATTR_ID])
+                _tcms_entities = find_matching_cases(_search_text, _product[ATTR_ID])
                 [_sorted_entities.append((_e[ATTR_SUMMARY], _e[ATTR_ID])) for _e in _tcms_entities]
             _sorted_entities.sort()
             self.__entities.clear()
