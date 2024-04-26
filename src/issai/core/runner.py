@@ -209,44 +209,26 @@ def run_tcms_plan(plan, options, local_config, task_monitor):
     """
     # noinspection PyBroadException
     try:
-        _working_path = local_config.get_value(CFG_PAR_RUNNER_WORKING_PATH)
-        if _working_path is None or not os.path.isdir(_working_path):
-            raise IssaiException(E_RUN_WORKING_PATH_MISSING, CFG_PAR_RUNNER_WORKING_PATH)
-        if not os.path.isdir(_working_path):
-            raise IssaiException(E_RUN_WORKING_PATH_INVALID, _working_path)
-        _version = options.get(OPTION_VERSION)
-        _build = options.get(OPTION_BUILD)
+        _working_path = local_config.runner_working_path()
         # create TestPlan entity from TCMS data
         task_monitor.set_dry_run(options.get(OPTION_DRY_RUN))
         _plan_entity = plan_entity_from_tcms(plan, options, local_config, task_monitor)
         task_monitor.set_operation_count(_plan_entity.runnable_case_count() + 1)
         task_monitor.operations_processed(1)
         # create initial set of environment variables
-        _env_vars = initial_env_vars(local_config, options)
+        _env_vars = initial_env_vars(local_config, _working_path, TcmsInterface.current_user()[ATTR_USERNAME])
         # download attachments, if applicable
         _attachments = _plan_entity.attachments()
         if len(_attachments) > 0:
             _att_patterns = local_config.get_list_value(CFG_PAR_TCMS_SPEC_ATTACHMENTS)
             if _att_patterns is not None:
                 download_attachments(_plan_entity, _working_path, task_monitor, _att_patterns)
-        _env_vars[ENVA_ATTACHMENTS_PATH] = os.path.join(_working_path, ATTACHMENTS_ROOT_DIR)
-        _env_vars[ENVA_ISSAI_USERNAME] = TcmsInterface.current_user()[ATTR_USERNAME]
         # run test plan
         _plan_result = _run_ancestor_plan(_plan_entity, options, local_config, _env_vars, task_monitor)
         # store test result
-        if not task_monitor.is_dry_run():
-            _att_patterns = local_config.get_list_value(CFG_PAR_TCMS_RESULT_ATTACHMENTS)
-            store_plan_results(_plan_result, _plan_entity, local_config, _att_patterns, _working_path,
-                               options.get(OPTION_STORE_RESULT))
-        _rc = _plan_result.result_status()
-        _summary = _plan_result.get_attr_value(ATTR_SUMMARY)
-        _notes = _plan_result.get_attr_value(ATTR_NOTES)
-        if len(_summary) == 0 and len(_notes) == 0:
-            _task_summary = localized_message(I_RUN_PLAN_SUCCEEDED, plan[ATTR_NAME])
-        else:
-            _task_summary = '%s%s%s' % (_plan_result.get_attr_value(ATTR_SUMMARY), os.linesep,
-                                        _plan_result.get_attr_value(ATTR_NOTES))
-        return TaskResult(_rc, _task_summary)
+        store_plan_results(_plan_result, _plan_entity, local_config, _working_path, task_monitor,
+                           options.get(OPTION_STORE_RESULT))
+        return execution_task_result(plan[ATTR_NAME], _plan_result)
     except BaseException as _e:
         return TaskResult(TASK_FAILED, str(_e))
 
@@ -265,31 +247,24 @@ def run_offline_plan(plan_entity, options, local_config, attachment_path, task_m
     :returns: execution result
     :rtype: TaskResult
     """
-    _working_path = local_config.get_value(CFG_PAR_RUNNER_WORKING_PATH)
-    if _working_path is None or not os.path.isdir(_working_path):
-        raise IssaiException(E_RUN_WORKING_PATH_MISSING, CFG_PAR_RUNNER_WORKING_PATH)
-    if not os.path.isdir(_working_path):
-        raise IssaiException(E_RUN_WORKING_PATH_INVALID, _working_path)
-    _version = options.get(OPTION_VERSION)
-    _build = options.get(OPTION_BUILD)
-    task_monitor.set_operation_count(plan_entity.runnable_executions_count() + 1)
-    task_monitor.operations_processed(1)
-    task_monitor.set_dry_run(options.get(OPTION_DRY_RUN))
-    # create initial set of environment variables
-    _env_vars = initial_env_vars(local_config, options)
-    _env_vars[ENVA_ATTACHMENTS_PATH] = attachment_path
-    _users = plan_entity.master_data_of_type(ATTR_TCMS_USERS)
-    _env_vars[ENVA_ISSAI_USERNAME] = DEFAULT_USER_NAME if len(_users) == 0 else _users[0][ATTR_USERNAME]
-    # run test plan
-    _exe_table = ExecutableTable(local_config)
-    _plan_result = _run_plan(plan_entity, [-1], _exe_table, local_config, _env_vars, task_monitor)[0]
-    _att_patterns = local_config.get_list_value(CFG_PAR_TCMS_RESULT_ATTACHMENTS)
-    # store test result
-    store_plan_results(_plan_result, plan_entity, local_config, _att_patterns, _working_path,
-                       options.get(OPTION_STORE_RESULT))
-    _rc = _plan_result.result_status()
-    return TaskResult(_rc, '%s%s%s' % (_plan_result.get_attr_value(ATTR_SUMMARY), os.linesep,
-                                       _plan_result.get_attr_value(ATTR_NOTES)))
+    # noinspection PyBroadException
+    try:
+        _working_path = local_config.runner_working_path()
+        task_monitor.set_operation_count(plan_entity.runnable_case_count() + 1)
+        task_monitor.operations_processed(1)
+        task_monitor.set_dry_run(options.get(OPTION_DRY_RUN))
+        # create initial set of environment variables
+        _users = plan_entity.master_data_of_type(ATTR_TCMS_USERS)
+        _user_name = DEFAULT_USER_NAME if len(_users) == 0 else _users[0][ATTR_USERNAME]
+        _env_vars = initial_env_vars(local_config, _working_path, _user_name)
+        # run test plan
+        _plan_result = _run_ancestor_plan(plan_entity, options, local_config, _env_vars, task_monitor)
+        # store test result
+        store_plan_results(_plan_result, plan_entity, local_config, _working_path, task_monitor,
+                           options.get(OPTION_STORE_RESULT))
+        return execution_task_result(plan_entity.entity_name(), _plan_result)
+    except BaseException as _e:
+        return TaskResult(TASK_FAILED, str(_e))
 
 
 def _run_ancestor_plan(plan_entity, options, local_config, env_vars, task_monitor):
@@ -536,11 +511,12 @@ def plan_entity_from_tcms(plan, options, local_config, task_monitor):
     return _plan_entity
 
 
-def initial_env_vars(local_config, options):
+def initial_env_vars(local_config, working_path, user_name):
     """
     Creates and returns basic set of environment variables for test execution.
     :param LocalConfig local_config: the local issai product configuration
-    :param dict options: the run options
+    :param str working_path: the runner working path
+    :param str user_name: name of user executing the test
     :returns: basic environment variables
     :rtype: MutableMapping
     :raises IssaiException: if local configuration doesn't specify a valid product source path
@@ -559,58 +535,103 @@ def initial_env_vars(local_config, options):
         _runtime_env[ENVA_PYTHON_PATH] = _source_path
     else:
         _runtime_env[ENVA_PYTHON_PATH] = f'{_source_path}:{_py_path}'
+    _runtime_env[ENVA_ATTACHMENTS_PATH] = os.path.join(working_path, ATTACHMENTS_ROOT_DIR)
+    _runtime_env[ENVA_ISSAI_USERNAME] = user_name
     return _runtime_env
 
 
-def store_plan_results(plan_result, plan_entity, local_config, attachment_patterns, working_path, store_in_tcms):
+def store_plan_results_to_tcms(plan_result, plan_entity, local_config, working_path):
+    """
+    Stores plan result in TCMS and eventually uploads output files from test execution.
+    :param PlanResult plan_result: the test plan result
+    :param TestPlanEntity plan_entity: the test plan entity
+    :param LocalConfig local_config: the local issai product configuration
+    :param str working_path: the runner root path for output files
+    """
+    _att_patterns = local_config.get_list_value(CFG_PAR_TCMS_RESULT_ATTACHMENTS)
+    _plan_results = plan_result.plan_results()
+    for _pr in _plan_results:
+        _run_id = _pr.get_attr_value(ATTR_RUN)
+        _vals = {ATTR_START_DATE: _pr.get_attr_value(ATTR_START_DATE),
+                 ATTR_STOP_DATE: _pr.get_attr_value(ATTR_STOP_DATE)}
+        _notes = _pr.get_attr_value(ATTR_NOTES)
+        _summary = _pr.get_attr_value(ATTR_SUMMARY)
+        if len(_notes) > 0:
+            _vals[ATTR_NOTES] = _notes
+        if len(_summary) > 0:
+            _vals[ATTR_SUMMARY] = _summary
+        update_run(_run_id, _vals)
+        for _cr in _pr.get_attr_value(ATTR_CASE_RESULTS):
+            _custom_status_name = local_config.custom_execution_status(_cr.get_attr_value(ATTR_STATUS))
+            _status_id = plan_entity.execution_status_id_of(_custom_status_name)
+            _exec_id = _cr.get_attr_value(ATTR_EXECUTION)
+            _vals = {ATTR_START_DATE: _cr.get_attr_value(ATTR_START_DATE),
+                     ATTR_STOP_DATE: _cr.get_attr_value(ATTR_STOP_DATE), ATTR_STATUS: _status_id}
+            update_execution(_exec_id, _vals, _cr.get_attr_value(ATTR_COMMENT))
+            if _att_patterns is not None and len(_att_patterns) > 0:
+                for _file_path in list_attachment_files(working_path, TCMS_CLASS_ID_TEST_EXECUTION, _exec_id):
+                    _file_name = os.path.basename(_file_path)
+                    _tcms_file_name = f'testexecution_{_exec_id}_{_file_name}'
+                    upload_attachment_file(_file_path, _tcms_file_name, TCMS_CLASS_ID_TEST_RUN, _run_id)
+
+
+def store_plan_results_to_file(plan_result, plan_entity, local_config, working_path):
     """
     Stores plan result in a file.
     :param PlanResult plan_result: the test plan result
     :param TestPlanEntity plan_entity: the test plan entity
     :param LocalConfig local_config: the local issai product configuration
-    :param list attachment_patterns: the regular expression pattern describing which output files to upload to TCMS
     :param str working_path: the runner root path for output files
+    """
+    _att_patterns = local_config.get_list_value(CFG_PAR_TCMS_RESULT_ATTACHMENTS)
+    if _att_patterns is not None and len(_att_patterns) > 0:
+        for _cr in plan_result.case_results():
+            _plan_id = _cr.get_attr_value(ATTR_PLAN)
+            _case_id = _cr.get_attr_value(ATTR_CASE)
+            for _file_path in list_case_result_files(working_path, _plan_id, _case_id):
+                _file_name = os.path.basename(_file_path)
+                if local_config.upload_patterns_match(_file_name):
+                    _cr[ATTR_OUTPUT_FILES].append(_file_name)
+    _pr = PlanResultEntity.from_result(plan_result, plan_entity)
+    _plan_id = _pr.entity_id()
+    _output_file_path = os.path.join(working_path, RESULTS_ROOT_DIR, f'testplan_{_plan_id}.toml')
+    _pr.to_file(_output_file_path)
+
+
+def store_plan_results(plan_result, plan_entity, local_config, working_path, task_monitor, store_in_tcms):
+    """
+    Stores plan result in a file.
+    :param PlanResult plan_result: the test plan result
+    :param TestPlanEntity plan_entity: the test plan entity
+    :param LocalConfig local_config: the local issai product configuration
+    :param str working_path: the runner root path for output files
+    :param TaskMonitor task_monitor: the progress handler
     :param bool store_in_tcms: indicates whether to store result and attachments in TCMS
     """
+    if task_monitor.is_dry_run():
+        return
     if store_in_tcms:
-        _plan_results = plan_result.plan_results()
-        for _pr in _plan_results:
-            _run_id = _pr.get_attr_value(ATTR_RUN)
-            _vals = {ATTR_START_DATE: _pr.get_attr_value(ATTR_START_DATE),
-                     ATTR_STOP_DATE: _pr.get_attr_value(ATTR_STOP_DATE)}
-            _notes = _pr.get_attr_value(ATTR_NOTES)
-            _summary = _pr.get_attr_value(ATTR_SUMMARY)
-            if len(_notes) > 0:
-                _vals[ATTR_NOTES] = _notes
-            if len(_summary) > 0:
-                _vals[ATTR_SUMMARY] = _summary
-            update_run(_run_id, _vals)
-            for _cr in _pr.get_attr_value(ATTR_CASE_RESULTS):
-                _custom_status_name = local_config.custom_execution_status(_cr.get_attr_value(ATTR_STATUS))
-                _status_id = plan_entity.execution_status_id_of(_custom_status_name)
-                _exec_id = _cr.get_attr_value(ATTR_EXECUTION)
-                _vals = {ATTR_START_DATE: _cr.get_attr_value(ATTR_START_DATE),
-                         ATTR_STOP_DATE: _cr.get_attr_value(ATTR_STOP_DATE), ATTR_STATUS: _status_id}
-                update_execution(_exec_id, _vals, _cr.get_attr_value(ATTR_COMMENT))
-                if attachment_patterns is not None and len(attachment_patterns) > 0:
-                    for _file_path in list_attachment_files(working_path, TCMS_CLASS_ID_TEST_EXECUTION, _exec_id):
-                        _file_name = os.path.basename(_file_path)
-                        _tcms_file_name = f'testexecution_{_exec_id}_{_file_name}'
-                        upload_attachment_file(_file_path, _tcms_file_name, TCMS_CLASS_ID_TEST_RUN, _run_id)
+        store_plan_results_to_tcms(plan_result, plan_entity, local_config, working_path)
     else:
-        # export results to working path
-        if attachment_patterns is not None and len(attachment_patterns) > 0:
-            for _cr in plan_result.case_results():
-                _plan_id = _cr.get_attr_value(ATTR_PLAN)
-                _case_id = _cr.get_attr_value(ATTR_CASE)
-                for _file_path in list_case_result_files(working_path, _plan_id, _case_id):
-                    _file_name = os.path.basename(_file_path)
-                    if local_config.upload_patterns_match(_file_name):
-                        _cr[ATTR_OUTPUT_FILES].append(_file_name)
-        _pr = PlanResultEntity.from_result(plan_result, plan_entity)
-        _plan_id = _pr.entity_id()
-        _output_file_path = os.path.join(working_path, RESULTS_ROOT_DIR, f'testplan_{_plan_id}.toml')
-        _pr.to_file(_output_file_path)
+        store_plan_results_to_file(plan_result, plan_entity, local_config, working_path)
+
+
+def execution_task_result(plan_name, plan_result):
+    """
+    :param str plan_name: the test plan name
+    :param PlanResult plan_result: the plan result
+    :returns: the task result for GUI or CLI
+    :rtype: TaskResult
+    """
+    _rc = plan_result.result_status()
+    _summary = plan_result.get_attr_value(ATTR_SUMMARY)
+    _notes = plan_result.get_attr_value(ATTR_NOTES)
+    if len(_summary) == 0 and len(_notes) == 0:
+        _task_summary = localized_message(I_RUN_PLAN_SUCCEEDED, plan_name)
+    else:
+        _task_summary = '%s%s%s' % (plan_result.get_attr_value(ATTR_SUMMARY), os.linesep,
+                                    plan_result.get_attr_value(ATTR_NOTES))
+    return TaskResult(_rc, _task_summary)
 
 
 def _tags_exclude_platform_os(tags):

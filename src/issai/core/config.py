@@ -163,6 +163,19 @@ class LocalConfig(dict):
                     return True
         return False
 
+    def runner_working_path(self):
+        """
+        :returns: working path for test runner
+        :rtype: str
+        :raises IssaiException: if working path is not defined or doesn't exist
+        """
+        _working_path = self.get_value(CFG_PAR_RUNNER_WORKING_PATH)
+        if _working_path is None or not os.path.isdir(_working_path):
+            raise IssaiException(E_RUN_WORKING_PATH_MISSING, CFG_PAR_RUNNER_WORKING_PATH)
+        if not os.path.isdir(_working_path):
+            raise IssaiException(E_RUN_WORKING_PATH_INVALID, _working_path)
+        return _working_path
+
     def custom_function(self, function_name):
         """
         Returns pointer to custom function with specified name.
