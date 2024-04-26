@@ -38,7 +38,8 @@ Localized message support.
 
 import os
 
-from issai.core import ASSISTANT_ACTION_INIT, ENTITY_TYPE_CASE, ENTITY_TYPE_PLAN, ENTITY_TYPE_PLAN_RESULT
+from issai.core import (ASSISTANT_ACTION_INIT, ENTITY_TYPE_CASE, ENTITY_TYPE_CASE_RESULT,
+                        ENTITY_TYPE_PLAN, ENTITY_TYPE_PLAN_RESULT)
 from issai.core.util import platform_locale
 
 
@@ -141,17 +142,21 @@ E_RUN_SOURCE_PATH_INVALID = 'e-run-source-path-invalid'
 E_RUN_WORKING_PATH_MISSING = 'e-run-working-path-missing'
 E_RUN_WORKING_PATH_INVALID = 'e-run-working-path-invalid'
 I_DRY_RUN_RUN_ENTITY_SKIPPED = 'i-dry-run-run-entity-skipped'
+I_DRY_RUN_RUN_RUNNING_CASE = 'i-dry-run-run-running-case'
 I_DRY_RUN_RUN_RUNNING_ENV = 'i-dry-run-run-running-env'
 I_DRY_RUN_RUN_RUNNING_PLAN = 'i-dry-run-run-running-plan'
+I_DRY_RUN_RUN_RUNNING_SCRIPT = 'i-dry-run-run-running-script'
 I_RUN_ASSISTANT_SUCCEEDED = 'i-run-assistant-succeeded'
 I_RUN_CASE_NOT_AUTOMATED = 'i-run-case-not-automated'
 I_RUN_ENTITY_NOT_FOR_LOCAL_ARCH = 'i-run-entity-not-for-local-arch'
 I_RUN_ENTITY_NOT_FOR_LOCAL_OS = 'i-run-entity-not-for-local-os'
 I_RUN_ENTITY_SKIPPED = 'i-run-entity-skipped'
 I_RUN_PLAN_NOT_ACTIVE = 'i-run-plan-not-active'
+I_RUN_PLAN_SUCCEEDED = 'i-run-plan-succeeded'
 I_RUN_RUNNING_CASE = 'i-run-running-case'
 I_RUN_RUNNING_ENV = 'i-run-running-env'
 I_RUN_RUNNING_PLAN = 'i-run-running-plan'
+I_RUN_RUNNING_SCRIPT = 'i-run-running-script'
 
 # entity related
 E_TOML_ATTRIBUTE_MISSING = 'e-toml-attribute-missing'
@@ -274,6 +279,7 @@ L_SELECT_PATH = 'l-select-path'
 L_STORE_RESULT = 'l-store-result'
 L_SUMMARY = 'l-summary'
 L_TEST_CASE = 'l-test-case'
+L_TEST_CASE_RESULT = 'l-test-case-result'
 L_TEST_PLAN = 'l-test-plan'
 L_TEST_PLAN_RESULT = 'l-test-plan-result'
 L_TYPE = 'l-type'
@@ -508,6 +514,8 @@ def entity_type_name(entity_type):
         return localized_label(L_TEST_CASE)
     elif entity_type == ENTITY_TYPE_PLAN_RESULT:
         return localized_label(L_TEST_PLAN_RESULT)
+    elif entity_type == ENTITY_TYPE_CASE_RESULT:
+        return localized_label(L_TEST_CASE_RESULT)
     else:
         return localized_label(L_PRODUCT)
 

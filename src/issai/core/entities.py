@@ -1048,20 +1048,19 @@ class ResultEntity(Entity):
     Test results do not have an equivalent in TCMS, there they are part of test runs or test executions.
     They are modeled separately to allow for offline tests, where results can be stored in TCMS on demand.
     """
-    def __init__(self, type_id, entities_attr_name, associated_entity_id, parent_entity_name):
+    def __init__(self, type_id, entities_attr_name, entity_id, parent_entity_name):
         """
         Constructor.
         :param int type_id: the result entity type (test case result or test plan result)
         :param str entities_attr_name: the attribute name for the result objects
-        :param int associated_entity_id: the TCMS ID of associated entity (test run for test plan results,
-                                         test execution for test case results)
+        :param int entity_id: the TCMS entity ID of test plan or case
         :param str parent_entity_name: the name of parent entity (test plan name for test plan results,
                                        test case summary for test case results)
         """
-        super().__init__(type_id, associated_entity_id, parent_entity_name)
+        super().__init__(type_id, entity_id, parent_entity_name)
         self.__entities_attr_name = entities_attr_name
         _entity_attrs = {ATTR_START_DATE: None, ATTR_STOP_DATE: None, ATTR_OUTPUT_FILES: []}
-        self[entities_attr_name] = {associated_entity_id: _entity_attrs}
+        self[entities_attr_name] = {entity_id: _entity_attrs}
 
     def result_attr_value(self, attribute_name):
         """
@@ -1125,24 +1124,17 @@ class PlanResultEntity(ResultEntity):
     """
     Result of a test plan execution.
     """
-    def __init__(self, run_id, plan_name):
+    def __init__(self, plan_id, plan_name):
         """
         Constructor.
-        :param int run_id: the TCMS ID of the test run associated with the test plan
-        :param str plan_name: the name of the test plan
+        :param int plan_id: the TCMS test plan ID
+        :param str plan_name: the test plan name
         """
-        super().__init__(ENTITY_TYPE_PLAN_RESULT, ATTR_TEST_PLAN_RESULTS, run_id, plan_name)
+        super().__init__(ENTITY_TYPE_PLAN_RESULT, ATTR_TEST_PLAN_RESULTS, plan_id, plan_name)
         _attrs = self[ATTR_TEST_PLAN_RESULTS][self.entity_id()]
-        _attrs.update({ATTR_RUN_ID: run_id, ATTR_CASE_RESULTS: [], ATTR_CHILD_PLAN_RESULTS: [],
+        _attrs.update({ATTR_PLAN: plan_id, ATTR_CASE_RESULTS: [], ATTR_CHILD_PLAN_RESULTS: [],
                        ATTR_NOTES: '', ATTR_SUMMARY: ''})
         self[ATTR_TEST_CASE_RESULTS] = {}
-
-    def associated_run_id(self):
-        """
-        :returns: the associated test run's ID
-        :rtype: int
-        """
-        return self[ATTR_TEST_PLAN_RESULTS][self.entity_id()][ATTR_RUN_ID]
 
     def attachments(self):
         """
@@ -1228,21 +1220,21 @@ class PlanResultEntity(ResultEntity):
         :returns: created test plan result
         :rtype: PlanResultEntity
         """
-        _run_id = core_result.get_attr_value(ATTR_RUN)
+        _plan_entity_id = core_result.get_attr_value(ATTR_PLAN)
         _plan_name = plan_entity.entity_name()
-        _plan_result_entity = PlanResultEntity(_run_id, _plan_name)
+        _plan_result_entity = PlanResultEntity(_plan_entity_id, _plan_name)
         _plan_result_entity[ATTR_PRODUCT] = plan_entity[ATTR_PRODUCT].copy()
         _plan_result_entity[ATTR_MASTER_DATA] = plan_entity[ATTR_MASTER_DATA]
         for _pr in core_result.plan_results():
-            _run_id = _pr[ATTR_RUN]
+            _plan_id = _pr[ATTR_PLAN]
             _epr = _pr.copy()
             _epr[ATTR_CASE_RESULTS] = []
             for _cr in _pr[ATTR_CASE_RESULTS]:
-                _execution_id = _cr[ATTR_EXECUTION]
-                _plan_result_entity[ATTR_TEST_CASE_RESULTS][_execution_id] = _cr.copy()
-                _epr[ATTR_CASE_RESULTS].append(_execution_id)
+                _case_id = _cr[ATTR_CASE]
+                _plan_result_entity[ATTR_TEST_CASE_RESULTS][_case_id] = _cr.copy()
+                _epr[ATTR_CASE_RESULTS].append(_case_id)
             _epr[ATTR_CHILD_PLAN_RESULTS] = [_cpr[ATTR_RUN] for _cpr in _pr[ATTR_CHILD_PLAN_RESULTS]]
-            _plan_result_entity[ATTR_TEST_PLAN_RESULTS][_run_id] = _epr
+            _plan_result_entity[ATTR_TEST_PLAN_RESULTS][_plan_id] = _epr
         return _plan_result_entity
 
 
@@ -1340,8 +1332,6 @@ class CaseResult(Result):
         :param str case_summary: the test case summary
         """
         super().__init__(RESULT_TYPE_CASE_RESULT)
-        self[ATTR_EXECUTION] = -1
-        self[ATTR_RUN] = -1
         self[ATTR_PLAN] = plan_id
         self[ATTR_CASE] = case_id
         self[ATTR_CASE_NAME] = case_summary
@@ -1349,24 +1339,23 @@ class CaseResult(Result):
         self[ATTR_TESTER_NAME] = ''
         self[ATTR_COMMENT] = ''
 
+
 class PlanResult(Result):
     """
     Test plan result used within test runner.
     """
 
-    def __init__(self, plan_id, plan_name, run_id, version=None, build=None):
+    def __init__(self, plan_id, plan_name, version=None, build=None):
         """
         Constructor.
         :param int plan_id: the test plan TCMS ID
         :param str plan_name: the test plan name
-        :param int run_id: the test run TCMS ID
         :param str|None version: the software version value; None for child plan result
         :param str|None build: the build name; None for child plan result
         """
         super().__init__(RESULT_TYPE_PLAN_RESULT)
         self[ATTR_VERSION] = version
         self[ATTR_BUILD] = build
-        self[ATTR_RUN] = run_id
         self[ATTR_PLAN] = plan_id
         self[ATTR_PLAN_NAME] = plan_name
         self[ATTR_NOTES] = ''
@@ -1435,9 +1424,7 @@ class PlanResult(Result):
         :rtype: PlanResult
         """
         _plan = entity.get_part(ATTR_TEST_PLANS, plan_id)
-        _runs = _plan.get(ATTR_RUNS)
-        _run_id = -1 if _runs is None or len(_runs) != 1 else _runs[0]
-        return PlanResult(_plan[ATTR_ID], _plan[ATTR_NAME], _run_id, version, build)
+        return PlanResult(_plan[ATTR_ID], _plan[ATTR_NAME], version, build)
 
 
 class MasterData(dict):

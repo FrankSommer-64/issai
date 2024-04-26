@@ -169,6 +169,22 @@ def list_attachment_files(root_path, tcms_class_id, tcms_entity_id):
             if os.path.isfile(os.path.join(_entity_subdir, _f))]
 
 
+def list_case_result_files(root_path, plan_id, case_id):
+    """
+    Lists all output files from execution of a test case.
+    :param str root_path: the root path
+    :param int plan_id: the TCMS plan ID
+    :param int case_id: the TCMS case ID
+    :returns: names of all files found including path
+    :rtype: list
+    """
+    _result_path = os.path.join(root_path, RESULTS_ROOT_DIR, ATTACHMENTS_CASE_DIR, f'{plan_id}_{case_id}')
+    if not os.path.isdir(_result_path):
+        return []
+    return [os.path.join(_result_path, _f) for _f in os.listdir(_result_path)
+            if os.path.isfile(os.path.join(_result_path, _f))]
+
+
 def url_file_name(url):
     """
     :param str url: the URL
