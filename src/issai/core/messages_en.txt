@@ -99,6 +99,7 @@ i-run-case-not-automated Test case not automated.
 i-run-entity-not-for-local-arch Entity not suitable for local CPU architecture '{0}'.
 i-run-entity-not-for-local-os Entity not suitable for local operating system '{0}.
 i-run-entity-skipped {0} '{1}' skipped: {2}
+i-run-matrix-result Matrix code '{0}': {1}.
 i-run-plan-not-active Test plan not active.
 i-run-plan-succeeded Test plan '{0}' successfully executed.
 i-run-plan-tag-mismatch Test plan tagged with '{0}', but local platform is '{1}'.

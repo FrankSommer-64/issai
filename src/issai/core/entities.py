@@ -1242,13 +1242,15 @@ class Result(dict):
     """
     Base class for test results used within test runner.
     """
-    def __init__(self, type_id):
+    def __init__(self, type_id, plan_id):
         """
         Constructor.
+        :param int plan_id: the TCMS test plan ID
         :param int type_id: the result object type (test case result or test plan result)
         """
         super().__init__()
         self.__result_type = type_id
+        self[ATTR_PLAN] = plan_id
         self[ATTR_START_DATE] = None
         self[ATTR_STOP_DATE] = None
         self[ATTR_OUTPUT_FILES] = []
@@ -1325,19 +1327,42 @@ class CaseResult(Result):
     """
     Test case result used within test runner.
     """
-    def __init__(self, plan_id, case_id, case_summary):
+    def __init__(self, plan_id, case_id, case_summary, matrix_code):
         """
         Constructor.
-        :param int case_id: the test case TCMS ID
+        :param int plan_id: the TCMS test plan ID
+        :param int case_id: the TCMS test case ID
         :param str case_summary: the test case summary
+        :param str matrix_code: the permuting properties code
         """
-        super().__init__(RESULT_TYPE_CASE_RESULT)
-        self[ATTR_PLAN] = plan_id
+        super().__init__(RESULT_TYPE_CASE_RESULT, plan_id)
         self[ATTR_CASE] = case_id
         self[ATTR_CASE_NAME] = case_summary
-        self[ATTR_STATUS] = RESULT_STATUS_ERROR
+        self[ATTR_MATRIX_CODE] = matrix_code
+        self[ATTR_STATUS] = RESULT_STATUS_PASSED
         self[ATTR_TESTER_NAME] = ''
         self[ATTR_COMMENT] = ''
+
+    def id_str(self):
+        """
+        :returns: identification based on plan ID and case ID
+        :rtype: str
+        """
+        return f'{self[ATTR_PLAN]}.{self[ATTR_CASE]}'
+
+    def merge_matrix_result(self, case_result):
+        """
+        Merges the result of a test plan execution for a specific matrix code.
+        :param CaseResult case_result: the test case result
+        """
+        _new_matrix_code = case_result[ATTR_MATRIX_CODE]
+        _new_status = case_result[ATTR_STATUS]
+        self.append_attr_value(ATTR_COMMENT, localized_message(I_RUN_MATRIX_RESULT, _new_matrix_code, _new_status))
+        self.append_attr_value(ATTR_COMMENT, case_result[ATTR_COMMENT])
+        if _new_status == RESULT_STATUS_ERROR or (_new_status == RESULT_STATUS_FAILED and
+                                                  self[ATTR_STATUS] == RESULT_STATUS_PASSED):
+            self[ATTR_STATUS] = _new_status
+        self[ATTR_STOP_DATE] = case_result[ATTR_STOP_DATE]
 
 
 class PlanResult(Result):
@@ -1353,10 +1378,9 @@ class PlanResult(Result):
         :param str|None version: the software version value; None for child plan result
         :param str|None build: the build name; None for child plan result
         """
-        super().__init__(RESULT_TYPE_PLAN_RESULT)
+        super().__init__(RESULT_TYPE_PLAN_RESULT, plan_id)
         self[ATTR_VERSION] = version
         self[ATTR_BUILD] = build
-        self[ATTR_PLAN] = plan_id
         self[ATTR_PLAN_NAME] = plan_name
         self[ATTR_NOTES] = ''
         self[ATTR_SUMMARY] = ''
@@ -1376,6 +1400,30 @@ class PlanResult(Result):
         :param PlanResult plan_result: the test plan result
         """
         self[ATTR_CHILD_PLAN_RESULTS].append(plan_result)
+
+    def merge_matrix_result(self, plan_result):
+        """
+        Merges the result of a test plan execution for a specific matrix code.
+        :param PlanResult plan_result: the test plan result
+        """
+        self[ATTR_STOP_DATE] = plan_result[ATTR_STOP_DATE]
+        self.append_attr_value(ATTR_NOTES, plan_result[ATTR_NOTES])
+        _overall_case_results = {}
+        for _cr in self.case_results():
+            _overall_case_results[_cr.id_str()] = _cr
+        _new_case_results = {}
+        for _cr in plan_result.case_results():
+            _new_case_results[_cr.id_str()] = _cr
+        for _cr_id, _cr in _new_case_results.items():
+            _overall_cr = _overall_case_results.get(_cr_id)
+            if _overall_cr is None:
+                _cr_status = _cr[ATTR_STATUS]
+                _cr_code = _cr[ATTR_MATRIX_CODE]
+                _cr.append_attr_value(ATTR_COMMENT, localized_message(I_RUN_MATRIX_RESULT, _cr_code, _cr_status))
+                del _cr[ATTR_MATRIX_CODE]
+                self.add_case_result(_cr)
+                continue
+            _overall_cr.merge_matrix_result(_cr)
 
     def case_results(self):
         """

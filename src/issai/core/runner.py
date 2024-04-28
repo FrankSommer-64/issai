@@ -212,7 +212,7 @@ def run_tcms_plan(plan, options, local_config, task_monitor):
         _working_path = local_config.runner_working_path()
         # create TestPlan entity from TCMS data
         task_monitor.set_dry_run(options.get(OPTION_DRY_RUN))
-        _plan_entity = plan_entity_from_tcms(plan, options, local_config, task_monitor)
+        _plan_entity = plan_entity_from_tcms(plan, options, task_monitor)
         task_monitor.set_operation_count(_plan_entity.runnable_case_count() + 1)
         task_monitor.operations_processed(1)
         # create initial set of environment variables
@@ -256,7 +256,7 @@ def run_offline_plan(plan_entity, options, local_config, attachment_path, task_m
         # create initial set of environment variables
         _users = plan_entity.master_data_of_type(ATTR_TCMS_USERS)
         _user_name = DEFAULT_USER_NAME if len(_users) == 0 else _users[0][ATTR_USERNAME]
-        _env_vars = initial_env_vars(local_config, _working_path, _user_name)
+        _env_vars = initial_env_vars(local_config, _working_path, _user_name, attachment_path)
         # run test plan
         _plan_result = _run_ancestor_plan(plan_entity, options, local_config, _env_vars, task_monitor)
         # store test result
@@ -304,7 +304,7 @@ def _run_ancestor_plan(plan_entity, options, local_config, env_vars, task_monito
                 else:
                     env_vars[_prop_name] = _val
         if _prop_matrix.is_empty():
-            _result = _run_plan(plan_entity, _plan_id, _exe_table, local_config, env_vars, task_monitor)
+            _result = _run_plan(plan_entity, _plan_id, _exe_table, local_config, env_vars, task_monitor, _prop_matrix)
         else:
             for _props in _prop_matrix:
                 _prop_infos = []
@@ -312,9 +312,8 @@ def _run_ancestor_plan(plan_entity, options, local_config, env_vars, task_monito
                     env_vars[_enva_name] = _enva_value
                     _prop_infos.append(f'{_enva_name}="{_enva_value}"')
                 task_monitor.log(I_RUN_RUNNING_ENV, ','.join(_prop_infos))
-                _res = _run_plan(plan_entity, _plan_id, _exe_table, local_config, env_vars, task_monitor,
-                                 _prop_matrix.code())
-                _result.append_attr_value(ATTR_NOTES, _res[ATTR_NOTES])
+                _res = _run_plan(plan_entity, _plan_id, _exe_table, local_config, env_vars, task_monitor, _prop_matrix)
+                _result.merge_matrix_result(_res)
         # eventually run cleanup for top level plan
         _run_assistant(CFG_PAR_RUNNER_ENTITY_ASSISTANT, ASSISTANT_ACTION_CLEANUP, _plan_name,
                        _exe_table, local_config, env_vars, task_monitor)
@@ -326,7 +325,7 @@ def _run_ancestor_plan(plan_entity, options, local_config, env_vars, task_monito
     return _result
 
 
-def _run_plan(plan_entity, plan_id, executable_table, local_config, env_vars, task_monitor, matrix_code=''):
+def _run_plan(plan_entity, plan_id, executable_table, local_config, env_vars, task_monitor, matrix):
     """
     Runs a test plan.
     :param TestPlanEntity plan_entity: the test plan, eventually including descendants
@@ -335,7 +334,7 @@ def _run_plan(plan_entity, plan_id, executable_table, local_config, env_vars, ta
     :param LocalConfig local_config: the local issai product configuration
     :param dict env_vars: the environment variables to use in test execution
     :param TaskMonitor task_monitor: the progress handler
-    :param str matrix_code: the code string of all permuting properties
+    :param PropertyMatrix matrix: the permuting properties matrix
     :returns: execution result
     :rtype: PlanResult
     """
@@ -367,14 +366,14 @@ def _run_plan(plan_entity, plan_id, executable_table, local_config, env_vars, ta
             if _skip_entity_on_local_machine(plan_entity, ENTITY_TYPE_CASE, _case_id, task_monitor):
                 continue
             _case_result = _run_case(plan_entity, plan_id, _case_id, executable_table, local_config, _plan_env,
-                                     task_monitor, matrix_code)
+                                     task_monitor, matrix)
             _result.add_case_result(_case_result)
         # eventually run child plans
         for _child_id in plan_entity.plan_child_ids(plan_id):
             if _skip_entity_on_local_machine(plan_entity, ENTITY_TYPE_PLAN, _child_id, task_monitor):
                 continue
             _child_result = _run_plan(plan_entity, _child_id, executable_table, local_config, _plan_env,
-                                      task_monitor, matrix_code)
+                                      task_monitor, matrix)
             _result.add_plan_result(_child_result)
         # run cleanup for plan
         _run_assistant(CFG_PAR_RUNNER_PLAN_ASSISTANT, ASSISTANT_ACTION_CLEANUP, _plan_name,
@@ -387,7 +386,7 @@ def _run_plan(plan_entity, plan_id, executable_table, local_config, env_vars, ta
     return _result
 
 
-def _run_case(plan_entity, plan_id, case_id, executable_table, local_config, runtime_env, task_monitor, matrix_code):
+def _run_case(plan_entity, plan_id, case_id, executable_table, local_config, runtime_env, task_monitor, matrix):
     """
     Runs a single test case.
     :param TestPlanEntity plan_entity: the test plan, eventually including descendants
@@ -397,14 +396,14 @@ def _run_case(plan_entity, plan_id, case_id, executable_table, local_config, run
     :param LocalConfig local_config: the local issai product configuration
     :param dict runtime_env: the environment variables to use in test execution
     :param TaskMonitor task_monitor: the progress handler
-    :param str matrix_code: the code string of all permuting properties
+    :param PropertyMatrix matrix: the permuting properties matrix
     :returns: execution result
     :rtype: CaseResult
     """
     _case = plan_entity.get_part(ATTR_TEST_CASES, case_id)
     _case_name = _case[ATTR_SUMMARY]
     task_monitor.log(I_RUN_RUNNING_CASE, _case[ATTR_SUMMARY])
-    _result = CaseResult(plan_id, case_id, _case_name)
+    _result = CaseResult(plan_id, case_id, _case_name, matrix.code())
     _result.mark_start()
     # noinspection PyBroadException
     try:
@@ -425,7 +424,7 @@ def _run_case(plan_entity, plan_id, case_id, executable_table, local_config, run
         _run_assistant(CFG_PAR_RUNNER_CASE_ASSISTANT, ASSISTANT_ACTION_INIT, _case_name,
                        executable_table, local_config, _case_env, task_monitor)
         # run test case
-        _args = _case[ATTR_ARGUMENTS]
+        _args = f"'{_case_name}' {_case[ATTR_ARGUMENTS]}"
         task_monitor.log(I_RUN_RUNNING_SCRIPT, _script, _args)
         if not task_monitor.is_dry_run():
             _rc, _stdout, _stderr = _executable.run(runtime_env, _args)
@@ -435,7 +434,7 @@ def _run_case(plan_entity, plan_id, case_id, executable_table, local_config, run
             _output_path = os.path.join(local_config.get_value(CFG_PAR_RUNNER_WORKING_PATH),
                                         RESULTS_ROOT_DIR, ATTACHMENTS_CASE_DIR, f'{plan_id}_{case_id}')
             os.makedirs(_output_path, exist_ok=True)
-            _output_file_path = os.path.join(_output_path, f'{local_config.output_log()}{matrix_code}')
+            _output_file_path = os.path.join(_output_path, f'{local_config.output_log()}{matrix.suffix_code()}')
             with open(_output_file_path, 'w') as _output_file:
                 _output_file.write(_stdout)
                 _output_file.write(_stderr)
@@ -454,12 +453,11 @@ def _run_case(plan_entity, plan_id, case_id, executable_table, local_config, run
     return _result
 
 
-def plan_entity_from_tcms(plan, options, local_config, task_monitor):
+def plan_entity_from_tcms(plan, options, task_monitor):
     """
     Creates TestPlan entity from TCMS.
     :param dict plan: the test plan name and ID
     :param dict options: the run options
-    :param LocalConfig local_config: the local issai product configuration
     :param TaskMonitor task_monitor: the progress handler
     :returns: test plan entity
     :rtype: TestPlanEntity
@@ -511,12 +509,13 @@ def plan_entity_from_tcms(plan, options, local_config, task_monitor):
     return _plan_entity
 
 
-def initial_env_vars(local_config, working_path, user_name):
+def initial_env_vars(local_config, working_path, user_name, attachment_path=None):
     """
     Creates and returns basic set of environment variables for test execution.
     :param LocalConfig local_config: the local issai product configuration
     :param str working_path: the runner working path
     :param str user_name: name of user executing the test
+    :param str attachment_path: root path for attachment files, if test is executed from offline file
     :returns: basic environment variables
     :rtype: MutableMapping
     :raises IssaiException: if local configuration doesn't specify a valid product source path
@@ -537,6 +536,8 @@ def initial_env_vars(local_config, working_path, user_name):
         _runtime_env[ENVA_PYTHON_PATH] = f'{_source_path}:{_py_path}'
     _runtime_env[ENVA_ATTACHMENTS_PATH] = os.path.join(working_path, ATTACHMENTS_ROOT_DIR)
     _runtime_env[ENVA_ISSAI_USERNAME] = user_name
+    if attachment_path is not None:
+        _runtime_env[ENVA_ATTACHMENTS_PATH] = attachment_path
     return _runtime_env
 
 

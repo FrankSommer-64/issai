@@ -168,13 +168,19 @@ class PropertyMatrix:
 
     def code(self):
         """
-        :returns: code string of all property values, starting with an underscore; empty string if empty
+        :returns: code string of all property values; empty string if empty
         :rtype: str
         """
         if self.is_empty():
             return ''
-        _all_codes = '_'.join([self.values[_i][self.indexes[_i]] for _i in range(0, self.count)])
-        return f'_{_all_codes}'
+        return '_'.join([self.values[_i][self.indexes[_i]] for _i in range(0, self.count)])
+
+    def suffix_code(self):
+        """
+        :returns: code string of all property values, starting with an underscore; empty string if empty
+        :rtype: str
+        """
+        return '' if self.is_empty() else f'_{self.code()}'
 
     def _increment_index(self, property_nr):
         """
