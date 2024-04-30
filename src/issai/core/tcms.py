@@ -499,7 +499,6 @@ def read_tcms_environments():
         _envs_dict = dict([(_e[ATTR_ID], _e) for _e in _envs])
         for _e in _envs:
             _e[ATTR_PROPERTIES] = []
-        _env_ids = [_e[ATTR_ID] for _e in _envs]
         for _prop in _cxn.Environment.properties({}):
             _envs_dict[_prop[ATTR_ENVIRONMENT]][ATTR_PROPERTIES].append({_prop[ATTR_NAME]: _prop[ATTR_VALUE]})
         return _envs

@@ -1230,10 +1230,11 @@ class PlanResultEntity(ResultEntity):
             _epr = _pr.copy()
             _epr[ATTR_CASE_RESULTS] = []
             for _cr in _pr[ATTR_CASE_RESULTS]:
+                del _cr[ATTR_MATRIX_CODE]
                 _case_id = _cr[ATTR_CASE]
                 _plan_result_entity[ATTR_TEST_CASE_RESULTS][_case_id] = _cr.copy()
                 _epr[ATTR_CASE_RESULTS].append(_case_id)
-            _epr[ATTR_CHILD_PLAN_RESULTS] = [_cpr[ATTR_RUN] for _cpr in _pr[ATTR_CHILD_PLAN_RESULTS]]
+            _epr[ATTR_CHILD_PLAN_RESULTS] = [_cpr[ATTR_PLAN] for _cpr in _pr[ATTR_CHILD_PLAN_RESULTS]]
             _plan_result_entity[ATTR_TEST_PLAN_RESULTS][_plan_id] = _epr
         return _plan_result_entity
 
@@ -1370,17 +1371,13 @@ class PlanResult(Result):
     Test plan result used within test runner.
     """
 
-    def __init__(self, plan_id, plan_name, version=None, build=None):
+    def __init__(self, plan_id, plan_name):
         """
         Constructor.
         :param int plan_id: the test plan TCMS ID
         :param str plan_name: the test plan name
-        :param str|None version: the software version value; None for child plan result
-        :param str|None build: the build name; None for child plan result
         """
         super().__init__(RESULT_TYPE_PLAN_RESULT, plan_id)
-        self[ATTR_VERSION] = version
-        self[ATTR_BUILD] = build
         self[ATTR_PLAN_NAME] = plan_name
         self[ATTR_NOTES] = ''
         self[ATTR_SUMMARY] = ''
@@ -1420,7 +1417,6 @@ class PlanResult(Result):
                 _cr_status = _cr[ATTR_STATUS]
                 _cr_code = _cr[ATTR_MATRIX_CODE]
                 _cr.append_attr_value(ATTR_COMMENT, localized_message(I_RUN_MATRIX_RESULT, _cr_code, _cr_status))
-                del _cr[ATTR_MATRIX_CODE]
                 self.add_case_result(_cr)
                 continue
             _overall_cr.merge_matrix_result(_cr)
@@ -1461,18 +1457,16 @@ class PlanResult(Result):
         return _overall_status
 
     @staticmethod
-    def from_entity(entity, plan_id, version=None, build=None):
+    def from_entity(entity, plan_id):
         """
         Creates a plan result from a test plan entity.
         :param Entity entity: the test plan entity
         :param int plan_id: the test plan TCMS ID
-        :param str version: the version value
-        :param str build: the build name
         :returns: the plan result
         :rtype: PlanResult
         """
         _plan = entity.get_part(ATTR_TEST_PLANS, plan_id)
-        return PlanResult(_plan[ATTR_ID], _plan[ATTR_NAME], version, build)
+        return PlanResult(_plan[ATTR_ID], _plan[ATTR_NAME])
 
 
 class MasterData(dict):

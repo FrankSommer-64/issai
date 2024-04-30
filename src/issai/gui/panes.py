@@ -210,7 +210,20 @@ class FileActionPane(QGroupBox):
             _options_box_layout.addRow(_user_caption, self.__user_option)
             self.__dry_run_option = _create_option(_options_box_layout, L_DRY_RUN, T_OPT_DRY_RUN, False)
         else:
+            # run
             self.__store_result_option = _create_option(_options_box_layout, L_STORE_RESULT, T_OPT_STORE_RESULT, False)
+            self.__tree_option = _create_option(_options_box_layout, L_RUN_DESCENDANT_PLANS,
+                                                T_OPT_RUN_DESCENDANT_PLANS, True)
+            self.__dry_run_option = _create_option(_options_box_layout, L_DRY_RUN, T_OPT_DRY_RUN, False)
+            _entity_envs = self.__entity_data.get(ATTR_ENVIRONMENTS)
+            if _entity_envs is not None:
+                _env_combo_caption, self.__env_combo = _create_combo(self, None, L_ENV_COMBO)
+                _options_box_layout.addRow(_env_combo_caption, self.__env_combo)
+                _options_box_layout.setAlignment(self.__env_combo, Qt.AlignmentFlag.AlignLeft)
+                self.__env_combo.addItem(localized_label(L_NO_ENVIRONMENT), None)
+                for _env in _entity_envs.values():
+                    self.__env_combo.addItem(_env[ATTR_NAME], _env)
+                self.__env_combo.setCurrentIndex(0)
         return _options_box
 
     def _version_selected(self, index):
@@ -269,6 +282,7 @@ class FileActionPane(QGroupBox):
                 _options[OPTION_AUTO_CREATE] = True
             _prog_dlg = ProgressDialog(self, ACTION_IMPORT, self.__entity_data, _options, {}, self.__file_path)
         else:
+            # run
             _version = self.__version_combo.currentData()
             if _version is None:
                 QMessageBox.information(self, localized_label(L_MBOX_TITLE_INFO),
@@ -286,8 +300,12 @@ class FileActionPane(QGroupBox):
             except IssaiException as _e:
                 QMessageBox.critical(self, localized_label(L_MBOX_TITLE_ERROR), str(_e), QMessageBox.StandardButton.Ok)
                 return
-            _options = {OPTION_STORE_RESULT: self.__store_result_option.isChecked(),
-                        OPTION_VERSION: _version, OPTION_BUILD: _build}
+            _env_option = None if self.__env_combo is None else self.__env_combo.currentData()
+            _options = {OPTION_VERSION: _version, OPTION_BUILD: _build,
+                        OPTION_ENVIRONMENT: _env_option,
+                        OPTION_PLAN_TREE: self.__tree_option.isChecked(),
+                        OPTION_STORE_RESULT: self.__store_result_option.isChecked(),
+                        OPTION_DRY_RUN: self.__dry_run_option.isChecked()}
             _attachments_path = os.path.join(os.path.dirname(self.__file_path), ATTACHMENTS_ROOT_DIR)
             _prog_dlg = ProgressDialog(self, self.__action, self.__entity_data, _options, _local_cfg, _attachments_path)
         _prog_dlg.exec()
@@ -474,7 +492,7 @@ class TcmsActionPane(QGroupBox):
             _options_box_layout.addRow(_env_combo_caption, self.__env_combo)
             _options_box_layout.setAlignment(self.__env_combo, Qt.AlignmentFlag.AlignLeft)
             self.__env_combo.addItem(localized_label(L_NO_ENVIRONMENT), None)
-            for _env in find_tcms_objects(TCMS_CLASS_ID_ENVIRONMENT, {}):
+            for _env in read_tcms_environments():
                 self.__env_combo.addItem(_env[ATTR_NAME], _env)
             self.__env_combo.setCurrentIndex(0)
             return _options_box

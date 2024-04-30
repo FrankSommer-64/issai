@@ -37,6 +37,7 @@ Functions to run a test entity.
 """
 
 import os.path
+import shutil
 import threading
 
 from issai.core import *
@@ -48,7 +49,7 @@ from issai.core.entities import CaseResult, PlanResult, TestPlanEntity, PlanResu
 from issai.core.issai_exception import *
 from issai.core.messages import *
 from issai.core.task import TaskResult
-from issai.core.tcms import (create_run_from_plan, find_tcms_objects, read_environment_properties,
+from issai.core.tcms import (create_run_from_plan, find_tcms_objects,
                              read_test_entity_with_id, read_product_for_test_entity, read_tcms_cases,
                              read_tcms_executions, read_tcms_plan,
                              read_tcms_run_tree, TcmsInterface, update_execution, update_run)
@@ -277,14 +278,14 @@ def _run_ancestor_plan(plan_entity, options, local_config, env_vars, task_monito
     :returns: execution result; None, if plan is not runnable
     :rtype: PlanResult
     """
+    clear_result_path(local_config)
     _plan_id = plan_entity.entity_id()
     _plan_name = plan_entity.entity_name()
-    _run_id = plan_entity.run_id()
     _version = plan_entity.master_data_of_type(ATTR_PRODUCT_VERSIONS)[0]
     _build = plan_entity.master_data_of_type(ATTR_PRODUCT_BUILDS)[0]
     _exe_table = ExecutableTable(local_config)
     _env_opt = options.get(OPTION_ENVIRONMENT)
-    _result = PlanResult.from_entity(plan_entity, _plan_id, _version, _build)
+    _result = PlanResult.from_entity(plan_entity, _plan_id)
     _result.mark_start()
     # noinspection PyBroadException
     try:
@@ -296,13 +297,13 @@ def _run_ancestor_plan(plan_entity, options, local_config, env_vars, task_monito
                        _exe_table, local_config, env_vars, task_monitor)
         # run plan
         _prop_matrix = PropertyMatrix()
-        if _env_opt is not None:
-            for _prop_name, _prop_val in _env_opt[ATTR_PROPERTIES].items():
-                _val = _parse_env_property(_prop_name, _prop_val)
-                if isinstance(_val, list):
-                    _prop_matrix.add(_prop_name, _val)
-                else:
-                    env_vars[_prop_name] = _val
+        _env_properties = _read_env_properties(_env_opt)
+        for _property in _env_properties:
+            _property_name, _property_value = next(iter(_property.items()))
+            if isinstance(_property_value, list):
+                _prop_matrix.add(_property_name, _property_value)
+            else:
+                env_vars[_property_name] = _property_value
         if _prop_matrix.is_empty():
             _result = _run_plan(plan_entity, _plan_id, _exe_table, local_config, env_vars, task_monitor, _prop_matrix)
         else:
@@ -339,13 +340,8 @@ def _run_plan(plan_entity, plan_id, executable_table, local_config, env_vars, ta
     :rtype: PlanResult
     """
     if plan_id < 0:
-        _version = plan_entity.master_data_of_type(ATTR_PRODUCT_VERSIONS)[0]
-        _build = plan_entity.master_data_of_type(ATTR_PRODUCT_BUILDS)[0]
         plan_id = plan_entity.entity_id()
-    else:
-        _version = None
-        _build = None
-    _result = PlanResult.from_entity(plan_entity, plan_id, _version, _build)
+    _result = PlanResult.from_entity(plan_entity, plan_id)
     _result.mark_start()
     _plan = plan_entity.get_part(ATTR_TEST_PLANS, plan_id)
     _plan_name = _plan[ATTR_NAME]
@@ -504,7 +500,7 @@ def plan_entity_from_tcms(plan, options, task_monitor):
     _plan_entity.add_tcms_executions(read_tcms_executions([_build], False, _plan_cases), True)
     _env = options.get(OPTION_ENVIRONMENT)
     if _env is not None:
-        _env[ATTR_PROPERTIES] = read_environment_properties(_env)
+        # _env[ATTR_PROPERTIES] = read_environment_properties(_env)
         _plan_entity.add_environments([_env])
     return _plan_entity
 
@@ -539,6 +535,21 @@ def initial_env_vars(local_config, working_path, user_name, attachment_path=None
     if attachment_path is not None:
         _runtime_env[ENVA_ATTACHMENTS_PATH] = attachment_path
     return _runtime_env
+
+
+def clear_result_path(local_config):
+    """
+    Clears output directory with result files from previous run.
+    :param LocalConfig local_config: the local issai product configuration
+    """
+    _result_path = os.path.join(local_config.runner_working_path(), RESULTS_ROOT_DIR)
+    if not os.path.exists(_result_path):
+        return
+    if os.path.isdir(_result_path):
+        shutil.rmtree(_result_path)
+    else:
+        os.remove(_result_path)
+    os.makedirs(_result_path, exist_ok=True)
 
 
 def store_plan_results_to_tcms(plan_result, plan_entity, local_config, working_path):
@@ -762,19 +773,32 @@ def _fill_essential_props(property_set, local_config, cfg_par):
             property_set.add(_p)
 
 
-def _parse_env_property(prop_name, prop_val):
+def _read_env_properties(env_opt):
     """
-    Parses environment property value.
-    :param str prop_val: the property value as defined in TCMS
-    :return: the parsed value
-    :rtype: str|list
-    :raises IssaiException: if property value is invalid
+    Reads properties from environment option.
+    :param dict env_opt: the environment specification
+    :returns: environment properties
+    :rtype: list
     """
-    prop_val = prop_val.strip()
-    if not prop_val.startswith('['):
-        return prop_val
-    if not prop_val.endswith(']'):
-        raise IssaiException(E_RUN_INVALID_ENV_PROPERTY_VALUE, prop_name)
-    prop_val = prop_val[1:-1].strip().replace(r'\,', '&&&comma;;;')
-    _prop_values = prop_val.split(',')
-    return [_val.replace('&&&comma;;;', ',').strip() for _val in _prop_values]
+    if env_opt is None:
+        return []
+    _props = []
+    _prop_names = dict()
+    _prop_indexes = dict()
+    _index = -1
+    for _property in env_opt[ATTR_PROPERTIES]:
+        _prop_name, _prop_value = next(iter(_property.items()))
+        _val_count = _prop_names.get(_prop_name)
+        if _val_count is None:
+            _index += 1
+            _prop_names[_prop_name] = 1
+            _prop_indexes[_prop_name] = _index
+            _props.append({_prop_name: _prop_value})
+            continue
+        _prop_index = _prop_indexes[_prop_name]
+        if _val_count == 1:
+            _prop_names[_prop_name] += 1
+            _props[_prop_index][_prop_name] = [_props[_prop_index][_prop_name], _prop_value]
+            continue
+        _props[_prop_index][_prop_name].append(_prop_value)
+    return _props
