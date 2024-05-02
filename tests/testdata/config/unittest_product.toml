@@ -6,7 +6,6 @@ test-path = "${repository-path}/tests"
 test-data-path = "${test-path}/testdata"
 
 [tcms]
-label-scheme = "none"
 execution-states = {IDLE="IDLE", PASSED="PASSED", FAILED="FAILED", ERROR="ERROR"}
 result-attachments = ["console.log"]
 spec-attachments = ["issai.toml"]

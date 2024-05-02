@@ -119,19 +119,6 @@ class LocalConfig(dict):
         _env_vars = {} if _env_grp is None else _env_grp.unwrap()
         return _env_vars
 
-    def localized_label_scheme(self):
-        """
-        :returns: label scheme as localized string
-        :rtype: str
-        """
-        _scheme = self.get_value(CFG_PAR_TCMS_LABEL_SCHEME)
-        if _scheme is not None:
-            if _scheme == CFG_VALUE_TCMS_LABEL_SCHEME_NONE:
-                return localized_label(L_TYPE_LABEL_SCHEME_NONE)
-            elif _scheme == CFG_VALUE_TCMS_LABEL_SCHEME_BUILD:
-                return localized_label(L_TYPE_LABEL_SCHEME_BUILD)
-        return localized_label(L_TYPE_LABEL_SCHEME_VERSION)
-
     def download_patterns_match(self, file_name):
         """
         :param str file_name: the pure file name
@@ -735,8 +722,6 @@ META_KEY_VALUE_TYPE = 'value-type'
 META_TYPE_BOOLEAN = 'b'
 META_TYPE_ENUM = 'e'
 META_TYPE_INT = 'i'
-META_TYPE_LABEL_SCHEME = f'e:{CFG_VALUE_TCMS_LABEL_SCHEME_NONE},{CFG_VALUE_TCMS_LABEL_SCHEME_VERSION},'\
-                         f'{CFG_VALUE_TCMS_LABEL_SCHEME_BUILD}'
 META_TYPE_LIST = 'l'
 META_TYPE_LIST_OF_INT = 'l:i'
 META_TYPE_LIST_OF_STR = 'l:s'
@@ -908,13 +893,6 @@ _META_TCMS = {META_KEY_ALLOWED_IN_MASTER: True,
               META_KEY_UNQUOTED_STR_VALUES: False,
               META_KEY_VALUE_TYPE: None,
               META_KEY_ATTRS: [
-                  {META_KEY_ATTR_DEFAULT_VALUE: '',
-                   META_KEY_ATTR_NAME: CFG_PAR_TCMS_LABEL_SCHEME[len(CFG_GROUP_TCMS)+1:],
-                   META_KEY_ATTR_QUALIFIED_NAME: CFG_PAR_TCMS_LABEL_SCHEME,
-                   META_KEY_ATTR_TOML_TYPE: str,
-                   META_KEY_ATTR_TYPE: META_TYPE_LABEL_SCHEME,
-                   META_KEY_COMMENT: L_CFG_PAR_TCMS_LABEL_SCHEME,
-                   META_KEY_OPT: True},
                   {META_KEY_ATTR_DEFAULT_VALUE: {},
                    META_KEY_ATTR_NAME: CFG_PAR_TCMS_EXECUTION_STATES[len(CFG_GROUP_TCMS)+1:],
                    META_KEY_ATTR_QUALIFIED_NAME: CFG_PAR_TCMS_EXECUTION_STATES,

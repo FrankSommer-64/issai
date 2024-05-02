@@ -207,7 +207,6 @@ CFG_PAR_RUNNER_PYTHON_VENV_PATH = 'runner.python-venv-path'
 CFG_PAR_RUNNER_TEST_DRIVER_EXE = 'runner.test-driver-executable'
 CFG_PAR_RUNNER_WORKING_PATH = 'runner.working-path'
 CFG_PAR_TCMS_EXECUTION_STATES = 'tcms.execution-states'
-CFG_PAR_TCMS_LABEL_SCHEME = 'tcms.label-scheme'
 CFG_PAR_TCMS_RESULT_ATTACHMENTS = 'tcms.result-attachments'
 CFG_PAR_TCMS_SPEC_ATTACHMENTS = 'tcms.spec-attachments'
 CFG_PAR_TCMS_XML_RPC_PASSWORD = 'tcms.password'
@@ -216,9 +215,6 @@ CFG_PAR_TCMS_XML_RPC_USE_KERBEROS = 'tcms.use_kerberos'
 CFG_PAR_TCMS_XML_RPC_USERNAME = 'tcms.username'
 CFG_PAR_TESTING_ROOT_PATH = 'testing-root-path'
 CFG_VAR_CONFIG_ROOT = 'config-root'
-CFG_VALUE_TCMS_LABEL_SCHEME_BUILD = 'build'
-CFG_VALUE_TCMS_LABEL_SCHEME_NONE = 'none'
-CFG_VALUE_TCMS_LABEL_SCHEME_VERSION = 'version'
 
 # entity type IDs
 ENTITY_TYPE_PRODUCT = 0

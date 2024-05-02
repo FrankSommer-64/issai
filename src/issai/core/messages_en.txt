@@ -1,4 +1,5 @@
 # general
+e-attachment-missing Error: Attachment file {0} does not exist.
 e-background-task-aborted Background task aborted.
 e-background-task-failed Background task failed. {0}.
 e-container-not-runnable File {0} must contain a test plan or test case.
@@ -8,10 +9,19 @@ e-internal-error Internal Error: {0}
 e-invalid-action Cannot process action {0}.
 e-invalid-entity-type Cannot process entity type {0}.
 e-load-container-failed Could not load entity file {0}. {1}
+e-read-attachment-failed Error: Could not read attachment {0}: {1}.
 e-read-file-failed Could not read file {0}. {1}.
+e-unknown-entity-attr Internal error: entity '{0}' has no attribute '{1}'.
+e-unknown-entity-part Internal error: entity '{0}' does not contain a part with type '{1}' and ID {2}.
 e-write-file-failed Could not write file {0}. {1}.
+i-download-attachment Downloading attachment file '{0}'.
+i-download-attachments Downloading attachments for '{0}'.
+i-upload-attachment Uploading attachment file {0} for test plan '{1}' and test case '{2}'.
+i-dry-run-download-attachment Will download attachment file '{0}'.
+i-dry-run-download-attachments Will download attachment files for '{0}'.
+i-dry-run-upload-attachment Will upload attachment file {0} for test plan '{1}' and test case '{2}'.
 
-# config
+# configuration messages
 e-cfg-custom-config-root-not-found Custom Issai configuration directory {0} referenced by environment variable {1} does not exist.
 e-cfg-custom-mod-invalid Could not load custom module {0} due to Python error {1}.
 e-cfg-custom-mod-not-defined Custom module for test execution is not defined.
@@ -42,6 +52,30 @@ w-cfg-grp-ignored-in-master Group '{0}' ignored in master configuration file {1}
 w-cfg-par-ignored Unsupported parameter '{0}' ignored in configuration file {1}.
 w-cfg-par-reserved Reserved parameter '{0}' ignored in configuration file {1}.
 
+# configuration parameter comments
+l-cfg-par-product-name Product name, case-sensitive
+l-cfg-par-product-repository-path Root path of repository containing all product files
+l-cfg-par-product-source-path Root path for product source code, defaults to subdirectory 'src' under repository-path
+l-cfg-par-product-test-path Root path for product test code, defaults to subdirectory 'tests' under repository-path
+l-cfg-par-product-test-data-path Root path for product test data, defaults to subdirectory 'tests/testdata' under repository-path
+l-cfg-par-runner-case-assistant Script or python function to call before and after execution of every test case
+l-cfg-par-runner-custom-module-path Python module with custom functions for test execution
+l-cfg-par-runner-custom-script-path Directory containing custom scripts for test execution
+l-cfg-par-runner-entity-assistant Script or python function to call before and after execution of entire test
+l-cfg-par-runner-output-log File name to use for captured console output
+l-cfg-par-runner-plan-assistant Script or python function to call before and after execution of every test plan
+l-cfg-par-runner-python-venv-path Directory containing Python virtual environment to use for tests
+l-cfg-par-runner-test-driver-exe Name of executable to run the product
+l-cfg-par-runner-working-path Working path for intermediate files of test execution
+l-cfg-par-tcms-execution-states Mapping of standard test execution statuses to customized names
+l-cfg-par-tcms-result-attachments Regular expression patterns for attachment files to be uploaded after test execution
+l-cfg-par-tcms-spec-attachments Regular expression patterns for attachment files to be downloaded prior to test execution
+l-cfg-par-tcms-xml-rpc-password The password for the TCMS username to use for connections to TCMS.
+l-cfg-par-tcms-xml-rpc-url The TCMS server URL, must be terminated by slash.
+l-cfg-par-tcms-xml-rpc-username The TCMS username to use for connections to TCMS.
+l-cfg-par-tcms-xml-rpc-use-kerberos Indicates whether to use Kerberos instead password authentication for connections to TCMS.
+l-cfg-par-testing-root-path Root path for intermediate files of all test activities on local machine
+
 # export
 i-exp-fetch-case Fetching TestCase '{0}' from TCMS.
 i-exp-fetch-cases Fetching test cases from TCMS.
@@ -55,45 +89,59 @@ i-exp-fetch-product Fetching product data from TCMS.
 i-exp-write-output-file Writing output file '{0}'
 
 # import
-e-imp-attr-type-invalid Detected invalid type for attribute(s): '{0}'.
-e-imp-attr-value-invalid Detected invalid value for attribute(s): '{0}'.
+e-imp-attr-ambiguous Attribute(s) '{0}' must not occur multiple times.
 e-imp-attr-mismatch Attribute values for '{0}' and '{1}' don't match.
 e-imp-attr-missing Detected missing mandatory attribute(s): '{0}'.
-e-imp-attr-ambiguous Attribute(s) '{0}' must not occur multiple times.
-w-imp-attr-not-supported Detected unsupported attribute(s): '{0}'.
+e-imp-attr-type-invalid Detected invalid type for attribute(s): '{0}'.
+e-imp-attr-value-invalid Detected invalid value for attribute(s): '{0}'.
 e-imp-case-result-failed Import result for TestCase '{0}' failed: {1}
-e-imp-plan-result-failed Import result for TestPlan '{0}' failed: {1}
 e-imp-md-no-match Cannot create non-existing {0} object '{1}' in TCMS, auto create option not set.
 e-imp-object-must-exist {0} '{1}' must exist in TCMS, it cannot be created programmatically.
+e-imp-owning-object-mismatch Owning {0} '{1}' of {2} #{3} has different name '{4}' in TCMS.
+e-imp-plan-result-failed Import result for TestPlan '{0}' failed: {1}
 e-imp-tcms-object-missing {0} '{1}' doesn't exist in TCMS, import not possible.
 e-imp-user-no-match Cannot replace non-existing user '{0}' with current user '{1}', no corresponding option set.
 e-imp-user-not-found Cannot replace non-existing user '{0}' with current user '{1}', no corresponding option set.
-e-imp-owning-object-mismatch Owning {0} '{1}' of {2} #{3} has different name '{4}' in TCMS.
+e-dry-run-imp-md-no-match Error: Cannot create non-existing {0} '{1}' in TCMS, auto create option not set.
+e-dry-run-imp-object-must-exist {0} '{1}' must exist in TCMS, it cannot be created programmatically.
+e-dry-run-imp-tcms-object-missing Error: {0} with name '{1}' doesn't exist in TCMS, will not use ID {2}.
+e-dry-run-imp-user-no-match Error: Cannot replace non-existing user '{0}' with current user '{1}', no corresponding option set.
 i-imp-execution-created Created TestExecution for TestCase '{0}' and TestRun ID {1}.
 i-imp-execution-skipped TestExecution '{0}' not imported, using existing TestExecution ID {2} of TestRun ID {1}.
 i-imp-execution-updated TestExecution {0} for TestCase '{1}' updated with values {2}.
 i-imp-md-exact-match {0} '{1}' exists with same ID {2} in TCMS.
-i-imp-run-created Created TestRun for TestPlan '{0}' and Build ID {1}.
-i-imp-run-updated TestRun {0} for TestPlan '{1}' updated with values {2}.
+i-imp-md-ref-changed Using different ID {0} for {1} '{2}' instead of ID {3}.
 i-imp-object-created Created {0} with name '{1}'.
 i-imp-object-skipped {0} '{1}' not imported, using existing object with ID {2}.
+i-imp-run-created Created TestRun for TestPlan '{0}' and Build ID {1}.
 i-imp-run-skipped TestRun '{0}' not imported, using existing TestRun ID {2} for build ID {1}.
+i-imp-run-updated TestRun {0} for TestPlan '{1}' updated with values {2}.
 i-imp-user-exact-match User '{0}' exists with same ID {1} in TCMS.
 i-imp-user-repl-current Using current user '{0}' for username '{1}'.
-i-imp-md-ref-changed Using different ID {0} for {1} '{2}' instead of ID {3}.
+i-dry-run-imp-execution-created Will create TestExecution for TestCase '{0}' and TestRun ID {1}.
+i-dry-run-imp-execution-skipped Will not import TestExecution for TestCase '{0}' and TestRun ID {1}, using existing TestExecution with ID {2}.
 i-dry-run-imp-execution-updated Will update TestExecution #{0} for TestCase '{1}' with values {2}.
+i-dry-run-imp-md-exact-match {0} '{1}' exists with same ID {2} in TCMS.
+i-dry-run-imp-md-ref-changed Will use different ID {0} for {1} '{2}' instead of ID {3}.
+i-dry-run-imp-object-created Will create {0} with name '{1}'.
+i-dry-run-imp-object-skipped Will not import {0} '{1}', using existing object with ID {2}.
+i-dry-run-imp-run-created Will create TestRun for TestPlan '{0}' and Build ID {1}.
+i-dry-run-imp-run-skipped Will not import TestRun for TestPlan '{0}' and Build ID {1}, using existing TestRun with ID {2}.
 i-dry-run-imp-run-updated Will update TestRun #{0} for TestPlan '{1}' with values {2}.
+i-dry-run-imp-user-exact-match User '{0}' exists with same ID {1} in TCMS.
+i-dry-run-imp-user-repl-current Will use current user '{0}' for username '{1}'.
+w-imp-attr-not-supported Detected unsupported attribute(s): '{0}'.
 
 # runner
 e-run-assistant-failed Assistant '{0}' for action {1} failed: {2}.
 e-run-case-failed Execution of test case '{0}' failed.
-e-run-invalid-env-property-value Invalid value for environment property '{0}'.
+e-run-case-script-missing No script defined for test case '{0}'.
 e-run-plan-failed Execution of test plan '{0}' failed.
-e-run-source-path-missing Path for source files is not defined, configuration parameter '{0}' is missing.
 e-run-source-path-invalid Path for source files '{0}' does not exist.
-e-run-working-path-missing Working path is not defined, configuration parameter '{0}' is missing.
+e-run-source-path-missing Path for source files is not defined, configuration parameter '{0}' is missing.
 e-run-working-path-invalid Working path '{0}' does not exist.
-e-run-cannot-create-test-run Cannot create test run for plan '{0}'. Local configuration doesn't allow TCMS write access.
+e-run-working-path-missing Working path is not defined, configuration parameter '{0}' is missing.
+e-dry-run-run-assistant-failed Assistant '{0}' for action {1} will fail: {2}.
 i-run-assistant-succeeded Assistant '{0}' for action {1} executed.
 i-run-case-not-automated Test case not automated.
 i-run-creating-execution Creating test execution for plan '{0}', case '{1}' and build '{2}'.
@@ -104,13 +152,37 @@ i-run-entity-skipped {0} '{1}' skipped: {2}
 i-run-matrix-result Matrix code '{0}': {1}.
 i-run-plan-not-active Test plan not active.
 i-run-plan-succeeded Test plan '{0}' successfully executed.
-i-run-plan-tag-mismatch Test plan tagged with '{0}', but local platform is '{1}'.
 i-run-running-case Executing test case '{0}'.
 i-run-running-env Running test for environment properties {0}.
 i-run-running-plan Executing test plan '{0}'.
 i-run-running-script Executing '{0}' with arguments '{1}'.
+i-dry-run-run-assistant-succeeded Will execute assistant '{0}' for action {1}.
+i-dry-run-run-creating-execution Will create test execution for plan '{0}', test case '{1}' and build '{2}'.
+i-dry-run-run-creating-run Will create test run for plan '{0}' and build '{1}'.
+i-dry-run-run-entity-skipped Will skip {0} '{1}': {2}
+i-dry-run-run-running-case Will execute test case '{0}'.
+i-dry-run-run-running-env Will run for environment properties {0}.
+i-dry-run-run-running-plan Will execute test plan '{0}'.
+i-dry-run-run-running-script Will execute '{0}' with arguments '{1}'.
 
-# entities
+# TCMS interface
+e-tcms-ambiguous-result Found more than one result for {0} with name '{1}'.
+e-tcms-attachments-not-supported Attachments for {0} entities are not supported.
+e-tcms-check-master-data-status-failed Error during TCMS master data status check. {0}
+e-tcms-check-object-status-failed Could not determine TCMS object status of {0} '{1}'. {2}
+e-tcms-create-object-failed Could not create {0} in TCMS. {1}.
+e-tcms-error Error during communication with TCMS. {0}
+e-tcms-find-object-failed Could not read {0} from TCMS. {1}
+e-tcms-init-failed Error: Could not initialize XML-RPC connection to TCMS: {0}.
+e-tcms-invalid-class-id Invalid TCMS class ID {0}.
+e-tcms-no-products No TCMS products available.
+e-tcms-plan-unknown Error: Test plan '{0}' doesn't exist in TCMS.
+e-tcms-subordinate-object-not-found {0} #{1} for {2} '{3}' not found in TCMS.
+e-tcms-test-case-unknown Error: Test case with summary {0} not found in TCMS.
+e-tcms-update-object-failed Could not update {0} #{1} in TCMS. {2}
+e-tcms-upload-attachment-failed Could not upload attachment file '{0}' for {1} #{2}. {3}
+
+# TOML entities
 e-toml-attribute-missing Attribute '{0}' is missing.
 e-toml-attribute-wrong-type Attribute '{0}' must have type {1}.
 e-toml-entity-attr-immutable Attribute '{0}' for entity type {1} is not writable.
@@ -122,7 +194,53 @@ e-toml-master-data-attr-invalid-type Attribute {0} in master data type {1} has i
 e-toml-master-data-type-invalid Invalid master data type {0}.
 e-toml-master-data-type-not-array Master data type {0} is not an array.
 
-# GUI
+# GUI messages
+e-gui-import-case-failed Import Test case '{0}' failed.
+e-gui-import-plan-failed Import Test plan '{0}' failed.
+e-gui-import-plan-result-failed Import Test plan result for run ID {0} failed.
+e-gui-import-product-failed Import Product {0} failed.
+e-gui-lru-case-no-longer-exists Test case {0} doesn't exist anymore in TCMS.
+e-gui-lru-plan-no-longer-exists Test plan {0} doesn't exist anymore in TCMS.
+e-gui-neither-product-nor-version-selected Neither product nor version selected.
+e-gui-no-entity-selected No entity selected.
+e-gui-no-product-selected No product selected.
+e-gui-no-version-selected No product version selected.
+e-gui-output-path-invalid Invalid output path {0}.
+e-gui-write-config-data-failed Could not write configuration data to file {0}. {1}.
+i-gui-about-detail-text Version {0}\nQt version {1}
+i-gui-about-info-text Copyright (c) 2024 Frank Sommer
+i-gui-about-text Issai - Framework to run automated tests managed in Kiwi Test case management system
+i-gui-attribute-exists Attribute {0} already defined.
+i-gui-clear-export-attachments Directory for attachment files {0} must be deleted. Please confirm to proceed.
+i-gui-clear-export-file Output file {0} must be deleted. Please confirm to proceed.
+i-gui-clear-export-output Output file {0} and directory for attachment files {0} must be deleted. Please confirm to proceed.
+i-gui-config-problem Problems in Issai configuration detected:
+i-gui-config-warning Warnings in Issai configuration detected:
+i-gui-create-config-root OK to create Issai configuration directory, Cancel to terminate application.
+i-gui-create-first-product Do you want to create an initial product configuration ?
+i-gui-export-case-successful Test case {0} successfully exported.
+i-gui-export-plan-successful Test plan {0} successfully exported.
+i-gui-export-product-successful Product {0} successfully exported.
+i-gui-import-case-successful Test case '{0}' successfully imported.
+i-gui-import-plan-successful Test plan '{0}' successfully imported.
+i-gui-import-plan-result-successful Test plan result for run ID {0} successfully imported.
+i-gui-import-product-successful Product {0} successfully imported.
+i-gui-invalid-attribute-name Attribute name {0} does not match pattern {1}.
+i-gui-no-attribute-name No attribute name specified.
+i-gui-no-build-selected No build selected.
+i-gui-no-lru-entities No recently used test entities available.
+i-gui-no-version-selected No version selected.
+i-gui-progress-container-status Matching import data against TCMS.
+i-gui-progress-task-finished Task finished at {0}
+i-gui-progress-task-failed Task failed
+i-gui-progress-task-running Background task running...
+i-gui-progress-task-started Task started at {0}
+i-gui-progress-upload-file Uploaded attachment file {0} for {1} ID {2}
+w-gui-read-config-data-failed Could not read configuration data from file {0}. {1}.
+w-gui-write-config-loses-comments Writing configuration will lose comments currently present in file. Proceed ?
+w-gui-write-gui-configuration-failed Could not write GUI configuration to file {0}. {1}.
+
+# GUI general labels
 l-action Action
 l-add Add
 l-attribute Attribute
@@ -135,7 +253,6 @@ l-dry-run Dry run
 l-entity Entity
 l-export-entity Export {0}
 l-file File
-l-id ID
 l-import Import
 l-import-user-behaviour Apply current user
 l-import-user-use-always for all user references
@@ -165,13 +282,14 @@ l-select Select
 l-select-group Select group
 l-select-path Select path
 l-store-result Store result in TCMS
-l-summary Summary
 l-test-case Test Case
 l-test-case-result Test case result
 l-test-plan Test Plan
 l-test-plan-result Test plan result
 l-type Type
 l-value Value
+
+# GUI widget labels
 l-build-combo Build
 l-env-combo Environment
 l-product-combo Product
@@ -217,35 +335,8 @@ l-menubar-item-export &Export
 l-menubar-item-file &File
 l-menubar-item-help &Help
 l-menubar-item-run &Run
-l-type-label-scheme-build Build
-l-type-label-scheme-none None
-l-type-label-scheme-version Version
 
-# Configuration parameter comments
-l-cfg-par-product-name Product name, case-sensitive
-l-cfg-par-product-repository-path Root path of repository containing all product files
-l-cfg-par-product-source-path Root path for product source code, defaults to subdirectory 'src' under repository-path
-l-cfg-par-product-test-path Root path for product test code, defaults to subdirectory 'tests' under repository-path
-l-cfg-par-product-test-data-path Root path for product test data, defaults to subdirectory 'tests/testdata' under repository-path
-l-cfg-par-runner-case-assistant Script or python function to call before and after execution of every test case
-l-cfg-par-runner-custom-module-path Python module with custom functions for test execution
-l-cfg-par-runner-custom-script-path Directory containing custom scripts for test execution
-l-cfg-par-runner-entity-assistant Script or python function to call before and after execution of entire test
-l-cfg-par-runner-output-log File name to use for captured console output
-l-cfg-par-runner-plan-assistant Script or python function to call before and after execution of every test plan
-l-cfg-par-runner-python-venv-path Directory containing Python virtual environment to use for tests
-l-cfg-par-runner-test-driver-exe Name of executable to run the product
-l-cfg-par-runner-working-path Working path for intermediate files of test execution
-l-cfg-par-tcms-label-scheme Labeling scheme for test runs and executions: 'none', 'version' or 'build'
-l-cfg-par-tcms-execution-states Mapping of standard test execution statuses to customized names
-l-cfg-par-tcms-result-attachments Regular expression patterns for attachment files to be uploaded after test execution
-l-cfg-par-tcms-spec-attachments Regular expression patterns for attachment files to be downloaded prior to test execution
-l-cfg-par-tcms-xml-rpc-password The password for the TCMS username to use for connections to TCMS.
-l-cfg-par-tcms-xml-rpc-url The TCMS server URL, must be terminated by slash.
-l-cfg-par-tcms-xml-rpc-username The TCMS username to use for connections to TCMS.
-l-cfg-par-tcms-xml-rpc-use-kerberos Indicates whether to use Kerberos instead password authentication for connections to TCMS.
-l-cfg-par-testing-root-path Root path for intermediate files of all test activities on local machine
-
+# GUI tool tips
 t-opt-auto-create-master-data Check to create missing master data in TCMS automatically
 t-opt-dry-run Check to simulate import only
 t-opt-exp-attachments Check to export any attachment files
@@ -261,101 +352,7 @@ t-search-case Enter a number to search a test case by its TCMS ID, otherwise it 
 t-search-plan Enter a number to search a test plan by its TCMS ID, otherwise it is searched by name
 t-show-recent Click to select from most recently used entities
 
-e-gui-write-config-data-failed Could not write configuration data to file {0}. {1}.
-e-gui-no-id-specified No ID entered.
-e-gui-id-not-numeric The entered ID '{0}' is not numeric.
-e-gui-neither-product-nor-version-selected Neither product nor version selected.
-e-gui-no-entity-selected No entity selected.
-e-gui-no-product-selected No product selected.
-e-gui-no-version-selected No product version selected.
-e-gui-output-path-invalid Invalid output path {0}.
-e-gui-import-case-failed Import Test case '{0}' failed.
-e-gui-import-plan-failed Import Test plan '{0}' failed.
-e-gui-import-plan-result-failed Import Test plan result for run ID {0} failed.
-e-gui-import-product-failed Import Product {0} failed.
-i-gui-about-detail-text Version {0}\nQt version {1}
-i-gui-about-info-text Copyright (c) 2024 Frank Sommer
-i-gui-about-text Issai - Framework to run automated tests managed in Kiwi Test case management system
-i-gui-attribute-exists Attribute {0} already defined.
-i-gui-config-problem Problems in Issai configuration detected:
-i-gui-config-warning Warnings in Issai configuration detected:
-i-gui-create-config-root OK to create Issai configuration directory, Cancel to terminate application.
-i-gui-create-first-product Do you want to create an initial product configuration ?
-i-gui-export-case-successful Test case {0} successfully exported.
-i-gui-export-plan-successful Test plan {0} successfully exported.
-i-gui-export-product-successful Product {0} successfully exported.
-i-gui-invalid-attribute-name Attribute name {0} does not match pattern {1}.
-e-gui-lru-case-no-longer-exists Test case {0} doesn't exist anymore in TCMS.
-e-gui-lru-plan-no-longer-exists Test plan {0} doesn't exist anymore in TCMS.
-i-gui-no-attribute-name No attribute name specified.
-i-gui-no-build-selected No build selected.
-i-gui-no-lru-entities No recently used test entities available.
-i-gui-no-version-selected No version selected.
-i-gui-progress-container-status Matching import data against TCMS.
-i-gui-import-case-successful Test case '{0}' successfully imported.
-i-gui-import-plan-successful Test plan '{0}' successfully imported.
-i-gui-import-plan-result-successful Test plan result for run ID {0} successfully imported.
-i-gui-import-product-successful Product {0} successfully imported.
-i-gui-progress-task-finished Task finished at {0}
-i-gui-progress-task-failed Task failed
-i-gui-progress-task-running Background task running...
-i-gui-progress-task-started Task started at {0}
-i-gui-progress-upload-file Uploaded attachment file {0} for {1} ID {2}
-w-gui-read-config-data-failed Could not read configuration data from file {0}. {1}.
-w-gui-write-config-loses-comments Writing configuration will lose comments currently present in file. Proceed ?
-w-gui-write-gui-configuration-failed Could not write GUI configuration to file {0}. {1}.
-
-e-run-case-script-missing No script defined for test case '{0}'.
-i-download-attachment Downloading attachment file '{0}'.
-i-download-attachments Downloading attachments for '{0}'.
-i-upload-attachment Uploading attachment file {0} for test plan '{1}' and test case '{2}'.
-
-# dry run
-e-dry-run-run-assistant-failed Assistant '{0}' for action {1} will fail: {2}.
-i-dry-run-download-attachment Will download attachment file '{0}'.
-i-dry-run-download-attachments Will download attachment files for '{0}'.
-i-dry-run-upload-attachment Will upload attachment file {0} for test plan '{1}' and test case '{2}'.
-i-dry-run-imp-md-exact-match {0} '{1}' exists with same ID {2} in TCMS.
-i-dry-run-imp-md-ref-changed Will use different ID {0} for {1} '{2}' instead of ID {3}.
-i-dry-run-imp-execution-created Will create TestExecution for TestCase '{0}' and TestRun ID {1}.
-i-dry-run-imp-execution-skipped Will not import TestExecution for TestCase '{0}' and TestRun ID {1}, using existing TestExecution with ID {2}.
-i-dry-run-imp-object-created Will create {0} with name '{1}'.
-i-dry-run-imp-object-skipped Will not import {0} '{1}', using existing object with ID {2}.
-i-dry-run-imp-run-created Will create TestRun for TestPlan '{0}' and Build ID {1}.
-i-dry-run-imp-run-skipped Will not import TestRun for TestPlan '{0}' and Build ID {1}, using existing TestRun with ID {2}.
-i-dry-run-imp-user-exact-match User '{0}' exists with same ID {1} in TCMS.
-i-dry-run-imp-user-repl-current Will use current user '{0}' for username '{1}'.
-i-dry-run-run-assistant-succeeded Will execute assistant '{0}' for action {1}.
-i-dry-run-run-creating-execution Will create test execution for plan '{0}', test case '{1}' and build '{2}'.
-i-dry-run-run-creating-run Will create test run for plan '{0}' and build '{1}'.
-i-dry-run-run-entity-skipped Will skip {0} '{1}': {2}
-i-dry-run-run-running-case Will execute test case '{0}'.
-i-dry-run-run-running-env Will run for environment properties {0}.
-i-dry-run-run-running-plan Will execute test plan '{0}'.
-i-dry-run-run-running-script Will execute '{0}' with arguments '{1}'.
-
-e-attachment-missing Error: Attachment file {0} does not exist.
-e-dry-run-imp-md-no-match Error: Cannot create non-existing {0} '{1}' in TCMS, auto create option not set.
-e-dry-run-imp-object-must-exist {0} '{1}' must exist in TCMS, it cannot be created programmatically.
-e-dry-run-imp-user-no-match Error: Cannot replace non-existing user '{0}' with current user '{1}', no corresponding option set.
-e-dry-run-imp-tcms-object-missing Error: {0} with name '{1}' doesn't exist in TCMS, will not use ID {2}.
-
-# TCMS related
-e-tcms-ambiguous-result Found more than one result for {0} with name '{1}'.
-e-tcms-check-master-data-status-failed Error during TCMS master data status check. {0}
-e-tcms-check-object-status-failed Could not determine TCMS object status of {0} '{1}'. {2}
-e-tcms-create-object-failed Could not create {0} in TCMS. {1}.
-e-tcms-error Error during communication with TCMS. {0}
-e-tcms-find-object-failed Could not read {0} from TCMS. {1}
-e-tcms-invalid-class-id Invalid TCMS class ID {0}.
-e-tcms-no-products No TCMS products available.
-e-tcms-subordinate-object-not-found {0} #{1} for {2} '{3}' not found in TCMS.
-e-tcms-update-object-failed Could not update {0} #{1} in TCMS. {2}
-e-tcms-upload-attachment-failed Could not upload attachment file '{0}' for {1} #{2}. {3}
-
-e-int-unknown-entity-attr Entity '{0}' has no attribute '{1}'.
-e-int-unknown-entity-part Entity '{0}' does not contain a part with type '{1}' and ID {2}.
-
+# CLI texts
 i-cli-issai-version Issai version {0}
 l-cli-arg-build-help the product build name
 l-cli-arg-create-master-data-help create master data objects, if they don't exist
@@ -379,6 +376,7 @@ l-cli-export-description Issai command line interface to export products, test p
 l-cli-import-description Issai command line interface to import products, test plans, test cases or results
 l-cli-run-description Issai command line interface to run test plans
 
+# CLI messages
 e-cli-ambiguous-build-in-file File {0} contains more than one build for version '{1}'. Argument --build must be specified.
 e-cli-build-required More than one build exist for product '{0}', version '{1}'. Argument --build must be specified.
 e-cli-case-id-required More than one test case with summary '{0}' exists in product '{1}'. Argument --case-id must be used.
@@ -397,28 +395,3 @@ e-cli-tcms-object-not-found {0} '{1}' not found in TCMS.
 e-cli-tcms-object-id-not-found {0} with ID {1} not found in TCMS.
 e-cli-version-plan-not-found Test plan '{0}' not found for product '{1}' and version '{2}'.
 e-cli-version-required More than one version exist for product '{0}'. Argument --version must be specified.
-
-# OLD
-e-read-attachment-failed Error: Could not read attachment {0}: {1}.
-e-tcms-plan-unknown Error: Test plan '{0}' doesn't exist in TCMS.
-e-tcms-init-failed Error: Could not initialize XML-RPC connection to TCMS: {0}.
-e-tcms-test-case-unknown Error: Test case with summary {0} not found in TCMS.
-e-tcms-attachments-not-supported Attachments for {0} entities are not supported.
-
-
-i-clear-export-attachments Directory for attachment files {0} must be deleted. Please confirm to proceed.
-i-clear-export-file Output file {0} must be deleted. Please confirm to proceed.
-i-clear-export-output Output file {0} and directory for attachment files {0} must be deleted. Please confirm to proceed.
-                Options:\n   \
-                   -p product-name\n   \
-                   -v product-version\n   \
-                   -b product-build\n   \
-                   --dry-run print actions to console only\n   \
-                   --pure-run do not update TCMS\n \
-                Actions:\n   \
-                   run-test-plan - execute test plan\n   \
-                   run-test-run - execute test run\n   \
-                   export-test-plan - export test plan from TCMS\n   \
-                   export-test-run - export test run from TCMS
-
-

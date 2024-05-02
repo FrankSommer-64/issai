@@ -784,11 +784,11 @@ class TcmsActionPane(QGroupBox):
         _confirmation_msg = None
         if _output_file_exists:
             if _clear_attachments_required:
-                _confirmation_msg = localized_message(I_CLEAR_EXPORT_OUTPUT, _output_file_path, _attachments_path)
+                _confirmation_msg = localized_message(I_GUI_CLEAR_EXPORT_OUTPUT, _output_file_path, _attachments_path)
             else:
-                _confirmation_msg = localized_message(I_CLEAR_EXPORT_FILE, _output_file_path)
+                _confirmation_msg = localized_message(I_GUI_CLEAR_EXPORT_FILE, _output_file_path)
         elif _clear_attachments_required:
-            _confirmation_msg = localized_message(I_CLEAR_EXPORT_ATTACHMENTS, _attachments_path)
+            _confirmation_msg = localized_message(I_GUI_CLEAR_EXPORT_ATTACHMENTS, _attachments_path)
         if _confirmation_msg is not None:
             _rc = QMessageBox.question(self, localized_label(L_MBOX_TITLE_OUTPUT_EXISTS), _confirmation_msg,
                                        QMessageBox.StandardButton.Ok, QMessageBox.StandardButton.Cancel)

@@ -168,12 +168,12 @@ class Entity(dict):
         """
         _attr = self.get(attr_name)
         if _attr is None:
-            raise IssaiException(E_INT_UNKNOWN_ENTITY_ATTR, self.entity_name(), attr_name)
+            raise IssaiException(E_UNKNOWN_ENTITY_ATTR, self.entity_name(), attr_name)
         if attr_id < 0:
             attr_id = self.entity_id()
         _part_data = _attr.get(attr_id)
         if _part_data is None:
-            raise IssaiException(E_INT_UNKNOWN_ENTITY_PART, self.entity_name(), attr_name, attr_id)
+            raise IssaiException(E_UNKNOWN_ENTITY_PART, self.entity_name(), attr_name, attr_id)
         return _part_data
 
     def object_count(self):
@@ -1041,7 +1041,7 @@ class TestPlanEntity(SpecificationEntity):
         _run_id = _plan_data.get(ATTR_RUN)
         _run_data = self.get_part(ATTR_TEST_RUNS, _run_id)
         if _run_data is None:
-            raise IssaiException(E_INT_UNKNOWN_ENTITY_PART, self.entity_name(), ATTR_TEST_RUNS, _run_id)
+            raise IssaiException(E_UNKNOWN_ENTITY_PART, self.entity_name(), ATTR_TEST_RUNS, _run_id)
         return _run_data
 
 
