@@ -71,12 +71,10 @@ class GuiSettings(dict):
 
     def entity_used(self, entity_type, entity_id, entity_name):
         """
-        Returns recently used test entities for specified type, the latest ones first.
-
         :param int entity_type: the entity type (test case or test plan)
         :param int entity_id: the TCMS entity ID
         :param str entity_name: the TCMS entity name
-        :returns: recently used entities
+        :returns: recently used test entities for specified type, the latest ones first
         :rtype: list
         """
         _entity_info = '%s %s' % (str(entity_id), entity_name.strip())
@@ -95,6 +93,21 @@ class GuiSettings(dict):
         _lru_list.insert(0, _entity_info)
         if len(_lru_list) > self.max_lru_size():
             del _lru_list[-1]
+
+    def entity_not_found(self, entity_type, entity_info):
+        """
+        Removes an entity from LRU list.
+        :param int entity_type: the entity type (test case or test plan)
+        :param str entity_info: the entity info string, TCMS entity ID - entity name
+        """
+        _key = _KEY_LRU_CASES if entity_type == ENTITY_TYPE_CASE else _KEY_LRU_PLANS
+        _lru_list = self.get(_key)
+        if _lru_list is None:
+            return
+        for _i, _v in enumerate(_lru_list):
+            if _v == entity_info:
+                del _lru_list[_i]
+                return
 
     def latest_input_dir(self):
         """

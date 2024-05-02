@@ -392,13 +392,22 @@ def create_tcms_object(class_id, container_object):
         elif class_id == TCMS_CLASS_ID_TEST_EXECUTION:
             _run_id = _attributes[ATTR_RUN]
             _case_id = _attributes[ATTR_CASE]
-            _tcms_execution = _cxn.TestRun.add_case(_run_id, _case_id)[0]
-            _object = _cxn.TestExecution.update(_tcms_execution[ATTR_ID], _attributes)
+            _object = _cxn.TestRun.add_case(_run_id, _case_id)[0]
             _execution_id = _object[ATTR_ID]
-            for _comment in container_object[ATTR_COMMENTS]:
-                _cxn.TestExecution.add_comment(_case_id, _comment)
-            for _link in container_object[ATTR_LINKS]:
-                _cxn.TestExecution.add_link(_case_id, _link)
+            del _attributes[ATTR_RUN]
+            del _attributes[ATTR_CASE]
+            _comments = container_object.get(ATTR_COMMENTS)
+            if _comments is not None:
+                for _comment in _comments:
+                    _cxn.TestExecution.add_comment(_execution_id, _comment)
+                del _attributes[ATTR_COMMENTS]
+            _links = container_object.get(ATTR_LINKS)
+            if _links is not None:
+                for _link in _links:
+                    _cxn.TestExecution.add_link(_execution_id, _link)
+                del _attributes[ATTR_LINKS]
+            if len(_attributes) > 0:
+                _object = _cxn.TestExecution.update(_execution_id, _attributes)
         elif class_id == TCMS_CLASS_ID_TEST_EXECUTION_STATUS:
             _object = _cxn.TestExecutionStatus.create(_attributes)
         elif class_id == TCMS_CLASS_ID_TEST_PLAN:

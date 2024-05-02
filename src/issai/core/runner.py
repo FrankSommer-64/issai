@@ -41,15 +41,14 @@ import shutil
 import threading
 
 from issai.core import *
-from issai.core.attachments import (download_attachments, list_attachment_files, list_case_result_files,
-                                    upload_attachment_file)
+from issai.core.attachments import download_attachments, list_case_result_files, upload_attachment_file
 from issai.core.builtin_runners import builtin_runner
 from issai.core.config import LocalConfig
 from issai.core.entities import CaseResult, PlanResult, TestPlanEntity, PlanResultEntity
 from issai.core.issai_exception import *
 from issai.core.messages import *
 from issai.core.task import TaskResult
-from issai.core.tcms import (create_run_from_plan, find_tcms_objects,
+from issai.core.tcms import (create_run_from_plan, create_tcms_object, find_tcms_objects,
                              read_test_entity_with_id, read_product_for_test_entity, read_tcms_cases,
                              read_tcms_executions, read_tcms_plan,
                              read_tcms_run_tree, TcmsInterface, update_execution, update_run)
@@ -227,8 +226,7 @@ def run_tcms_plan(plan, options, local_config, task_monitor):
         # run test plan
         _plan_result = _run_ancestor_plan(_plan_entity, options, local_config, _env_vars, task_monitor)
         # store test result
-        store_plan_results(_plan_result, _plan_entity, local_config, _working_path, task_monitor,
-                           options.get(OPTION_STORE_RESULT))
+        store_plan_results(_plan_result, _plan_entity, options, local_config, _working_path, task_monitor)
         return execution_task_result(plan[ATTR_NAME], _plan_result)
     except BaseException as _e:
         return TaskResult(TASK_FAILED, str(_e))
@@ -261,8 +259,7 @@ def run_offline_plan(plan_entity, options, local_config, attachment_path, task_m
         # run test plan
         _plan_result = _run_ancestor_plan(plan_entity, options, local_config, _env_vars, task_monitor)
         # store test result
-        store_plan_results(_plan_result, plan_entity, local_config, _working_path, task_monitor,
-                           options.get(OPTION_STORE_RESULT))
+        store_plan_results(_plan_result, plan_entity, options, local_config, _working_path, task_monitor)
         return execution_task_result(plan_entity.entity_name(), _plan_result)
     except BaseException as _e:
         return TaskResult(TASK_FAILED, str(_e))
@@ -351,7 +348,7 @@ def _run_plan(plan_entity, plan_id, executable_table, local_config, env_vars, ta
         # add issai relevant plan properties to runtime environment
         _essential_props = _essential_properties_for(local_config, ENTITY_TYPE_PLAN)
         _plan_env = env_vars.copy()
-        for _prop_k, _prop_v in plan_entity.get_plan_properties(plan_id, _essential_props).items():
+        for _prop_k, _prop_v in plan_entity.get_plan_properties(_plan, _essential_props).items():
             _plan_env[_prop_k] = str(_prop_v)
         # run initialization for plan
         _run_assistant(CFG_PAR_RUNNER_PLAN_ASSISTANT, ASSISTANT_ACTION_INIT, _plan_name,
@@ -477,30 +474,13 @@ def plan_entity_from_tcms(plan, options, task_monitor):
     _plan_entity.add_master_data(ATTR_EXECUTION_STATUSES, _execution_statuses)
     _full_plan = read_tcms_plan(plan, options.get(OPTION_PLAN_TREE), False)
     _plan_entity.add_tcms_plans(_full_plan)
-    _runs = read_tcms_run_tree(_full_plan, _build)
-    _created_runs = []
-    for _plan_member in _full_plan:
-        _member_id = _plan_member[ATTR_ID]
-        _run_exists = False
-        for _run in _runs:
-            if _run[ATTR_PLAN] == _member_id:
-                _run_exists = True
-                break
-        if _run_exists:
-            continue
-        if not options.get(OPTION_STORE_RESULT):
-            raise IssaiException(E_RUN_CANNOT_CREATE_TEST_RUN, _plan_member[ATTR_NAME])
-        _run = create_run_from_plan(_plan_member, _build)
-        _created_runs.append(_run)
-    _runs.extend(_created_runs)
-    _plan_entity.add_tcms_runs(_runs)
+    _plan_entity.add_tcms_runs(read_tcms_run_tree(_full_plan, _build))
     task_monitor.log(I_EXP_FETCH_PLAN_CASES, _plan_name)
     _plan_cases = read_tcms_cases(False, _full_plan, True, False)
     _plan_entity.add_tcms_cases(_plan_cases)
     _plan_entity.add_tcms_executions(read_tcms_executions([_build], False, _plan_cases), True)
     _env = options.get(OPTION_ENVIRONMENT)
     if _env is not None:
-        # _env[ATTR_PROPERTIES] = read_environment_properties(_env)
         _plan_entity.add_environments([_env])
     return _plan_entity
 
@@ -552,18 +532,29 @@ def clear_result_path(local_config):
     os.makedirs(_result_path, exist_ok=True)
 
 
-def store_plan_results_to_tcms(plan_result, plan_entity, local_config, working_path):
+def store_plan_results_to_tcms(plan_result, plan_entity, options, local_config, working_path, task_monitor):
     """
     Stores plan result in TCMS and eventually uploads output files from test execution.
     :param PlanResult plan_result: the test plan result
     :param TestPlanEntity plan_entity: the test plan entity
+    :param dict options: the run options
     :param LocalConfig local_config: the local issai product configuration
     :param str working_path: the runner root path for output files
+    :param TaskMonitor task_monitor: the progress handler
     """
-    _att_patterns = local_config.get_list_value(CFG_PAR_TCMS_RESULT_ATTACHMENTS)
+    _version = options.get(ATTR_VERSION)
+    _build = options.get(ATTR_BUILD)
+    _build_id = _build[ATTR_ID]
     _plan_results = plan_result.plan_results()
     for _pr in _plan_results:
-        _run_id = _pr.get_attr_value(ATTR_RUN)
+        _plan_id = _pr.get_attr_value(ATTR_PLAN)
+        _plan = plan_entity.object(TCMS_CLASS_ID_TEST_PLAN, _plan_id)
+        _run = find_tcms_objects(TCMS_CLASS_ID_TEST_RUN, {ATTR_PLAN: _plan_id, ATTR_BUILD: _build_id})
+        if len(_run) == 0:
+            task_monitor.log(I_RUN_CREATING_RUN, _plan[ATTR_NAME], _build[ATTR_NAME])
+            _run_id = -1 if task_monitor.is_dry_run() else create_run_from_plan(_plan, _build)[ATTR_ID]
+        else:
+            _run_id = _run[0][ATTR_ID]
         _vals = {ATTR_START_DATE: _pr.get_attr_value(ATTR_START_DATE),
                  ATTR_STOP_DATE: _pr.get_attr_value(ATTR_STOP_DATE)}
         _notes = _pr.get_attr_value(ATTR_NOTES)
@@ -572,18 +563,33 @@ def store_plan_results_to_tcms(plan_result, plan_entity, local_config, working_p
             _vals[ATTR_NOTES] = _notes
         if len(_summary) > 0:
             _vals[ATTR_SUMMARY] = _summary
-        update_run(_run_id, _vals)
+        if not task_monitor.is_dry_run():
+            update_run(_run_id, _vals)
         for _cr in _pr.get_attr_value(ATTR_CASE_RESULTS):
+            _case_id = _cr[ATTR_CASE]
             _custom_status_name = local_config.custom_execution_status(_cr.get_attr_value(ATTR_STATUS))
             _status_id = plan_entity.execution_status_id_of(_custom_status_name)
-            _exec_id = _cr.get_attr_value(ATTR_EXECUTION)
+            _execution = find_tcms_objects(TCMS_CLASS_ID_TEST_EXECUTION, {ATTR_CASE: _case_id, ATTR_BUILD: _build_id})
+            if len(_execution) == 0:
+                task_monitor.log(I_RUN_CREATING_EXECUTION, _plan[ATTR_NAME], _cr[ATTR_CASE_NAME], _build[ATTR_NAME])
+                _execution_attrs = {ATTR_RUN: _run_id, ATTR_CASE: _case_id}
+                if not task_monitor.is_dry_run():
+                    _execution = create_tcms_object(TCMS_CLASS_ID_TEST_EXECUTION, _execution_attrs)
+                    _execution_id = _execution[ATTR_ID]
+                else:
+                    _execution_id = -1
+            else:
+                _execution_id = _execution[0][ATTR_ID]
+            if task_monitor.is_dry_run():
+                continue
             _vals = {ATTR_START_DATE: _cr.get_attr_value(ATTR_START_DATE),
                      ATTR_STOP_DATE: _cr.get_attr_value(ATTR_STOP_DATE), ATTR_STATUS: _status_id}
-            update_execution(_exec_id, _vals, _cr.get_attr_value(ATTR_COMMENT))
-            if _att_patterns is not None and len(_att_patterns) > 0:
-                for _file_path in list_attachment_files(working_path, TCMS_CLASS_ID_TEST_EXECUTION, _exec_id):
+            update_execution(_execution_id, _vals, _cr.get_attr_value(ATTR_COMMENT))
+            if local_config.has_upload_patterns():
+                for _file_path in list_case_result_files(working_path, _plan_id, _case_id, local_config):
                     _file_name = os.path.basename(_file_path)
-                    _tcms_file_name = f'testexecution_{_exec_id}_{_file_name}'
+                    task_monitor.log(I_UPLOAD_ATTACHMENT, _file_name, _plan[ATTR_NAME], _cr[ATTR_CASE_NAME])
+                    _tcms_file_name = f'testexecution_{_execution_id}_{_file_name}'
                     upload_attachment_file(_file_path, _tcms_file_name, TCMS_CLASS_ID_TEST_RUN, _run_id)
 
 
@@ -595,36 +601,32 @@ def store_plan_results_to_file(plan_result, plan_entity, local_config, working_p
     :param LocalConfig local_config: the local issai product configuration
     :param str working_path: the runner root path for output files
     """
-    _att_patterns = local_config.get_list_value(CFG_PAR_TCMS_RESULT_ATTACHMENTS)
-    if _att_patterns is not None and len(_att_patterns) > 0:
+    if local_config.has_upload_patterns():
         for _cr in plan_result.case_results():
             _plan_id = _cr.get_attr_value(ATTR_PLAN)
             _case_id = _cr.get_attr_value(ATTR_CASE)
-            for _file_path in list_case_result_files(working_path, _plan_id, _case_id):
-                _file_name = os.path.basename(_file_path)
-                if local_config.upload_patterns_match(_file_name):
-                    _cr[ATTR_OUTPUT_FILES].append(_file_name)
+            for _file_path in list_case_result_files(working_path, _plan_id, _case_id, local_config):
+                _cr[ATTR_OUTPUT_FILES].append(os.path.basename(_file_path))
     _pr = PlanResultEntity.from_result(plan_result, plan_entity)
     _plan_id = _pr.entity_id()
     _output_file_path = os.path.join(working_path, RESULTS_ROOT_DIR, f'testplan_{_plan_id}.toml')
     _pr.to_file(_output_file_path)
 
 
-def store_plan_results(plan_result, plan_entity, local_config, working_path, task_monitor, store_in_tcms):
+def store_plan_results(plan_result, plan_entity, options, local_config, working_path, task_monitor):
     """
     Stores plan result in a file.
     :param PlanResult plan_result: the test plan result
     :param TestPlanEntity plan_entity: the test plan entity
+    :param dict options: the run options
     :param LocalConfig local_config: the local issai product configuration
     :param str working_path: the runner root path for output files
     :param TaskMonitor task_monitor: the progress handler
-    :param bool store_in_tcms: indicates whether to store result and attachments in TCMS
     """
-    if task_monitor.is_dry_run():
+    if options.get(OPTION_STORE_RESULT):
+        store_plan_results_to_tcms(plan_result, plan_entity, options, local_config, working_path, task_monitor)
         return
-    if store_in_tcms:
-        store_plan_results_to_tcms(plan_result, plan_entity, local_config, working_path)
-    else:
+    if not task_monitor.is_dry_run():
         store_plan_results_to_file(plan_result, plan_entity, local_config, working_path)
 
 

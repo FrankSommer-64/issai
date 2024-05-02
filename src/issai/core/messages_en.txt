@@ -96,6 +96,8 @@ e-run-working-path-invalid Working path '{0}' does not exist.
 e-run-cannot-create-test-run Cannot create test run for plan '{0}'. Local configuration doesn't allow TCMS write access.
 i-run-assistant-succeeded Assistant '{0}' for action {1} executed.
 i-run-case-not-automated Test case not automated.
+i-run-creating-execution Creating test execution for plan '{0}', case '{1}' and build '{2}'.
+i-run-creating-run Creating test run for plan '{0}' and build '{1}'.
 i-run-entity-not-for-local-arch Entity not suitable for local CPU architecture '{0}'.
 i-run-entity-not-for-local-os Entity not suitable for local operating system '{0}.
 i-run-entity-skipped {0} '{1}' skipped: {2}
@@ -283,6 +285,8 @@ i-gui-export-case-successful Test case {0} successfully exported.
 i-gui-export-plan-successful Test plan {0} successfully exported.
 i-gui-export-product-successful Product {0} successfully exported.
 i-gui-invalid-attribute-name Attribute name {0} does not match pattern {1}.
+e-gui-lru-case-no-longer-exists Test case {0} doesn't exist anymore in TCMS.
+e-gui-lru-plan-no-longer-exists Test plan {0} doesn't exist anymore in TCMS.
 i-gui-no-attribute-name No attribute name specified.
 i-gui-no-build-selected No build selected.
 i-gui-no-lru-entities No recently used test entities available.
@@ -304,13 +308,13 @@ w-gui-write-gui-configuration-failed Could not write GUI configuration to file {
 e-run-case-script-missing No script defined for test case '{0}'.
 i-download-attachment Downloading attachment file '{0}'.
 i-download-attachments Downloading attachments for '{0}'.
-i-upload-attachment Uploading {0} attachment file {1}.
+i-upload-attachment Uploading attachment file {0} for test plan '{1}' and test case '{2}'.
 
 # dry run
 e-dry-run-run-assistant-failed Assistant '{0}' for action {1} will fail: {2}.
 i-dry-run-download-attachment Will download attachment file '{0}'.
 i-dry-run-download-attachments Will download attachment files for '{0}'.
-i-dry-run-upload-attachment Will upload {0} attachment file {1}.
+i-dry-run-upload-attachment Will upload attachment file {0} for test plan '{1}' and test case '{2}'.
 i-dry-run-imp-md-exact-match {0} '{1}' exists with same ID {2} in TCMS.
 i-dry-run-imp-md-ref-changed Will use different ID {0} for {1} '{2}' instead of ID {3}.
 i-dry-run-imp-execution-created Will create TestExecution for TestCase '{0}' and TestRun ID {1}.
@@ -322,6 +326,8 @@ i-dry-run-imp-run-skipped Will not import TestRun for TestPlan '{0}' and Build I
 i-dry-run-imp-user-exact-match User '{0}' exists with same ID {1} in TCMS.
 i-dry-run-imp-user-repl-current Will use current user '{0}' for username '{1}'.
 i-dry-run-run-assistant-succeeded Will execute assistant '{0}' for action {1}.
+i-dry-run-run-creating-execution Will create test execution for plan '{0}', test case '{1}' and build '{2}'.
+i-dry-run-run-creating-run Will create test run for plan '{0}' and build '{1}'.
 i-dry-run-run-entity-skipped Will skip {0} '{1}': {2}
 i-dry-run-run-running-case Will execute test case '{0}'.
 i-dry-run-run-running-env Will run for environment properties {0}.

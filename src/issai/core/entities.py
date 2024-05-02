@@ -922,13 +922,13 @@ class TestPlanEntity(SpecificationEntity):
         :rtype: int
         """
         _case_count = 0
-        for _case in self[ATTR_TEST_CASES].values():
-            if not _case[ATTR_IS_AUTOMATED]:
+        for _plan in self[ATTR_TEST_PLANS].values():
+            if not _plan[ATTR_IS_ACTIVE]:
                 continue
-            _plan_id = self[ATTR_TEST_RUNS][_case[ATTR_RUN]][ATTR_PLAN]
-            if not self[ATTR_TEST_PLANS][_plan_id][ATTR_IS_ACTIVE]:
-                continue
-            _case_count += 1
+            for _case_id in _plan[ATTR_CASES]:
+                if not self[ATTR_TEST_CASES][_case_id][ATTR_IS_AUTOMATED]:
+                    continue
+                _case_count += 1
         return _case_count
 
     def runnable_executions_count(self):
@@ -985,16 +985,19 @@ class TestPlanEntity(SpecificationEntity):
             return False
         return tag_name in _tags
 
-    def get_plan_properties(self, plan_id, property_patterns):
+    def get_plan_properties(self, plan, property_patterns):
         """
         Returns properties of test plan with given ID that match one of the patterns specified
-        :param int plan_id: the test plan ID; -1 for entity ID
+        :param dict plan: the test plan data
         :param set property_patterns: the regular expression patterns
         :returns: properties of test plan matching one of specified patterns
         :rtype: dict
         :raises IssaiException: if there is no test plan with specified ID
         """
-        _run_data = self._run_for_plan_id(plan_id)
+        _run_id = plan.get(ATTR_RUN)
+        if _run_id is None:
+            return {}
+        _run_data = self._run_for_plan_id(plan[ATTR_ID])
         _properties = _run_data.get(ATTR_PROPERTIES)
         if _properties is None:
             return {}

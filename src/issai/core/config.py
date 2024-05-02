@@ -148,6 +148,14 @@ class LocalConfig(dict):
         """
         return self.attachment_patterns_match(CFG_PAR_TCMS_RESULT_ATTACHMENTS, file_name)
 
+    def has_upload_patterns(self):
+        """
+        :returns: True, if patterns for upload of attachment files are defined in the configuration
+        :rtype: bool
+        """
+        _patterns = self.get_list_value(CFG_PAR_TCMS_RESULT_ATTACHMENTS)
+        return _patterns is not None and len(_patterns) > 0
+
     def attachment_patterns_match(self, cfg_par, file_name):
         """
         Indicates whether patterns defined for TCMS attachments match given pure file name.

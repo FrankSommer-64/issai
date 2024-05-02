@@ -110,7 +110,7 @@ def import_file(entity, options, local_config, file_path, task_monitor):
                     _file_path = attachment_file_path(_input_path, _file_name, _class_id, _url_id)
                     if _dry_run:
                         if os.path.isfile(_file_path):
-                            task_monitor.log(I_UPLOAD_ATTACHMENT, _class_name, _file_path)
+                            task_monitor.log(I_UPLOAD_ATTACHMENT, _file_path, '-', '-')
                         else:
                             task_monitor.log(E_ATTACHMENT_MISSING, _file_path)
                         continue

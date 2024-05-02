@@ -669,14 +669,20 @@ class TcmsActionPane(QGroupBox):
                 try:
                     _id = int(_lru_entity.split(' ')[0])
                     if self.__entity_type == ENTITY_TYPE_PLAN:
-                        self.__selected_entity = find_tcms_object(TCMS_CLASS_ID_TEST_PLAN, {ATTR_ID: _id})
-                        _entity_info = '%d - %s' % (self.__selected_entity[ATTR_ID], self.__selected_entity[ATTR_NAME])
+                        _selected_entity = find_tcms_object(TCMS_CLASS_ID_TEST_PLAN, {ATTR_ID: _id})
+                        if _selected_entity is None:
+                            self.__preferences.entity_not_found(TCMS_CLASS_ID_TEST_PLAN, _lru_entity)
+                            raise IssaiException(E_GUI_LRU_PLAN_NO_LONGER_EXISTS, _lru_entity)
+                        _entity_info = '%d - %s' % (_selected_entity[ATTR_ID], _selected_entity[ATTR_NAME])
+                        _class_id = TCMS_CLASS_ID_TEST_PLAN
                     else:
-                        self.__selected_entity = find_tcms_object(TCMS_CLASS_ID_TEST_CASE, {ATTR_ID: _id})
-                        _entity_info = '%d - %s' % (self.__selected_entity[ATTR_ID],
-                                                    self.__selected_entity[ATTR_SUMMARY])
-                    _class_id = TCMS_CLASS_ID_TEST_CASE if self.__entity_type == ENTITY_TYPE_CASE\
-                        else TCMS_CLASS_ID_TEST_PLAN
+                        _selected_entity = find_tcms_object(TCMS_CLASS_ID_TEST_CASE, {ATTR_ID: _id})
+                        if _selected_entity is None:
+                            self.__preferences.entity_not_found(TCMS_CLASS_ID_TEST_CASE, _lru_entity)
+                            raise IssaiException(E_GUI_LRU_CASE_NO_LONGER_EXISTS, _lru_entity)
+                        _entity_info = '%d - %s' % (_selected_entity[ATTR_ID], _selected_entity[ATTR_SUMMARY])
+                        _class_id = TCMS_CLASS_ID_TEST_CASE
+                    self.__selected_entity = _selected_entity
                     _entity_product = find_product_for_tcms_object(_class_id, self.__selected_entity)
                     self.__product_combo.setCurrentText(_entity_product[ATTR_NAME])
                     self._fill_version_combo(self.__product_combo.currentData())

@@ -169,20 +169,25 @@ def list_attachment_files(root_path, tcms_class_id, tcms_entity_id):
             if os.path.isfile(os.path.join(_entity_subdir, _f))]
 
 
-def list_case_result_files(root_path, plan_id, case_id):
+def list_case_result_files(root_path, plan_id, case_id, local_config):
     """
     Lists all output files from execution of a test case.
     :param str root_path: the root path
     :param int plan_id: the TCMS plan ID
     :param int case_id: the TCMS case ID
+    :param LocalConfig local_config: the local issai product configuration
     :returns: names of all files found including path
     :rtype: list
     """
     _result_path = os.path.join(root_path, RESULTS_ROOT_DIR, ATTACHMENTS_CASE_DIR, f'{plan_id}_{case_id}')
     if not os.path.isdir(_result_path):
         return []
-    return [os.path.join(_result_path, _f) for _f in os.listdir(_result_path)
-            if os.path.isfile(os.path.join(_result_path, _f))]
+    _result_files = []
+    for _f in os.listdir(_result_path):
+        _file_path = os.path.join(_result_path, _f)
+        if os.path.isfile(_file_path) and local_config.upload_patterns_match(_f):
+            _result_files.append(_file_path)
+    return _result_files
 
 
 def url_file_name(url):
