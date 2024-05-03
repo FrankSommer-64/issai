@@ -549,12 +549,8 @@ def store_plan_results_to_tcms(plan_result, plan_entity, options, local_config, 
     for _pr in _plan_results:
         _plan_id = _pr.get_attr_value(ATTR_PLAN)
         _plan = plan_entity.object(TCMS_CLASS_ID_TEST_PLAN, _plan_id)
-        _run = find_tcms_objects(TCMS_CLASS_ID_TEST_RUN, {ATTR_PLAN: _plan_id, ATTR_BUILD: _build_id})
-        if len(_run) == 0:
-            task_monitor.log(I_RUN_CREATING_RUN, _plan[ATTR_NAME], _build[ATTR_NAME])
-            _run_id = -1 if task_monitor.is_dry_run() else create_run_from_plan(_plan, _build)[ATTR_ID]
-        else:
-            _run_id = _run[0][ATTR_ID]
+        _run = _run_for_plan(_plan, _build, plan_entity, task_monitor)
+        _run_id = _run[ATTR_ID]
         _vals = {ATTR_START_DATE: _pr.get_attr_value(ATTR_START_DATE),
                  ATTR_STOP_DATE: _pr.get_attr_value(ATTR_STOP_DATE)}
         _notes = _pr.get_attr_value(ATTR_NOTES)
@@ -569,19 +565,10 @@ def store_plan_results_to_tcms(plan_result, plan_entity, options, local_config, 
             _case_id = _cr[ATTR_CASE]
             _custom_status_name = local_config.custom_execution_status(_cr.get_attr_value(ATTR_STATUS))
             _status_id = plan_entity.execution_status_id_of(_custom_status_name)
-            _execution = find_tcms_objects(TCMS_CLASS_ID_TEST_EXECUTION, {ATTR_CASE: _case_id, ATTR_BUILD: _build_id})
-            if len(_execution) == 0:
-                task_monitor.log(I_RUN_CREATING_EXECUTION, _plan[ATTR_NAME], _cr[ATTR_CASE_NAME], _build[ATTR_NAME])
-                _execution_attrs = {ATTR_RUN: _run_id, ATTR_CASE: _case_id}
-                if not task_monitor.is_dry_run():
-                    _execution = create_tcms_object(TCMS_CLASS_ID_TEST_EXECUTION, _execution_attrs)
-                    _execution_id = _execution[ATTR_ID]
-                else:
-                    _execution_id = -1
-            else:
-                _execution_id = _execution[0][ATTR_ID]
+            _execution = _execution_for_case(_cr, _plan, _run_id, _build, plan_entity, task_monitor)
             if task_monitor.is_dry_run():
                 continue
+            _execution_id = _execution[ATTR_ID]
             _vals = {ATTR_START_DATE: _cr.get_attr_value(ATTR_START_DATE),
                      ATTR_STOP_DATE: _cr.get_attr_value(ATTR_STOP_DATE), ATTR_STATUS: _status_id}
             update_execution(_execution_id, _vals, _cr.get_attr_value(ATTR_COMMENT))
@@ -740,6 +727,62 @@ def _run_assistant(assistant_name, action, entity_name, executable_table, local_
         if _dry_run:
             return
         raise
+
+
+def _run_for_plan(plan, build, plan_entity, task_monitor):
+    """
+    Returns test run for specified plan and build.
+    Test run is searched first in plan entity, then in TCMS. If it doesn't exist it is created in TCMS except when in
+    dry run mode.
+    :param dict plan: the test plan data
+    :param dict build: the build data
+    :param Entity plan_entity: the test plan entity
+    :param TaskMonitor task_monitor: the progress handler
+    :returns: test run for specified plan and build
+    :rtype: dict
+    """
+    _run_id = plan.get(ATTR_RUN)
+    if _run_id is not None and _run_id > 0:
+        return plan_entity.get_part(ATTR_TEST_RUNS, _run_id)
+    _run = find_tcms_objects(TCMS_CLASS_ID_TEST_RUN, {ATTR_PLAN: plan[ATTR_ID], ATTR_BUILD: build[ATTR_ID]})
+    if len(_run) == 0:
+        task_monitor.log(I_RUN_CREATING_RUN, plan[ATTR_NAME], build[ATTR_NAME])
+        return {ATTR_ID: -1} if task_monitor.is_dry_run() else create_run_from_plan(plan, build)
+    return _run[0]
+
+
+def _execution_for_case(case_result, plan, run_id, build, plan_entity, task_monitor):
+    """
+    Returns test execution for specified plan, case and build.
+    Test execution is searched first in plan entity, then in TCMS. If it doesn't exist it is created in TCMS
+    except when in dry run mode.
+    :param dict case_result: the test case result data
+    :param dict plan: the test plan data
+    :param dict run_id: the test run data
+    :param dict build: the build data
+    :param Entity plan_entity: the test plan entity
+    :param TaskMonitor task_monitor: the progress handler
+    :returns: test execution for specified plan, case and build
+    :rtype: dict
+    """
+    _build_id = build[ATTR_ID]
+    _case_id = case_result[ATTR_CASE]
+    _case = plan_entity.get_part(ATTR_TEST_CASES, _case_id)
+    # look for test execution in plan entity first
+    _executions = _case.get(ATTR_EXECUTIONS)
+    if _executions is not None:
+        for _execution_id in _executions:
+            _execution = plan_entity.get_part(ATTR_TEST_EXECUTIONS, _execution_id)
+            if _execution[ATTR_BUILD] == _build_id:
+                return _execution
+    # try to find execution in TCMS
+    _execution = find_tcms_objects(TCMS_CLASS_ID_TEST_EXECUTION, {ATTR_CASE: _case_id, ATTR_BUILD: _build_id})
+    if len(_execution) == 0:
+        task_monitor.log(I_RUN_CREATING_EXECUTION, plan[ATTR_NAME], case_result[ATTR_CASE_NAME], build[ATTR_NAME])
+        _execution_attrs = {ATTR_RUN: run_id, ATTR_CASE: _case_id}
+        return {ATTR_ID: -1} if task_monitor.is_dry_run() else create_tcms_object(TCMS_CLASS_ID_TEST_EXECUTION,
+                                                                                  _execution_attrs)
+    return _execution[0]
 
 
 def _essential_properties_for(local_config, entity_type):

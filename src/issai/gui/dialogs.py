@@ -42,7 +42,8 @@ from pathlib import Path
 import time
 
 from PySide6.QtWidgets import (QWidget, QLabel, QComboBox, QProgressBar, QListWidget, QDialog, QFileDialog, QPushButton,
-                               QMessageBox, QGridLayout, QVBoxLayout, QGroupBox, QListWidgetItem, QLineEdit)
+                               QMessageBox, QGridLayout, QVBoxLayout, QGroupBox, QListWidgetItem, QLineEdit,
+                               QDialogButtonBox, QSizePolicy)
 from PySide6.QtCore import qVersion, QDir, QThreadPool, Qt, QPoint
 from PySide6.QtGui import QPainter, QBrush, QColor, QPen, QRadialGradient, QPixmap
 
@@ -64,7 +65,7 @@ class AboutDialog(QDialog):
         _parent_rect = parent.contentsRect()
         self.setGeometry(_parent_rect.x() + _ABOUT_DIALOG_OFFSET, _parent_rect.y() + _ISSAI_IMAGE_SIZE,
                          _ABOUT_DIALOG_WIDTH, _ABOUT_DIALOG_HEIGHT)
-        self.setStyleSheet(_STYLE_ABOUT_DIALOG)
+        self.setStyleSheet(_STYLE_WHITE_BG)
         _dlg_layout = QGridLayout()
         _dlg_layout.setSpacing(10)
         self.__issai_image = QLabel()
@@ -393,6 +394,52 @@ class ProgressDialog(QDialog):
         self.__infos.scrollToBottom()
 
 
+class NameInputDialog(QDialog):
+    """
+    Dialog window to enter a name for a new software version or build.
+    Currently existing names are displayed in a table.
+    """
+
+    def __init__(self, parent, title_id, list_id, existing_names):
+        """
+        Constructor.
+        :param QWidget parent: the parent widget
+        :param str title_id: label ID of window title
+        :param str list_id: label ID of list caption for currently existing versions or builds
+        :param list existing_names: names of all currently existing versions or builds
+        """
+        super().__init__(parent)
+        self.setWindowTitle(localized_label(title_id))
+        _dlg_layout = QVBoxLayout()
+        _name_list_caption = QLabel(localized_label(list_id))
+        _name_list_caption.setStyleSheet(_STYLE_BOLD_TEXT)
+        _dlg_layout.addWidget(_name_list_caption)
+        _name_list = QListWidget()
+        _name_list.setStyleSheet(_STYLE_WHITE_BG)
+        [_name_list.addItem(_e) for _e in existing_names]
+        _dlg_layout.addWidget(_name_list)
+        _name_field_caption = QLabel(localized_label(L_NEW_NAME))
+        _name_field_caption.setStyleSheet(_STYLE_BOLD_TEXT)
+        _dlg_layout.addWidget(_name_field_caption)
+        self.__name_field = QLineEdit()
+        self.__name_field.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.__name_field.setStyleSheet(_STYLE_INPUT_FIELD)
+        _dlg_layout.addWidget(self.__name_field)
+        _button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        _button_box.setCenterButtons(True)
+        _button_box.accepted.connect(self.accept)
+        _button_box.rejected.connect(self.reject)
+        _dlg_layout.addWidget(_button_box)
+        self.setLayout(_dlg_layout)
+
+    def name(self):
+        """
+        :returns: new name
+        :rtype: str
+        """
+        return self.__name_field.text()
+
+
 def select_output_dir(parent, preferred_dir):
     """
     Dialog window to select an output directory.
@@ -467,7 +514,8 @@ _ABOUT_DIALOG_WIDTH = 560
 _ISSAI_IMAGE_SIZE = 256
 _ISSAI_IMAGE_SPACING = 16
 
-_STYLE_ABOUT_DIALOG = 'background-color: white'
+_STYLE_INPUT_FIELD = 'background-color: #ffffcc'
+_STYLE_WHITE_BG = 'background-color: white'
 _STYLE_BOLD_TEXT = 'font-weight: bold'
 _STYLE_EXCEPTION_BOX_INFO = 'QLabel#qt_msgbox_informativelabel {font-weight: bold}'
 _STYLE_RUN_BUTTON = 'background-color: green; color: white; font-weight: bold'

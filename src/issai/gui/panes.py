@@ -47,7 +47,7 @@ from PySide6.QtWidgets import (QFileDialog, QFrame, QGroupBox, QWidget, QLabel, 
 
 from issai.core.config import config_root_path, master_config, product_config
 from issai.core.tcms import *
-from issai.gui.dialogs import ProgressDialog
+from issai.gui.dialogs import NameInputDialog, ProgressDialog
 from issai.gui.settings import GuiSettings
 
 
@@ -426,20 +426,30 @@ class TcmsActionPane(QGroupBox):
         _layout = QVBoxLayout()
 
         # upper part with product and optional version selection combos
-        _upper_layout = QFormLayout()
-        _upper_layout.setSpacing(20)
-        _upper_layout.setContentsMargins(10, 24, 24, 10)
+        _upper_layout = QGridLayout()
+        _upper_layout.setColumnStretch(3, 1)
+        # _upper_layout.setSpacing(20)
+        # _upper_layout.setContentsMargins(10, 24, 24, 10)
 
         _product_combo_caption, self.__product_combo = _create_combo(self, self._product_selected, L_PRODUCT_COMBO)
-        _upper_layout.addRow(_product_combo_caption, self.__product_combo)
-        _upper_layout.setAlignment(self.__product_combo, Qt.AlignmentFlag.AlignLeft)
+        self.__product_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        _upper_layout.addWidget(_product_combo_caption, 0, 0)
+        _upper_layout.addWidget(self.__product_combo, 0, 1)
         _version_combo_caption, self.__version_combo = _create_combo(self, self._version_selected, L_VERSION_COMBO)
-        _upper_layout.addRow(_version_combo_caption, self.__version_combo)
-        _upper_layout.setAlignment(self.__version_combo, Qt.AlignmentFlag.AlignLeft)
+        _new_version_button = QPushButton(localized_label(L_NEW))
+        _new_version_button.clicked.connect(self._new_version_button_clicked)
+        self.__version_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        _upper_layout.addWidget(_version_combo_caption, 1, 0)
+        _upper_layout.addWidget(self.__version_combo, 1, 1)
+        _upper_layout.addWidget(_new_version_button, 1, 2)
         if self.__action == ACTION_RUN_TCMS_PLAN:
             _build_combo_caption, self.__build_combo = _create_combo(self, None, L_BUILD_COMBO)
-            _upper_layout.addRow(_build_combo_caption, self.__build_combo)
-            _upper_layout.setAlignment(self.__build_combo, Qt.AlignmentFlag.AlignLeft)
+            _new_build_button = QPushButton(localized_label(L_NEW))
+            _new_build_button.clicked.connect(self._new_build_button_clicked)
+            self.__build_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+            _upper_layout.addWidget(_build_combo_caption, 2, 0)
+            _upper_layout.addWidget(self.__build_combo, 2, 1)
+            _upper_layout.addWidget(_new_build_button, 2, 2)
         _layout.addLayout(_upper_layout)
 
         # lower part with test entity selection and result list
@@ -609,6 +619,54 @@ class TcmsActionPane(QGroupBox):
         except Exception as _e:
             QMessageBox.critical(self, localized_label(L_MBOX_TITLE_ERROR), str(_e), QMessageBox.StandardButton.Ok)
             return False
+
+    def _new_version_button_clicked(self):
+        """
+        Called when the user clicks the button to create a new software version.
+        """
+        _product = self.__product_combo.currentData()
+        if _product is None:
+            QMessageBox.critical(self, localized_label(L_MBOX_TITLE_ERROR),
+                                 localized_message(E_GUI_NO_PRODUCT_SELECTED),
+                                 QMessageBox.StandardButton.Ok)
+            return
+        _all_versions = [self.__version_combo.itemText(i) for i in range(self.__version_combo.count())]
+        _new_version_dlg = NameInputDialog(self, L_DLG_TITLE_NEW_VERSION, L_EXISTING_VERSIONS, _all_versions)
+        if _new_version_dlg.exec():
+            _version_name = _new_version_dlg.name()
+            try:
+                _attributes = {ATTR_VALUE: _version_name, ATTR_PRODUCT: _product[ATTR_ID]}
+                _new_version = create_tcms_object(TCMS_CLASS_ID_VERSION, _attributes)
+                self.__version_combo.addItem(_version_name, _new_version)
+                self.__version_combo.setCurrentText(_version_name)
+            except BaseException as _e:
+                QMessageBox.critical(self, localized_label(L_MBOX_TITLE_ERROR), str(_e), QMessageBox.StandardButton.Ok)
+
+    def _new_build_button_clicked(self):
+        """
+        Called when the user clicks the button to create a new software version.
+        """
+        _product = self.__product_combo.currentData()
+        _version = self.__version_combo.currentData()
+        if _product is None:
+            QMessageBox.critical(self, localized_label(L_MBOX_TITLE_ERROR),
+                                 localized_message(E_GUI_NO_PRODUCT_SELECTED), QMessageBox.StandardButton.Ok)
+            return
+        if _version is None:
+            QMessageBox.critical(self, localized_label(L_MBOX_TITLE_ERROR),
+                                 localized_message(E_GUI_NO_VERSION_SELECTED), QMessageBox.StandardButton.Ok)
+            return
+        _all_builds = [self.__build_combo.itemText(i) for i in range(self.__build_combo.count())]
+        _new_build_dlg = NameInputDialog(self, L_DLG_TITLE_NEW_BUILD, L_EXISTING_BUILDS, _all_builds)
+        if _new_build_dlg.exec():
+            _build_name = _new_build_dlg.name()
+            try:
+                _attributes = {ATTR_NAME: _build_name, ATTR_VERSION: _version[ATTR_ID], ATTR_IS_ACTIVE: True}
+                _new_build = create_tcms_object(TCMS_CLASS_ID_BUILD, _attributes)
+                self.__build_combo.addItem(_build_name, _new_build)
+                self.__build_combo.setCurrentText(_build_name)
+            except BaseException as _e:
+                QMessageBox.critical(self, localized_label(L_MBOX_TITLE_ERROR), str(_e), QMessageBox.StandardButton.Ok)
 
     def _search_button_clicked(self):
         """
@@ -833,7 +891,7 @@ def _create_combo(parent, activated_handler, caption_id):
     :param QWidget parent: the widget that will own the created combo box
     :param func activated_handler: the method to be called when the combo box is activated
     :returns: caption and combo box widgets
-    :rtype: (str, QComboBox)
+    :rtype: (QLabel, QComboBox)
     """
     _combo_caption = QLabel(localized_label(caption_id))
     _combo_caption.setStyleSheet(_CAPTION_STYLE)

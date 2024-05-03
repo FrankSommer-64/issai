@@ -251,6 +251,8 @@ l-close Close
 l-create Create
 l-dry-run Dry run
 l-entity Entity
+l-existing-builds Existing builds
+l-existing-versions Existing versions
 l-export-entity Export {0}
 l-file File
 l-import Import
@@ -266,6 +268,8 @@ l-include-plan-tree Include child plans
 l-include-runs Include runs and executions
 l-init initialization
 l-name Name
+l-new New...
+l-new-name Enter new name:
 l-no-environment -none-
 l-ok OK
 l-options Options
@@ -302,6 +306,8 @@ l-dlg-title-import-file Import {0}
 l-dlg-title-lru-entities Recently used test entities
 l-dlg-title-master-config-editor Issai master configuration
 l-dlg-title-first-product No products configured
+l-dlg-title-new-build New build name
+l-dlg-title-new-version New version value
 l-dlg-title-product-config-editor Product configuration [{0}]
 l-dlg-title-product-selection Select product
 l-dlg-title-run-plan Run test plan

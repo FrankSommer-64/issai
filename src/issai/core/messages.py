@@ -42,11 +42,6 @@ from issai.core import (ASSISTANT_ACTION_INIT, ENTITY_TYPE_CASE, ENTITY_TYPE_CAS
                         ENTITY_TYPE_PLAN, ENTITY_TYPE_PLAN_RESULT)
 from issai.core.util import platform_locale
 
-
-# ===============================================================================================
-# error message IDs
-# ===============================================================================================
-
 # General messages
 E_ATTACHMENT_MISSING = 'e-attachment-missing'
 E_BACKGROUND_TASK_ABORTED = 'e-background-task-aborted'
@@ -255,6 +250,8 @@ L_CREATE = 'l-create'
 L_DRY_RUN = 'l-dry-run'
 L_FILE = 'l-file'
 L_ENTITY = 'l-entity'
+L_EXISTING_BUILDS = 'l-existing-builds'
+L_EXISTING_VERSIONS = 'l-existing-versions'
 L_EXPORT_ENTITY = 'l-export-entity'
 L_IMPORT = 'l-import'
 L_IMPORT_USER_BEHAVIOUR = 'l-import-user-behaviour'
@@ -269,6 +266,8 @@ L_INCLUDE_PLAN_TREE = 'l-include-plan-tree'
 L_INCLUDE_RUNS = 'l-include-runs'
 L_INIT = 'l-init'
 L_NAME = 'l-name'
+L_NEW = 'l-new'
+L_NEW_NAME = 'l-new-name'
 L_NO_ENVIRONMENT = 'l-no-environment'
 L_OK = 'l-ok'
 L_OPTIONS = 'l-options'
@@ -301,6 +300,8 @@ L_DLG_TITLE_IMPORT_FILE = 'l-dlg-title-import-file'
 L_DLG_TITLE_LRU_ENTITIES = 'l-dlg-title-lru-entities'
 L_DLG_TITLE_MASTER_CONFIG_EDITOR = 'l-dlg-title-master-config-editor'
 L_DLG_TITLE_FIRST_PRODUCT = 'l-dlg-title-first-product'
+L_DLG_TITLE_NEW_BUILD = 'l-dlg-title-new-build'
+L_DLG_TITLE_NEW_VERSION = 'l-dlg-title-new-version'
 L_DLG_TITLE_PRODUCT_CONFIG_EDITOR = 'l-dlg-title-product-config-editor'
 L_DLG_TITLE_PRODUCT_SELECTION = 'l-dlg-title-product-selection'
 L_DLG_TITLE_RUN_PLAN = 'l-dlg-title-run-plan'
