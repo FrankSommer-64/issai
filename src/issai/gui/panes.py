@@ -42,47 +42,13 @@ import shutil
 from PySide6.QtCore import Qt, QDir
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (QFileDialog, QFrame, QGroupBox, QWidget, QLabel, QComboBox, QLineEdit, QListWidget,
-                               QDialog, QVBoxLayout, QPushButton, QSizePolicy, QMessageBox, QDialogButtonBox,
+                               QVBoxLayout, QPushButton, QSizePolicy, QMessageBox,
                                QGridLayout, QFormLayout, QCheckBox)
 
 from issai.core.config import config_root_path, master_config, product_config
 from issai.core.tcms import *
-from issai.gui.dialogs import NameInputDialog, ProgressDialog
+from issai.gui.dialogs import NameInputDialog, ProgressDialog, RecentEntityDialog
 from issai.gui.settings import GuiSettings
-
-
-class RecentEntityDialog(QDialog):
-    """
-    Dialog window to select a test entity from a list of recently used ones.
-    """
-
-    def __init__(self, parent, entities):
-        """
-        Constructor.
-        :param QWidget parent: the parent widget
-        :param list entities: recently used entities
-        """
-        super().__init__(parent)
-        self.setWindowTitle(localized_label(L_DLG_TITLE_LRU_ENTITIES))
-        _dlg_layout = QVBoxLayout()
-        self.__entity_list = QListWidget()
-        self.__entity_list.setStyleSheet(_ENTITY_LIST_STYLE)
-        [self.__entity_list.addItem(_e) for _e in entities]
-        _dlg_layout.addWidget(self.__entity_list)
-        _button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-        _button_box.setCenterButtons(True)
-        _button_box.accepted.connect(self.accept)
-        _button_box.rejected.connect(self.reject)
-        _dlg_layout.addWidget(_button_box)
-        self.setLayout(_dlg_layout)
-
-    def selected_entity(self):
-        """
-        :returns: selected entity, None if nothing selected
-        :rtype: str
-        """
-        _selected_entity = self.__entity_list.currentItem()
-        return None if _selected_entity is None else _selected_entity.text()
 
 
 class FileActionPane(QGroupBox):
@@ -436,12 +402,9 @@ class TcmsActionPane(QGroupBox):
         _upper_layout.addWidget(_product_combo_caption, 0, 0)
         _upper_layout.addWidget(self.__product_combo, 0, 1)
         _version_combo_caption, self.__version_combo = _create_combo(self, self._version_selected, L_VERSION_COMBO)
-        _new_version_button = QPushButton(localized_label(L_NEW))
-        _new_version_button.clicked.connect(self._new_version_button_clicked)
         self.__version_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         _upper_layout.addWidget(_version_combo_caption, 1, 0)
         _upper_layout.addWidget(self.__version_combo, 1, 1)
-        _upper_layout.addWidget(_new_version_button, 1, 2)
         if self.__action == ACTION_RUN_TCMS_PLAN:
             _build_combo_caption, self.__build_combo = _create_combo(self, None, L_BUILD_COMBO)
             _new_build_button = QPushButton(localized_label(L_NEW))
@@ -620,28 +583,6 @@ class TcmsActionPane(QGroupBox):
             QMessageBox.critical(self, localized_label(L_MBOX_TITLE_ERROR), str(_e), QMessageBox.StandardButton.Ok)
             return False
 
-    def _new_version_button_clicked(self):
-        """
-        Called when the user clicks the button to create a new software version.
-        """
-        _product = self.__product_combo.currentData()
-        if _product is None:
-            QMessageBox.critical(self, localized_label(L_MBOX_TITLE_ERROR),
-                                 localized_message(E_GUI_NO_PRODUCT_SELECTED),
-                                 QMessageBox.StandardButton.Ok)
-            return
-        _all_versions = [self.__version_combo.itemText(i) for i in range(self.__version_combo.count())]
-        _new_version_dlg = NameInputDialog(self, L_DLG_TITLE_NEW_VERSION, L_EXISTING_VERSIONS, _all_versions)
-        if _new_version_dlg.exec():
-            _version_name = _new_version_dlg.name()
-            try:
-                _attributes = {ATTR_VALUE: _version_name, ATTR_PRODUCT: _product[ATTR_ID]}
-                _new_version = create_tcms_object(TCMS_CLASS_ID_VERSION, _attributes)
-                self.__version_combo.addItem(_version_name, _new_version)
-                self.__version_combo.setCurrentText(_version_name)
-            except BaseException as _e:
-                QMessageBox.critical(self, localized_label(L_MBOX_TITLE_ERROR), str(_e), QMessageBox.StandardButton.Ok)
-
     def _new_build_button_clicked(self):
         """
         Called when the user clicks the button to create a new software version.
@@ -656,8 +597,9 @@ class TcmsActionPane(QGroupBox):
             QMessageBox.critical(self, localized_label(L_MBOX_TITLE_ERROR),
                                  localized_message(E_GUI_NO_VERSION_SELECTED), QMessageBox.StandardButton.Ok)
             return
-        _all_builds = [self.__build_combo.itemText(i) for i in range(self.__build_combo.count())]
-        _new_build_dlg = NameInputDialog(self, L_DLG_TITLE_NEW_BUILD, L_EXISTING_BUILDS, _all_builds)
+        _all_builds = read_tcms_builds_for_version([_version], False)
+        _all_build_names = sorted([_b[ATTR_NAME] for _b in _all_builds])
+        _new_build_dlg = NameInputDialog(self, L_DLG_TITLE_NEW_BUILD, L_EXISTING_BUILDS, _all_build_names)
         if _new_build_dlg.exec():
             _build_name = _new_build_dlg.name()
             try:

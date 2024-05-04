@@ -394,6 +394,40 @@ class ProgressDialog(QDialog):
         self.__infos.scrollToBottom()
 
 
+class RecentEntityDialog(QDialog):
+    """
+    Dialog window to select a test entity from a list of recently used ones.
+    """
+
+    def __init__(self, parent, entities):
+        """
+        Constructor.
+        :param QWidget parent: the parent widget
+        :param list entities: recently used entities
+        """
+        super().__init__(parent)
+        self.setWindowTitle(localized_label(L_DLG_TITLE_LRU_ENTITIES))
+        _dlg_layout = QVBoxLayout()
+        self.__entity_list = QListWidget()
+        self.__entity_list.setStyleSheet(_STYLE_WHITE_BG)
+        [self.__entity_list.addItem(_e) for _e in entities]
+        _dlg_layout.addWidget(self.__entity_list)
+        _button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        _button_box.setCenterButtons(True)
+        _button_box.accepted.connect(self.accept)
+        _button_box.rejected.connect(self.reject)
+        _dlg_layout.addWidget(_button_box)
+        self.setLayout(_dlg_layout)
+
+    def selected_entity(self):
+        """
+        :returns: selected entity, None if nothing selected
+        :rtype: str
+        """
+        _selected_entity = self.__entity_list.currentItem()
+        return None if _selected_entity is None else _selected_entity.text()
+
+
 class NameInputDialog(QDialog):
     """
     Dialog window to enter a name for a new software version or build.
