@@ -400,12 +400,10 @@ def create_tcms_object(class_id, container_object):
             if _comments is not None:
                 for _comment in _comments:
                     _cxn.TestExecution.add_comment(_execution_id, _comment)
-                del _attributes[ATTR_COMMENTS]
             _links = container_object.get(ATTR_LINKS)
             if _links is not None:
                 for _link in _links:
                     _cxn.TestExecution.add_link(_execution_id, _link)
-                del _attributes[ATTR_LINKS]
             if len(_attributes) > 0:
                 _object = _cxn.TestExecution.update(_execution_id, _attributes)
         elif class_id == TCMS_CLASS_ID_TEST_EXECUTION_STATUS:
