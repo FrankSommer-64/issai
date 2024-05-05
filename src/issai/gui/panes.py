@@ -81,6 +81,7 @@ class FileActionPane(QGroupBox):
         if action == ACTION_IMPORT:
             _do_button_label = localized_label(L_IMPORT)
         else:
+            self._initialize_combos()
             _do_button_label = localized_label(L_RUN)
         _do_button = QPushButton(_do_button_label)
         _do_button.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
@@ -137,9 +138,6 @@ class FileActionPane(QGroupBox):
             _box_layout.addRow(_product_caption, _product_text)
             _version_combo_caption, self.__version_combo = _create_combo(self, self._version_selected, L_VERSION_COMBO)
             _box_layout.addRow(_version_combo_caption, self.__version_combo)
-            _build_combo_caption, self.__build_combo = _create_combo(self, None, L_BUILD_COMBO)
-            _box_layout.addRow(_build_combo_caption, self.__build_combo)
-            self._initialize_combos()
         _entity_info_box.setLayout(_box_layout)
         return _entity_info_box
 
@@ -150,10 +148,8 @@ class FileActionPane(QGroupBox):
         """
         _options_box = QGroupBox(localized_label(L_OPTIONS), self)
         _options_box.setStyleSheet(_GROUP_BOX_STYLE)
-        _options_box_layout = QFormLayout()
-        _options_box_layout.setContentsMargins(10, 24, 24, 10)
-        _options_box_layout.setSpacing(20)
-        _options_box_layout.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
+        _options_box_layout = QGridLayout()
+        _options_box_layout.setColumnStretch(3, 1)
         _options_box.setLayout(_options_box_layout)
 
         if self.__action == ACTION_IMPORT:
@@ -173,23 +169,28 @@ class FileActionPane(QGroupBox):
                                        OPTION_VALUE_USER_REF_REPLACE_MISSING)
             self.__user_option.addItem(localized_label(L_IMPORT_USER_USE_ALWAYS), OPTION_VALUE_USER_REF_REPLACE_ALWAYS)
             self.__user_option.setToolTip(T_OPT_USER_IMPORT)
-            _options_box_layout.addRow(_user_caption, self.__user_option)
+            _row_nr = _options_box_layout.rowCount()
+            _options_box_layout.addWidget(_user_caption, _row_nr, 0)
+            _options_box_layout.addWidget(self.__user_option, _row_nr, 1)
             self.__dry_run_option = _create_option(_options_box_layout, L_DRY_RUN, T_OPT_DRY_RUN, False)
         else:
             # run
-            self.__store_result_option = _create_option(_options_box_layout, L_STORE_RESULT, T_OPT_STORE_RESULT, False)
-            self.__tree_option = _create_option(_options_box_layout, L_RUN_DESCENDANT_PLANS,
-                                                T_OPT_RUN_DESCENDANT_PLANS, True)
-            self.__dry_run_option = _create_option(_options_box_layout, L_DRY_RUN, T_OPT_DRY_RUN, False)
+            _build_combo_caption, self.__build_combo = _create_combo(self, None, L_BUILD_COMBO)
+            _options_box_layout.addWidget(_build_combo_caption, 0, 0)
+            _options_box_layout.addWidget(self.__build_combo, 0, 1)
             _entity_envs = self.__entity_data.get(ATTR_ENVIRONMENTS)
             if _entity_envs is not None:
                 _env_combo_caption, self.__env_combo = _create_combo(self, None, L_ENV_COMBO)
-                _options_box_layout.addRow(_env_combo_caption, self.__env_combo)
-                _options_box_layout.setAlignment(self.__env_combo, Qt.AlignmentFlag.AlignLeft)
+                _options_box_layout.addWidget(_env_combo_caption, 1, 0)
+                _options_box_layout.addWidget(self.__env_combo, 1, 1)
                 self.__env_combo.addItem(localized_label(L_NO_ENVIRONMENT), None)
                 for _env in _entity_envs.values():
                     self.__env_combo.addItem(_env[ATTR_NAME], _env)
                 self.__env_combo.setCurrentIndex(0)
+            self.__store_result_option = _create_option(_options_box_layout, L_STORE_RESULT, T_OPT_STORE_RESULT, False)
+            self.__tree_option = _create_option(_options_box_layout, L_RUN_DESCENDANT_PLANS,
+                                                T_OPT_RUN_DESCENDANT_PLANS, True)
+            self.__dry_run_option = _create_option(_options_box_layout, L_DRY_RUN, T_OPT_DRY_RUN, False)
         return _options_box
 
     def _version_selected(self, index):
@@ -312,10 +313,10 @@ class TcmsActionPane(QGroupBox):
         _pane_layout.addWidget(self._options_box())
 
         if action & ACTION_EXPORT != 0:
-            _do_button = QPushButton(localized_message(L_EXPORT_ENTITY, lower_case_entity_type_name(entity_type)))
+            _do_button = QPushButton(localized_message(L_EXPORT_ENTITY, entity_type_name(entity_type)))
             _do_button.clicked.connect(self._export_entity)
         else:
-            _do_button = QPushButton(localized_message(L_RUN_ENTITY, lower_case_entity_type_name(entity_type)))
+            _do_button = QPushButton(localized_message(L_RUN_ENTITY, entity_type_name(entity_type)))
             _do_button.clicked.connect(self._run_entity)
         _do_button.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
         _do_button.setStyleSheet(_OPEN_BUTTON_STYLE)
@@ -394,8 +395,6 @@ class TcmsActionPane(QGroupBox):
         # upper part with product and optional version selection combos
         _upper_layout = QGridLayout()
         _upper_layout.setColumnStretch(3, 1)
-        # _upper_layout.setSpacing(20)
-        # _upper_layout.setContentsMargins(10, 24, 24, 10)
 
         _product_combo_caption, self.__product_combo = _create_combo(self, self._product_selected, L_PRODUCT_COMBO)
         self.__product_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
@@ -405,14 +404,6 @@ class TcmsActionPane(QGroupBox):
         self.__version_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         _upper_layout.addWidget(_version_combo_caption, 1, 0)
         _upper_layout.addWidget(self.__version_combo, 1, 1)
-        if self.__action == ACTION_RUN_TCMS_PLAN:
-            _build_combo_caption, self.__build_combo = _create_combo(self, None, L_BUILD_COMBO)
-            _new_build_button = QPushButton(localized_label(L_NEW))
-            _new_build_button.clicked.connect(self._new_build_button_clicked)
-            self.__build_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
-            _upper_layout.addWidget(_build_combo_caption, 2, 0)
-            _upper_layout.addWidget(self.__build_combo, 2, 1)
-            _upper_layout.addWidget(_new_build_button, 2, 2)
         _layout.addLayout(_upper_layout)
 
         # lower part with test entity selection and result list
@@ -451,31 +442,41 @@ class TcmsActionPane(QGroupBox):
         """
         _options_box = QGroupBox(localized_label(L_OPTIONS), self)
         _options_box.setStyleSheet(_GROUP_BOX_STYLE)
-        _options_box_layout = QFormLayout()
-        _options_box_layout.setContentsMargins(10, 24, 24, 10)
-        _options_box_layout.setSpacing(20)
-        _options_box_layout.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
+        _options_box_layout = QGridLayout()
         _options_box.setLayout(_options_box_layout)
         if self.__action == ACTION_RUN_TCMS_PLAN:
-            self.__store_result_option = _create_option(_options_box_layout, L_STORE_RESULT, T_OPT_STORE_RESULT, True)
-            self.__tree_option = _create_option(_options_box_layout, L_RUN_DESCENDANT_PLANS,
-                                                T_OPT_RUN_DESCENDANT_PLANS, True)
-            self.__dry_run_option = _create_option(_options_box_layout, L_DRY_RUN, T_OPT_DRY_RUN, False)
+            _options_box_layout.setColumnStretch(3, 1)
+            _build_combo_caption, self.__build_combo = _create_combo(self, None, L_BUILD_COMBO)
+            _new_build_button = QPushButton(localized_label(L_NEW))
+            _new_build_button.clicked.connect(self._new_build_button_clicked)
+            self.__build_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+            _options_box_layout.addWidget(_build_combo_caption, 0, 0)
+            _options_box_layout.addWidget(self.__build_combo, 0, 1)
+            _options_box_layout.addWidget(_new_build_button, 0, 2)
             _env_combo_caption, self.__env_combo = _create_combo(self, None, L_ENV_COMBO)
-            _options_box_layout.addRow(_env_combo_caption, self.__env_combo)
+            _options_box_layout.addWidget(_env_combo_caption, 1, 0)
+            _options_box_layout.addWidget(self.__env_combo, 1, 1)
             _options_box_layout.setAlignment(self.__env_combo, Qt.AlignmentFlag.AlignLeft)
             self.__env_combo.addItem(localized_label(L_NO_ENVIRONMENT), None)
             for _env in read_tcms_environments():
                 self.__env_combo.addItem(_env[ATTR_NAME], _env)
             self.__env_combo.setCurrentIndex(0)
+            self.__store_result_option = _create_option(_options_box_layout, L_STORE_RESULT, T_OPT_STORE_RESULT, True)
+            self.__tree_option = _create_option(_options_box_layout, L_RUN_DESCENDANT_PLANS,
+                                                T_OPT_RUN_DESCENDANT_PLANS, True)
+            self.__dry_run_option = _create_option(_options_box_layout, L_DRY_RUN, T_OPT_DRY_RUN, False)
             return _options_box
+        _options_box_layout.setColumnStretch(2, 1)
         if self.__entity_type == ENTITY_TYPE_PRODUCT:
             _version_combo_caption, self.__version_combo = _create_combo(self, self._version_selected, L_VERSION_COMBO)
-            _options_box_layout.addRow(_version_combo_caption, self.__version_combo)
-            _options_box_layout.setAlignment(self.__version_combo, Qt.AlignmentFlag.AlignLeft)
+            self.__version_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
+            _options_box_layout.addWidget(_version_combo_caption, 0, 0)
+            _options_box_layout.addWidget(self.__version_combo, 0, 1)
+        _row_nr = _options_box_layout.rowCount()
         _build_combo_caption, self.__build_combo = _create_combo(self, None, L_BUILD_COMBO)
-        _options_box_layout.addRow(_build_combo_caption, self.__build_combo)
-        _options_box_layout.setAlignment(self.__build_combo, Qt.AlignmentFlag.AlignLeft)
+        self.__build_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
+        _options_box_layout.addWidget(_build_combo_caption, _row_nr, 0)
+        _options_box_layout.addWidget(self.__build_combo, _row_nr, 1)
         if self.__entity_type == ENTITY_TYPE_PLAN:
             self.__tree_option = _create_option(_options_box_layout, L_INCLUDE_PLAN_TREE, T_OPT_EXP_PLAN_TREE, True)
             self.__runs_option = _create_option(_options_box_layout, L_INCLUDE_RUNS, T_OPT_EXP_RUNS, True)
@@ -847,21 +848,23 @@ def _create_combo(parent, activated_handler, caption_id):
 def _create_option(layout, caption_id, tooltip_id, initial_state):
     """
     Creates label and check box for an option.
-    :param QFormLayout layout: the layout that shall contain the option
+    :param QGridLayout layout: the layout that shall contain the option
     :param str caption_id: the label ID for the caption text
     :param str tooltip_id: the label ID for the tooltip text
     :param bool initial_state: the initial checkbox state
     :returns: the checkbox widget
     :rtype: QCheckBox
     """
+    _row_nr = layout.rowCount()
     _tooltip = localized_label(tooltip_id)
     _caption = QLabel(localized_label(caption_id))
     _caption.setToolTip(_tooltip)
     _caption.setStyleSheet(_CAPTION_STYLE)
+    layout.addWidget(_caption, _row_nr, 0)
     _check_box = QCheckBox()
     _check_box.setToolTip(_tooltip)
     _check_box.setChecked(initial_state)
-    layout.addRow(_caption, _check_box)
+    layout.addWidget(_check_box, _row_nr, 1)
     return _check_box
 
 

@@ -45,7 +45,7 @@ from PySide6.QtWidgets import (QWidget, QLabel, QComboBox, QProgressBar, QListWi
                                QMessageBox, QGridLayout, QVBoxLayout, QGroupBox, QListWidgetItem, QLineEdit,
                                QDialogButtonBox, QSizePolicy)
 from PySide6.QtCore import qVersion, QDir, QThreadPool, Qt, QPoint
-from PySide6.QtGui import QPainter, QBrush, QColor, QPen, QRadialGradient, QPixmap
+from PySide6.QtGui import QPainter, QBrush, QColor, QColorConstants, QPen, QRadialGradient, QPixmap
 
 from issai.core.tcms import *
 from issai.gui.workers import Worker
@@ -70,16 +70,18 @@ class AboutDialog(QDialog):
         _dlg_layout.setSpacing(10)
         self.__issai_image = QLabel()
         _pixmap = QPixmap(_ISSAI_IMAGE_SIZE, _ISSAI_IMAGE_SIZE)
-        _pixmap.fill(Qt.white)
+        _pixmap.fill(QColorConstants.white)
         self.__issai_image.setPixmap(_pixmap)
         _dlg_layout.addWidget(self.__issai_image, 0, 0, 4, 1)
-        _dlg_layout.addWidget(QLabel(localized_message(I_GUI_ABOUT_TEXT)), 0, 1, Qt.AlignHCenter | Qt.AlignBottom)
+        _dlg_layout.addWidget(QLabel(localized_message(I_GUI_ABOUT_TEXT)), 0, 1,
+                              Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom)
         _dlg_layout.addWidget(QLabel(localized_message(I_GUI_ABOUT_DETAIL_TEXT, VERSION, qVersion())),
-                              1, 1, Qt.AlignCenter)
-        _dlg_layout.addWidget(QLabel(localized_message(I_GUI_ABOUT_INFO_TEXT)), 2, 1, Qt.AlignHCenter | Qt.AlignTop)
+                              1, 1, Qt.AlignmentFlag.AlignCenter)
+        _dlg_layout.addWidget(QLabel(localized_message(I_GUI_ABOUT_INFO_TEXT)), 2, 1,
+                              Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
         _ok_button = QPushButton(localized_label(L_OK))
         _ok_button.clicked.connect(self.close)
-        _dlg_layout.addWidget(_ok_button, 3, 1, 1, 1, Qt.AlignCenter)
+        _dlg_layout.addWidget(_ok_button, 3, 1, 1, 1, Qt.AlignmentFlag.AlignCenter)
         self.setLayout(_dlg_layout)
         self._draw_image()
 
@@ -96,9 +98,9 @@ class AboutDialog(QDialog):
         _radius = (min(_rect.width(), _rect.height()) >> 1) - _ISSAI_IMAGE_SPACING
         _gradient = QRadialGradient(_center, _radius)
         _gradient.setColorAt(0.1, _bright_yellow)
-        _gradient.setColorAt(0.5, Qt.yellow)
-        _gradient.setColorAt(1.0, Qt.darkGreen)
-        painter.setPen(QPen(Qt.darkGray, 2, Qt.SolidLine))
+        _gradient.setColorAt(0.5, QColorConstants.yellow)
+        _gradient.setColorAt(1.0, QColorConstants.darkgreen)
+        painter.setPen(QPen(QColorConstants.darkgray, 2, Qt.PenStyle.SolidLine))
         painter.setBrush(QBrush(_gradient))
         painter.drawEllipse(_center, _radius, _radius)
         # draw beams
@@ -108,7 +110,7 @@ class AboutDialog(QDialog):
         _inner_beam_width = math.pi / 50
         _outer_beam_width = _inner_beam_width / 3
         _angle = 0.0
-        painter.setPen(QPen(Qt.yellow, 1, Qt.SolidLine))
+        painter.setPen(QPen(QColorConstants.yellow, 1, Qt.PenStyle.SolidLine))
         while _angle < 2 * math.pi:
             _inner_x = int(_center.x() + _inner_radius * math.cos(_angle))
             _inner_y = int(_center.y() + _inner_radius * math.sin(_angle))
@@ -121,7 +123,7 @@ class AboutDialog(QDialog):
             _outer_x2 = int(_center.x() + _outer_radius * math.cos(_angle+_outer_beam_width))
             _outer_y2 = int(_center.y() + _outer_radius * math.sin(_angle+_outer_beam_width))
             _beam_gradient = QRadialGradient(QPoint(_inner_x, _inner_y), _outer_radius - _inner_radius)
-            _beam_gradient.setColorAt(0.3, Qt.yellow)
+            _beam_gradient.setColorAt(0.3, QColorConstants.yellow)
             _beam_gradient.setColorAt(1.0, _bright_yellow)
             painter.setBrush(QBrush(_beam_gradient))
             painter.drawPolygon([QPoint(_inner_x1, _inner_y1), QPoint(_outer_x1, _outer_y1),
@@ -133,7 +135,7 @@ class AboutDialog(QDialog):
         _pit_height = int(_pit_width / 4)
         _angle = math.pi / 20.0
         _pit_color = QColor(0x44, 0x22, 0x55)
-        painter.setPen(QPen(_pit_color, 1, Qt.SolidLine))
+        painter.setPen(QPen(_pit_color, 1, Qt.PenStyle.SolidLine))
         painter.setBrush(QBrush(_pit_color))
         while _angle < 2 * math.pi:
             _pit_x = int(_center.x() + _pit_radius * math.cos(_angle))
@@ -251,7 +253,7 @@ class NoProductConfiguredDialog(QDialog):
         """
         _dlg = QFileDialog(self, localized_label(L_DLG_TITLE_SELECT_PRODUCT_REPO_PATH), str(Path.home()))
         _dlg.setOptions(QFileDialog.Option.DontUseNativeDialog)
-        _dlg.setFilter(QDir.AllDirs | QDir.Hidden)
+        _dlg.setFilter(QDir.Filter.AllDirs | QDir.Filter.Hidden)
         _dlg.setAcceptMode(QFileDialog.AcceptMode.AcceptOpen)
         _dlg.setFileMode(QFileDialog.FileMode.Directory)
         if _dlg.exec():
@@ -320,11 +322,11 @@ class ProgressDialog(QDialog):
         _dlg_layout.addWidget(_info_box, 0, 0, 1, 2)
         self.__cancel_button = QPushButton(localized_label(L_CANCEL))
         self.__cancel_button.clicked.connect(self._cancel_button_clicked)
-        _dlg_layout.addWidget(self.__cancel_button, 1, 0, Qt.AlignCenter)
+        _dlg_layout.addWidget(self.__cancel_button, 1, 0, Qt.AlignmentFlag.AlignCenter)
         self.__close_button = QPushButton(localized_label(L_CLOSE))
         self.__close_button.setEnabled(False)
         self.__close_button.clicked.connect(self.close)
-        _dlg_layout.addWidget(self.__close_button, 1, 1, Qt.AlignCenter)
+        _dlg_layout.addWidget(self.__close_button, 1, 1, Qt.AlignmentFlag.AlignCenter)
         self.setLayout(_dlg_layout)
 
     def exec(self):
@@ -485,9 +487,9 @@ def select_output_dir(parent, preferred_dir):
     _selected_file_path = None
     _dlg = QFileDialog(parent, localized_label(L_DLG_TITLE_SELECT_EXPORT_OUTPUT_PATH), preferred_dir)
     _dlg.setOptions(QFileDialog.Option.DontUseNativeDialog)
-    _dlg.setFilter(QDir.AllDirs | QDir.Hidden)
+    _dlg.setFilter(QDir.Filter.AllDirs | QDir.Filter.Hidden)
     _dlg.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
-    _dlg.setFileMode(QFileDialog.FileMode.DirectoryOnly)
+    _dlg.setFileMode(QFileDialog.FileMode.Directory)
     if _dlg.exec():
         _selected_file_path = _dlg.selectedFiles()[0]
     _dlg.close()
@@ -505,7 +507,7 @@ def select_entity_file(parent, preferred_dir):
     _selected_file_path = None
     _dlg = QFileDialog(parent, localized_label(L_DLG_TITLE_SELECT_IMPORT_FILE), preferred_dir)
     _dlg.setOptions(QFileDialog.Option.DontUseNativeDialog)
-    _dlg.setFilter(QDir.AllDirs | QDir.Hidden)
+    _dlg.setFilter(QDir.Filter.AllDirs | QDir.Filter.Hidden)
     _dlg.setAcceptMode(QFileDialog.AcceptMode.AcceptOpen)
     _dlg.setFileMode(QFileDialog.FileMode.ExistingFile)
     _dlg.setNameFilter('*.toml')
