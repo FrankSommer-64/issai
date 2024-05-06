@@ -351,6 +351,56 @@ tags = []
 cases = [2019, 2020, 2021]
 runs = []
 
+[[test-plans]]
+# options: update-tcms=False
+# expected result: PASSED
+id = 1020
+name = "UnmanagedParentPlan20"
+text = "Unmanaged test plan with two child plans, no test cases.\nEach child plan contains 3 test cases, one shared.\nOne plan with executions, one without run."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = []
+cases = []
+runs = [3020]
+
+[[test-plans]]
+# options: update-tcms=False
+# expected result: PASSED
+id = 1021
+name = "UnmanagedChildPlan21"
+text = "Unmanaged test plan with 3 test cases, one shared.\nAll executions exist."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+parent = 1020
+attachments = []
+tags = []
+cases = [2022, 2023, 2024]
+runs = [3021]
+
+[[test-plans]]
+# options: update-tcms=False
+# expected result: PASSED
+id = 1022
+name = "UnmanagedChildPlan22"
+text = "Unmanaged test plan with 3 test cases, one shared.\nRun does not exist."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+parent = 1020
+attachments = []
+tags = []
+cases = [2022, 2025, 2026]
+runs = []
+
 [[test-runs]]
 id = 3001
 summary = "UnmanagedEmptyPlan-Active-WithRun"
@@ -470,6 +520,30 @@ default_tester = 102
 properties = []
 tags = []
 executions = [4016, 4017, 4018]
+
+[[test-runs]]
+id = 3020
+summary = "UnmanagedParentPlan20"
+notes = ""
+plan = 1020
+build = 101
+manager = 101
+default_tester = 102
+properties = []
+tags = []
+executions = []
+
+[[test-runs]]
+id = 3021
+summary = "UnmanagedChildPlan21"
+notes = ""
+plan = 1021
+build = 101
+manager = 101
+default_tester = 102
+properties = []
+tags = []
+executions = [4022, 4023, 4024]
 
 [[test-cases]]
 id = 2001
@@ -955,6 +1029,121 @@ tags = []
 executions = []
 
 [[test-cases]]
+id = 2022
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-AutomatedCase22"
+notes = ""
+text = "Automated test case with/without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [4022]
+
+[[test-cases]]
+id = 2023
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-AutomatedCase23"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [4023]
+
+[[test-cases]]
+id = 2024
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-AutomatedCase24"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [4024]
+
+[[test-cases]]
+id = 2025
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-AutomatedCase25"
+notes = ""
+text = "Automated test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 2026
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-AutomatedCase26"
+notes = ""
+text = "Automated test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
 id = 2901
 is_automated = false
 arguments = ""
@@ -1253,6 +1442,42 @@ id = 4018
 assignee = 102
 run = 3018
 case = 2018
+build = 101
+status = 103
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+
+[[test-executions]]
+id = 4022
+assignee = 102
+run = 3021
+case = 2022
+build = 101
+status = 103
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+
+[[test-executions]]
+id = 4023
+assignee = 102
+run = 3021
+case = 2023
+build = 101
+status = 103
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+
+[[test-executions]]
+id = 4024
+assignee = 102
+run = 3021
+case = 2024
 build = 101
 status = 103
 expected_duration = 0.0

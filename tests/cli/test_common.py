@@ -45,7 +45,6 @@ from issai.cli.common import *
 from tests.cli import test_file_path, test_runs_in_multi_build_dataset, test_runs_in_multi_version_dataset
 
 
-DEFAULT_BUILD = 'unspecified'
 DEFAULT_BUILD_ID = '201'
 DEFAULT_CASE = 'DefaultCase'
 DEFAULT_CASE_ID = '601'
@@ -57,7 +56,6 @@ DEFAULT_PLAN = 'DefaultPlan'
 DEFAULT_PLAN_ID = '401'
 DEFAULT_PRODUCT = 'IssaiMvMb'
 DEFAULT_PRODUCT_ID = '1'
-DEFAULT_VERSION = 'unspecified'
 DEFAULT_VERSION_ID = '101'
 DUP_PLAN = 'FullyAmbiguousPlan'
 DUP_PLAN_ID_101 = '3491'

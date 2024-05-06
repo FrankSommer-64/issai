@@ -904,40 +904,44 @@ def tcms_master_data_status(product, master_data):
         _master_data_status = {}
         _cxn = TcmsInterface.connection()
         for _data_type, _objects in master_data.items():
-            if len(_objects) == 0:
+            if len(_objects) == 0 or _data_type == ATTR_PRODUCT_BUILDS:
                 continue
             _class_id = tcms_class_id_for_master_data_type(_data_type)
             _class_status = {}
-            if _class_id == TCMS_CLASS_ID_BUILD:
-                for _build_id, _build in _objects.items():
-                    _build_name = _build[ATTR_NAME]
-                    _build_version = _build[ATTR_VERSION]
-                    _tcms_build = find_tcms_object(TCMS_CLASS_ID_BUILD,
-                                                   {ATTR_NAME: _build_name, ATTR_VERSION: _build_version})
-                    if _tcms_build is None:
-                        _class_status[_build_id] = ObjectStatus(ObjectStatus.NO_MATCH, _class_id, _build)
-                    elif _tcms_build[ATTR_ID] == _build_id:
-                        _class_status[_build_id] = ObjectStatus(ObjectStatus.EXACT_MATCH, _class_id, _build,
-                                                                _tcms_build)
-                    else:
-                        _class_status[_build_id] = ObjectStatus(ObjectStatus.OTHER_NAME_MATCH, _class_id, _build,
-                                                                _tcms_build)
-            else:
-                _name_attr = name_attribute_for_tcms_class(_class_id)
-                _names = [_obj[_name_attr] for _obj in _objects.values()]
-                _tcms_objects = _read_objects_by_name(_cxn, product, _class_id, _name_attr, _names)
-                for _object_id, _object in _objects.items():
-                    _object_name = _object[_name_attr]
-                    _tcms_object = _tcms_objects.get(_object_name)
-                    if _tcms_object is None:
-                        _class_status[_object_id] = ObjectStatus(ObjectStatus.NO_MATCH, _class_id, _object)
-                    elif _tcms_object[ATTR_ID] == _object_id:
-                        _class_status[_object_id] = ObjectStatus(ObjectStatus.EXACT_MATCH, _class_id, _object,
-                                                                 _tcms_object)
-                    else:
-                        _class_status[_object_id] = ObjectStatus(ObjectStatus.OTHER_NAME_MATCH, _class_id, _object,
-                                                                 _tcms_object)
+            _name_attr = name_attribute_for_tcms_class(_class_id)
+            _names = [_obj[_name_attr] for _obj in _objects.values()]
+            _tcms_objects = _read_objects_by_name(_cxn, product, _class_id, _name_attr, _names)
+            for _object_id, _object in _objects.items():
+                _object_name = _object[_name_attr]
+                _tcms_object = _tcms_objects.get(_object_name)
+                if _tcms_object is None:
+                    _class_status[_object_id] = ObjectStatus(ObjectStatus.NO_MATCH, _class_id, _object)
+                elif _tcms_object[ATTR_ID] == _object_id:
+                    _class_status[_object_id] = ObjectStatus(ObjectStatus.EXACT_MATCH, _class_id, _object,
+                                                             _tcms_object)
+                else:
+                    _class_status[_object_id] = ObjectStatus(ObjectStatus.OTHER_NAME_MATCH, _class_id, _object,
+                                                             _tcms_object)
             _master_data_status[_class_id] = _class_status
+        # to process builds, we need version status, hence they are processed separately at the end
+        _class_status = {}
+        for _build_id, _build in master_data.get(ATTR_PRODUCT_BUILDS).items():
+            _build_name = _build[ATTR_NAME]
+            _build_version = _build[ATTR_VERSION]
+            _version_status = _master_data_status[TCMS_CLASS_ID_VERSION].get(_build_version)
+            if _version_status.is_name_match():
+                _build_version = _version_status.tcms_object().get(ATTR_ID)
+            _tcms_build = find_tcms_object(TCMS_CLASS_ID_BUILD,
+                                           {ATTR_NAME: _build_name, ATTR_VERSION: _build_version})
+            if _tcms_build is None:
+                _class_status[_build_id] = ObjectStatus(ObjectStatus.NO_MATCH, TCMS_CLASS_ID_BUILD, _build)
+            elif _tcms_build[ATTR_ID] == _build_id:
+                _class_status[_build_id] = ObjectStatus(ObjectStatus.EXACT_MATCH, TCMS_CLASS_ID_BUILD, _build,
+                                                        _tcms_build)
+            else:
+                _class_status[_build_id] = ObjectStatus(ObjectStatus.OTHER_NAME_MATCH, TCMS_CLASS_ID_BUILD, _build,
+                                                        _tcms_build)
+        _master_data_status[TCMS_CLASS_ID_BUILD] = _class_status
         return _master_data_status
     except Exception as _e:
         raise IssaiException(E_TCMS_CHECK_MASTER_DATA_STATUS_FAILED, str(_e))
