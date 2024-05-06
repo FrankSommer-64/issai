@@ -70,7 +70,7 @@ class AboutDialog(QDialog):
         _dlg_layout.setSpacing(10)
         self.__issai_image = QLabel()
         _pixmap = QPixmap(_ISSAI_IMAGE_SIZE, _ISSAI_IMAGE_SIZE)
-        _pixmap.fill(QColorConstants.white)
+        _pixmap.fill(QColorConstants.White)
         self.__issai_image.setPixmap(_pixmap)
         _dlg_layout.addWidget(self.__issai_image, 0, 0, 4, 1)
         _dlg_layout.addWidget(QLabel(localized_message(I_GUI_ABOUT_TEXT)), 0, 1,
@@ -98,9 +98,9 @@ class AboutDialog(QDialog):
         _radius = (min(_rect.width(), _rect.height()) >> 1) - _ISSAI_IMAGE_SPACING
         _gradient = QRadialGradient(_center, _radius)
         _gradient.setColorAt(0.1, _bright_yellow)
-        _gradient.setColorAt(0.5, QColorConstants.yellow)
-        _gradient.setColorAt(1.0, QColorConstants.darkgreen)
-        painter.setPen(QPen(QColorConstants.darkgray, 2, Qt.PenStyle.SolidLine))
+        _gradient.setColorAt(0.5, QColorConstants.Yellow)
+        _gradient.setColorAt(1.0, QColorConstants.DarkGreen)
+        painter.setPen(QPen(QColorConstants.DarkGray, 2, Qt.PenStyle.SolidLine))
         painter.setBrush(QBrush(_gradient))
         painter.drawEllipse(_center, _radius, _radius)
         # draw beams
@@ -110,7 +110,7 @@ class AboutDialog(QDialog):
         _inner_beam_width = math.pi / 50
         _outer_beam_width = _inner_beam_width / 3
         _angle = 0.0
-        painter.setPen(QPen(QColorConstants.yellow, 1, Qt.PenStyle.SolidLine))
+        painter.setPen(QPen(QColorConstants.Yellow, 1, Qt.PenStyle.SolidLine))
         while _angle < 2 * math.pi:
             _inner_x = int(_center.x() + _inner_radius * math.cos(_angle))
             _inner_y = int(_center.y() + _inner_radius * math.sin(_angle))
@@ -123,7 +123,7 @@ class AboutDialog(QDialog):
             _outer_x2 = int(_center.x() + _outer_radius * math.cos(_angle+_outer_beam_width))
             _outer_y2 = int(_center.y() + _outer_radius * math.sin(_angle+_outer_beam_width))
             _beam_gradient = QRadialGradient(QPoint(_inner_x, _inner_y), _outer_radius - _inner_radius)
-            _beam_gradient.setColorAt(0.3, QColorConstants.yellow)
+            _beam_gradient.setColorAt(0.3, QColorConstants.Yellow)
             _beam_gradient.setColorAt(1.0, _bright_yellow)
             painter.setBrush(QBrush(_beam_gradient))
             painter.drawPolygon([QPoint(_inner_x1, _inner_y1), QPoint(_outer_x1, _outer_y1),

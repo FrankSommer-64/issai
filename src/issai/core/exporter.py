@@ -42,7 +42,7 @@ from issai.core.task import TaskResult
 from issai.core.tcms import *
 
 
-def export_case(case, options, local_config, output_path, task_monitor):
+def export_case(case, options, output_path, task_monitor):
     """
     Exports a test case from TCMS.
     Test entity attributes and metadata like versions, components etc. are directly written to output file named
@@ -54,7 +54,6 @@ def export_case(case, options, local_config, output_path, task_monitor):
                          'build' - the TCMS build data (optional, defaults to all product builds),
                          'include_attachments' - (optional, attachments are not included by default)
                          'include_history' - (optional, test case histories are not included by default)
-    :param LocalConfig local_config: the local issai configuration
     :param str output_path: the output directory path, must be empty
     :param TaskMonitor task_monitor: the progress handler
     :raises IssaiException: if export fails
@@ -98,7 +97,7 @@ def export_case(case, options, local_config, output_path, task_monitor):
     return TaskResult(0, localized_message(I_GUI_EXPORT_CASE_SUCCESSFUL, _case_name))
 
 
-def export_plan(plan, options, local_config, output_path, task_monitor):
+def export_plan(plan, options, output_path, task_monitor):
     """
     Exports a test plan from TCMS.
     Test entity attributes and metadata like versions, components etc. are directly written to output file named
@@ -111,7 +110,6 @@ def export_plan(plan, options, local_config, output_path, task_monitor):
                          'build' - the TCMS build data (optional, defaults to all product builds),
                          'include_attachments' - (optional, attachments are not included by default)
                          'include_history' - (optional, test case histories are not included by default)
-    :param LocalConfig local_config: the local issai configuration
     :param str output_path: the output directory path, must be empty
     :param TaskMonitor task_monitor: the progress handler
     :raises IssaiException: if export fails
@@ -163,7 +161,7 @@ def export_plan(plan, options, local_config, output_path, task_monitor):
     return TaskResult(0, localized_message(I_GUI_EXPORT_PLAN_SUCCESSFUL, _plan_name))
 
 
-def export_product(product_name, options, local_config, output_path, task_monitor):
+def export_product(product_name, options, output_path, task_monitor):
     """
     Exports a product from TCMS.
     Test entity attributes and metadata like versions, components etc. are directly written to output file named
@@ -176,7 +174,6 @@ def export_product(product_name, options, local_config, output_path, task_monito
                          'build' - the TCMS build data (optional, defaults to all product builds),
                          'include_attachments' - (optional, attachments are not included by default)
                          'include_history' - (optional, test case histories are not included by default)
-    :param LocalConfig local_config: the local issai configuration
     :param str output_path: the output directory path, must be empty
     :param TaskMonitor task_monitor: the progress handler
     :raises IssaiException: if export fails

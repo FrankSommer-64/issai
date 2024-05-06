@@ -398,7 +398,7 @@ class LocalConfig(dict):
             _toml_data = tomlkit.loads(data) 
             _warnings = validate_config_structure(_toml_data, file_path, is_product_config)
             _cfg = LocalConfig(file_path, _warnings, is_product_config)
-            _cfg.update(_toml_data)
+            _cfg.update(_toml_data.items())
             return _cfg
         except Exception as e:
             raise IssaiException(E_CFG_READ_FILE_FAILED, file_path, e)

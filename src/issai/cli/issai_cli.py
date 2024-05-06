@@ -67,11 +67,11 @@ def export_main():
         _output_path = os.path.abspath(_args.output_path)
         _local_config = product_config(_config_path, _action.product_name(), _master_cfg)
         if _entity_type == ENTITY_TYPE_PRODUCT:
-            _result = export_product(_action.product_name(), _options, _local_config, _output_path, _task_monitor)
+            _result = export_product(_action.product_name(), _options, _output_path, _task_monitor)
         elif _entity_type == ENTITY_TYPE_PLAN:
-            _result = export_plan(_action.entity(), _options, _local_config, _output_path, _task_monitor)
+            _result = export_plan(_action.entity(), _options, _output_path, _task_monitor)
         else:
-            _result = export_case(_action.entity(), _options, _local_config, _output_path, _task_monitor)
+            _result = export_case(_action.entity(), _options, _output_path, _task_monitor)
     except Exception as e:
         print()
         print(e)
@@ -96,7 +96,7 @@ def import_main():
         _input_file_path = os.path.abspath(_args.input_file)
         _output_path = os.path.abspath(_args.output_path)
         _local_config = product_config(_config_path, _action.product_name(), _master_cfg)
-        _result = import_file(_action.entity(), _options, _local_config, _input_file_path, _task_monitor)
+        _result = import_file(_action.entity(), _options, _input_file_path, _task_monitor)
     except Exception as e:
         print()
         print(e)

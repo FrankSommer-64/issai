@@ -352,7 +352,7 @@ class EditorGroupTab(EditorTab):
         _add_button_frame = QWidget()
         _layout = QHBoxLayout()
         _layout.addWidget(_add_button)
-        _layout.setAlignment(Qt.AlignCenter)
+        _layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         _add_button_frame.setLayout(_layout)
         return _add_button_frame
 
@@ -368,7 +368,7 @@ class EditorGroupTab(EditorTab):
         _remove_button_frame = QWidget()
         _layout = QHBoxLayout()
         _layout.addWidget(_remove_button)
-        _layout.setAlignment(Qt.AlignCenter)
+        _layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         _remove_button_frame.setLayout(_layout)
         return _remove_button_frame
 

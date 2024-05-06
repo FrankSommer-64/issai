@@ -43,7 +43,7 @@ from issai.core.task import TaskMonitor, TaskResult
 from issai.core.tcms import *
 
 
-def import_file(entity, options, local_config, file_path, task_monitor):
+def import_file(entity, options, file_path, task_monitor):
     """
     Imports test entities from file.
     To import attachments, they must be a placed in subdirectory attachments.
@@ -54,7 +54,6 @@ def import_file(entity, options, local_config, file_path, task_monitor):
    'user-references' - specifies how to handle references to TCMS users
     :param Entity entity: the data to import
     :param dict options: the import control options
-    :param LocalConfig local_config: the local issai configuration
     :param str file_path: the name of the file to import including full path
     :param TaskMonitor task_monitor: the progress handler
     :raises IssaiException: if import fails

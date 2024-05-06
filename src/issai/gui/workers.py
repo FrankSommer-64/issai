@@ -140,13 +140,13 @@ class Worker(QRunnable):
         :rtype: Worker
         """
         if action == ACTION_EXPORT_PRODUCT:
-            return Worker(export_product, entity[ATTR_NAME], options, local_cfg, file_or_working_path)
+            return Worker(export_product, entity[ATTR_NAME], options, file_or_working_path)
         elif action == ACTION_EXPORT_PLAN:
-            return Worker(export_plan, entity, options, local_cfg, file_or_working_path)
+            return Worker(export_plan, entity, options, file_or_working_path)
         elif action == ACTION_EXPORT_CASE:
-            return Worker(export_case, entity, options, local_cfg, file_or_working_path)
+            return Worker(export_case, entity, options, file_or_working_path)
         elif action == ACTION_IMPORT:
-            return Worker(import_file, entity, options, local_cfg, file_or_working_path)
+            return Worker(import_file, entity, options, file_or_working_path)
         elif action == ACTION_RUN_TCMS_PLAN:
             return Worker(run_tcms_plan, entity, options, local_cfg)
         elif action == ACTION_RUN_OFFLINE_PLAN:
