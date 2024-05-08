@@ -139,6 +139,7 @@ e-run-case-script-missing No script defined for test case '{0}'.
 e-run-plan-failed Execution of test plan '{0}' failed.
 e-run-source-path-invalid Path for source files '{0}' does not exist.
 e-run-source-path-missing Path for source files is not defined, configuration parameter '{0}' is missing.
+e-run-test-path-invalid Path for test files '{0}' does not exist.
 e-run-working-path-invalid Working path '{0}' does not exist.
 e-run-working-path-missing Working path is not defined, configuration parameter '{0}' is missing.
 e-dry-run-run-assistant-failed Assistant '{0}' for action {1} will fail: {2}.
@@ -152,6 +153,8 @@ i-run-entity-skipped {0} '{1}' skipped: {2}
 i-run-matrix-result Matrix code '{0}': {1}.
 i-run-plan-not-active Test plan not active.
 i-run-plan-succeeded Test plan '{0}' successfully executed.
+i-run-py-unit-test-failed {0} of {1} tests for module {2} failed.
+i-run-py-unit-test-passed {0} tests for module {1} passed.
 i-run-running-case Executing test case '{0}'.
 i-run-running-env Running test for environment properties {0}.
 i-run-running-plan Executing test plan '{0}'.

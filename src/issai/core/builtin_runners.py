@@ -35,77 +35,81 @@
 """
 Built-in functions to run a test case.
 """
+import os.path
+import sys
+import unittest
 
-from os.path import isdir, isfile, join
-import re
-import subprocess
-
+from issai.core import ENVA_ISSAI_REPOSITORY_PATH, ENVA_ISSAI_TESTS_PATH
 from issai.core.messages import *
 
 
 def builtin_runner(function_name):
+    """
+    :param str function_name: the desired builtin runner function name
+    :returns: function corresponding to specified name
+    :rtype: function
+    """
     if function_name == 'py_unit_test':
         return py_unit_test
     return None
 
 
-def py_unit_test(runtime_env, venv_path, *modules):
+def py_unit_test(runtime_env, venv_path, case_name, modules):
     """
     Runs Python unit tests for specified module(s) and/or package(s).
     :param mapping runtime_env: the local issai runtime environment
     :param str venv_path: the path to virtual Python environment, may be None
-    :param tuple modules: the modules/packages to test
+    :param str case_name: the test case name
+    :param str modules: the module(s) to test, separated by comma
     :returns: execution result
     :rtype: tuple
     """
-    _source_files_path = runtime_env['PYTHONPATH'].split(':')[0]
     _overall_rc = 0
-    _overall_stdout = ''
-    _overall_stderr = ''
-    if venv_path is None:
-        _act_cmd = ''
-        _deact_cmd = ''
-    else:
-        _act_cmd = 'source %s; ' % os.path.join(venv_path, 'bin', 'activate')
-        _deact_cmd = '; deactivate'
-    if len(modules) == 0:
-        pass
-    else:
-        for _m in modules:
-            _module_path = os.path.join(_source_files_path, str(_m))
-            ut_cmd = f'python3 -m unittest discover {_module_path}'
-            cmd = 'bash -c "%s%s%s"' % (_act_cmd, ut_cmd, _deact_cmd)
-            _result = subprocess.run(cmd, capture_output=True, env=runtime_env, shell=True)
-            if _result.returncode != 0:
-                _overall_rc = -1
-            _overall_stdout = '%s%s' % (_overall_stdout, _result.stdout.decode('utf-8'))
-            _overall_stderr = '%s%s' % (_overall_stderr, _result.stderr.decode('utf-8'))
-    if re.search('^FAILED', _overall_stderr, re.MULTILINE | re.DOTALL):
+    _overall_stdout = []
+    _overall_stderr = []
+    modules = modules.strip()
+    _orig_sys_path = sys.path
+    _orig_sys_prefix = sys.prefix
+    _orig_env = os.environ.copy()
+    os.environ = runtime_env.copy()
+    try:
+        if venv_path is not None:
+            _activate_file_path = os.path.join(venv_path, 'bin', 'activate_this.py')
+            exec(open(_activate_file_path).read(), {'__file__': _activate_file_path})
+        _ut_runtime_env = runtime_env.copy()
+        _tests_path = runtime_env[ENVA_ISSAI_TESTS_PATH]
+        _test_loader = unittest.defaultTestLoader
+        _test_runner = unittest.TextTestRunner()
+        _test_runner.buffer = True
+        if len(modules) == 0:
+            # run all tests underneath test path using discover
+            _test_suite = _test_loader.discover(_tests_path)
+            _test_result = _test_runner.run(_test_suite)
+        else:
+            # run tests for one or more modules
+            for _m in modules.split(','):
+                _m_parts = _m.split('.')
+                _m_path = os.path.join(_tests_path, os.path.sep.join(_m_parts))
+                if os.path.isdir(_m_path):
+                    _test_suite = _test_loader.discover(_m_path)
+                else:
+                    _test_suite = _test_loader.loadTestsFromName(_m)
+                _test_result = _test_runner.run(_test_suite)
+                _error_count = len(_test_result.errors)
+                if _error_count == 0:
+                    _overall_stdout.append(localized_message(I_RUN_PY_UNIT_TEST_PASSED, _test_result.testsRun, _m))
+                else:
+                    _overall_rc = 1
+                    _overall_stdout.append(localized_message(I_RUN_PY_UNIT_TEST_FAILED,
+                                                             _error_count, _test_result.testsRun, _m))
+                    _err_msg = _test_runner.stream.read()
+                    _overall_stderr.extend(_test_result.errors)
+    except BaseException as _e:
         _overall_rc = -1
-    return _overall_rc, _overall_stdout, _overall_stderr
-
-
-def _find_py_unit_test_files(node, modules):
-    if isfile(node):
-        return [node]
-    _files = []
-    if len(modules) == 0:
-        _files.extend([join(node, f) for f in os.listdir(node) if _is_py_unit_test_file(join(node, f))])
-        _node_dirs = [d for d in os.listdir(node) if isdir(join(node, d))]
-        for d in _node_dirs:
-            if d == '__pycache__':
-                continue
-            _files.extend(_find_py_unit_test_files(join(node, d), ()))
-    else:
-        for _m in modules:
-            _files.extend(_find_py_unit_test_files(join(node, _m), ()))
-    return _files
-
-
-def _is_py_unit_test_file(file_path):
-    if not file_path.endswith('.py'):
-        return False
-    if not isfile(file_path):
-        return False
-    with open(file_path, 'r') as f:
-        return 'import unittest' in f.read()
+        _overall_stderr.append(str(_e))
+    finally:
+        os.environ = _orig_env
+        if venv_path is not None:
+            sys.path = _orig_sys_path
+            sys.prefix = _orig_sys_prefix
+    return _overall_rc, os.linesep.join(_overall_stdout), os.linesep.join(_overall_stderr)

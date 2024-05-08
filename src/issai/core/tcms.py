@@ -41,6 +41,7 @@ The module uses dict values for TCMS entities, as the XML-RPC API.
 import datetime
 import re
 import threading
+import traceback
 import xmlrpc.client
 
 from tcms_api import TCMS
@@ -429,9 +430,11 @@ def create_tcms_object(class_id, container_object):
         if ATTR_ATTACHMENTS in container_object:
             _object[ATTR_ATTACHMENTS] = container_object[ATTR_ATTACHMENTS]
         return _object
-    except IssaiException:
+    except IssaiException as _e:
+        traceback.print_exception(_e)
         raise
     except Exception as _e:
+        traceback.print_exception(_e)
         raise IssaiException(E_TCMS_CREATE_OBJECT_FAILED, tcms_class_name_for_id(class_id), str(_e))
 
 

@@ -417,10 +417,10 @@ def _run_case(plan_entity, plan_id, case_id, executable_table, local_config, run
         _run_assistant(CFG_PAR_RUNNER_CASE_ASSISTANT, ASSISTANT_ACTION_INIT, _case_name,
                        executable_table, local_config, _case_env, task_monitor)
         # run test case
-        _args = f"'{_case_name}' {_case[ATTR_ARGUMENTS]}"
-        task_monitor.log(I_RUN_RUNNING_SCRIPT, _script, _args)
+        _args = _case[ATTR_ARGUMENTS]
+        task_monitor.log(I_RUN_RUNNING_SCRIPT, _script, f"'{_case_name}' {_args}")
         if not task_monitor.is_dry_run():
-            _rc, _stdout, _stderr = _executable.run(runtime_env, _args)
+            _rc, _stdout, _stderr = _executable.run(runtime_env, f"'{_case_name}'", _args)
             _result.set_attr_value(ATTR_STATUS, result_status_name(_rc))
             # save output to file
             _case = plan_entity.get_part(ATTR_TEST_CASES, case_id)
@@ -510,6 +510,13 @@ def initial_env_vars(local_config, working_path, user_name, attachment_path=None
         _runtime_env[ENVA_PYTHON_PATH] = _source_path
     else:
         _runtime_env[ENVA_PYTHON_PATH] = f'{_source_path}:{_py_path}'
+    _tests_path = local_config.get_value(CFG_PAR_PRODUCT_TEST_PATH)
+    if _tests_path is None:
+        _tests_path = _source_path
+    else:
+        if not os.path.isdir(_tests_path):
+            raise IssaiException(E_RUN_TEST_PATH_INVALID, _tests_path)
+    _runtime_env[ENVA_ISSAI_TESTS_PATH] = _tests_path
     _runtime_env[ENVA_ATTACHMENTS_PATH] = os.path.join(working_path, ATTACHMENTS_ROOT_DIR)
     _runtime_env[ENVA_ISSAI_USERNAME] = user_name
     if attachment_path is not None:

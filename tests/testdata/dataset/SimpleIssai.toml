@@ -195,7 +195,7 @@ runs = []
 # options: update-tcms=False
 # expected result: -
 id = 1010
-name = "UnmanagedSinglePlan-WithRun-ManualCasesOnly-WithExecutions"
+name = "UnmanagedSinglePlan-WithRun-UnmanagedManualCasesOnly-WithExecutions"
 text = "Unmanaged test plan with three manual test cases.\nTest run for default build exists.\nAll test executions exist."
 is_active = true
 product_version = 101
@@ -211,7 +211,7 @@ runs = [3010]
 # options: update-tcms=False
 # expected result: -
 id = 1011
-name = "UnmanagedSinglePlan-WithRun-ManualCasesOnly-NoExecutions"
+name = "UnmanagedSinglePlan-WithRun-UnmanagedManualCasesOnly-NoExecutions"
 text = "Unmanaged test plan with three manual test cases.\nTest run for default build exists.\nNo test executions exist."
 is_active = true
 product_version = 101
@@ -227,7 +227,7 @@ runs = [3011]
 # options: update-tcms=False
 # expected result: -
 id = 1012
-name = "UnmanagedSinglePlan-NoRun-ManualCasesOnly"
+name = "UnmanagedSinglePlan-NoRun-UnmanagedManualCasesOnly"
 text = "Unmanaged test plan with one manual test case.\nNo test run exists."
 is_active = true
 product_version = 101
@@ -243,7 +243,7 @@ runs = []
 # options: update-tcms=False
 # expected result: PASSED
 id = 1013
-name = "UnmanagedSinglePlan-WithRun-AutomatedCasesOnly-WithExecutions"
+name = "UnmanagedSinglePlan-WithRun-UnmanagedAutomatedCasesOnly-WithExecutions"
 text = "Unmanaged test plan with three automated test cases.\nTest run and all test executions exist."
 is_active = true
 product_version = 101
@@ -259,7 +259,7 @@ runs = [3013]
 # options: update-tcms=False
 # expected result: PASSED
 id = 1014
-name = "UnmanagedSinglePlan-WithRun-AutomatedCasesOnly-NoExecutions"
+name = "UnmanagedSinglePlan-WithRun-UnmanagedAutomatedCasesOnly-NoExecutions"
 text = "Unmanaged test plan with three automated test cases.\nTest run exists.\nNo executions exist"
 is_active = true
 product_version = 101
@@ -275,7 +275,7 @@ runs = [3014]
 # options: update-tcms=False
 # expected result: PASSED
 id = 1015
-name = "UnmanagedSinglePlan-NoRun-AutomatedCasesOnly"
+name = "UnmanagedSinglePlan-NoRun-UnmanagedAutomatedCasesOnly"
 text = "Unmanaged test plan with three automated test cases.\nNo test run and no test executions exist."
 is_active = true
 product_version = 101
@@ -486,6 +486,2258 @@ tags = []
 cases = [2030, 2031]
 runs = [3027]
 
+[[test-plans]]
+# options: update-tcms=True
+# expected result: PASSED
+id = 11001
+name = "ManagedEmptyPlan-Active-WithRun"
+text = "Empty active test plan with test run, without any test cases."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = []
+cases = []
+runs = [13001]
+
+[[test-plans]]
+# options: update-tcms=True
+# expected result: FAILED
+# reason: run does not exist
+id = 11002
+name = "ManagedEmptyPlan-Active-NoRun"
+text = "Empty active test plan without test run and test cases."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = []
+cases = []
+runs = []
+
+[[test-plans]]
+# options: update-tcms=True
+# expected result: -
+# reason: inactive plans are skipped
+id = 11003
+name = "ManagedEmptyPlan-Inactive-WithRun"
+text = "Empty inactive test plan with test run, without any test cases."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = []
+cases = []
+runs = [13003]
+
+[[test-plans]]
+# options: update-tcms=True
+# expected result: -
+# reason: inactive plans are skipped
+id = 11004
+name = "ManagedEmptyPlan-Inactive-NoRun"
+text = "Empty inactive test plan without test run and test cases."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = []
+cases = []
+runs = []
+
+[[test-plans]]
+# options: update-tcms=True
+# expected result: PASSED/-
+# reason: -/plans not matching tagged operating system are skipped
+id = 11005
+name = "ManagedEmptyPlan-OsLinux-WithRun"
+text = "Empty active test plan with test run, without any test cases. Tagged with os.linux"
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = ["os.linux"]
+cases = []
+runs = [13005]
+
+[[test-plans]]
+# options: update-tcms=True
+# expected result: FAILED/-
+# reason: run does not exist/plans not matching tagged operating system are skipped
+id = 11006
+name = "ManagedEmptyPlan-OsLinux-NoRun"
+text = "Empty inactive test plan without test run and test cases."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = ["os.linux"]
+cases = []
+runs = []
+
+[[test-plans]]
+# options: update-tcms=True
+# expected result: PASSED/-
+# reason: -/plans not matching tagged operating system are skipped
+id = 11007
+name = "ManagedEmptyPlan-OsWindows-WithRun"
+text = "Empty active test plan with test run, without any test cases. Tagged with os.linux"
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = ["os.windows"]
+cases = []
+runs = [13007]
+
+[[test-plans]]
+# options: update-tcms=True
+# expected result: FAILED/-
+# reason: run does not exist/plans not matching tagged operating system are skipped
+id = 11008
+name = "ManagedEmptyPlan-OsWindows-NoRun"
+text = "Empty inactive test plan without test run and test cases."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = ["os.windows"]
+cases = []
+runs = []
+
+[[test-plans]]
+# options: update-tcms=True
+# expected result: -
+id = 11010
+name = "ManagedSinglePlan-WithRun-ManagedManualCasesOnly-WithExecutions"
+text = "Managed test plan with three manual test cases.\nTest run for default build exists.\nAll test executions exist."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = []
+cases = [12901, 12902, 12903]
+runs = [13010]
+
+[[test-plans]]
+# options: update-tcms=True
+# expected result: -
+id = 11011
+name = "ManagedSinglePlan-WithRun-ManagedManualCasesOnly-NoExecutions"
+text = "Managed test plan with three manual test cases.\nTest run for default build exists.\nNo test executions exist."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = []
+cases = [12904, 12905, 12906]
+runs = [13011]
+
+[[test-plans]]
+# options: update-tcms=True
+# expected result: -
+id = 11012
+name = "ManagedSinglePlan-NoRun-ManagedManualCasesOnly"
+text = "Managed test plan with one manual test case.\nNo test run exists."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = []
+cases = [12907]
+runs = []
+
+[[test-plans]]
+# options: update-tcms=True
+# expected result: PASSED
+id = 11013
+name = "ManagedSinglePlan-WithRun-ManagedAutomatedCasesOnly-WithExecutions"
+text = "Managed test plan with three automated test cases.\nTest run and all test executions exist."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = []
+cases = [12001, 12002, 12003]
+runs = [13013]
+
+[[test-plans]]
+# options: update-tcms=True
+# expected result: PASSED
+id = 11014
+name = "ManagedSinglePlan-WithRun-ManagedAutomatedCasesOnly-NoExecutions"
+text = "Managed test plan with three automated test cases.\nTest run exists.\nNo executions exist"
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = []
+cases = [12004, 12005, 12006]
+runs = [13014]
+
+[[test-plans]]
+# options: update-tcms=True
+# expected result: PASSED
+id = 11015
+name = "ManagedSinglePlan-NoRun-ManagedAutomatedCasesOnly"
+text = "Managed test plan with three automated test cases.\nNo test run and no test executions exist."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = []
+cases = [12007, 12008, 12009]
+runs = []
+
+[[test-plans]]
+# options: update-tcms=True
+# expected result: PASSED
+id = 11016
+name = "ManagedSinglePlan-WithExecutions-MixedCases"
+text = "Managed test plan with one manual, one automated and two OS specific test cases.\nTest run and all test executions exist."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = []
+cases = [12010, 12011, 12012, 12908]
+runs = [13016]
+
+[[test-plans]]
+# options: update-tcms=True
+# expected result: PASSED
+id = 11017
+name = "ManagedSinglePlan-NoRun-MixedCases"
+text = "Managed test plan with one manual, one automated and two OS specific test cases.\nNo test run exists."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = []
+cases = [12013, 12014, 12015, 12909]
+runs = []
+
+[[test-plans]]
+# options: update-tcms=True
+# expected result: FAILED
+id = 11018
+name = "ManagedSinglePlan-WithExecutions-FaultyCases"
+text = "Managed test plan with test cases containing invalid script definitions.\nTest run and all test executions exist."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = []
+cases = [12016, 12017, 12018]
+runs = [13018]
+
+[[test-plans]]
+# options: update-tcms=True
+# expected result: FAILED
+id = 11019
+name = "ManagedSinglePlan-NoRun-FaultyCases"
+text = "Managed test plan with test cases containing invalid script definitions.\nNo test run exists."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = []
+cases = [12019, 12020, 12021]
+runs = []
+
+[[test-plans]]
+# options: update-tcms=True
+# expected result: PASSED
+id = 11020
+name = "ManagedParentPlan20"
+text = "Managed test plan with two child plans, no test cases.\nEach child plan contains 3 test cases, one shared.\nOne plan with executions, one without run."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = []
+cases = []
+runs = [13020]
+
+[[test-plans]]
+# options: update-tcms=True
+# expected result: PASSED
+id = 11021
+name = "ManagedChildPlan21"
+text = "Managed test plan with 3 test cases, one shared.\nAll executions exist."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+parent = 11020
+attachments = []
+tags = []
+cases = [12022, 12023, 12024]
+runs = [13021]
+
+[[test-plans]]
+# options: update-tcms=True
+# expected result: PASSED
+id = 11022
+name = "ManagedChildPlan22"
+text = "Managed test plan with 3 test cases, one shared.\nRun does not exist."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+parent = 11020
+attachments = []
+tags = []
+cases = [12022, 12025, 12026]
+runs = []
+
+[[test-plans]]
+# options: update-tcms=True
+# expected result: PASSED
+id = 11023
+name = "ManagedFamilyPlan23"
+text = "Managed test plan with one child and 3 grandchild plans.\nRun exists."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+parent = 11020
+attachments = []
+tags = []
+cases = [12027]
+runs = [13023]
+
+[[test-plans]]
+# options: update-tcms=True
+# expected result: PASSED
+id = 11024
+name = "ManagedChildPlan24"
+text = "Managed test plan with 3 child plans and 2 test cases, one shared.\nRun exists."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+parent = 11023
+attachments = []
+tags = []
+cases = [12028, 12029]
+runs = [13024]
+
+[[test-plans]]
+# options: update-tcms=True
+# expected result: PASSED
+id = 11025
+name = "ManagedGrandChildPlan25"
+text = "Managed test plan tagged with wrong OS.\nRun does not exist."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+parent = 11024
+attachments = []
+tags = ["os.windows"]
+cases = []
+runs = []
+
+[[test-plans]]
+# options: update-tcms=True
+# expected result: PASSED
+id = 11026
+name = "ManagedGrandChildPlan26"
+text = "Managed inactive test plan.\nRun does not exist."
+is_active = false
+product_version = 101
+product = 201
+author = 101
+type = 102
+parent = 11024
+attachments = []
+tags = []
+cases = []
+runs = []
+
+[[test-plans]]
+# options: update-tcms=True
+# expected result: PASSED
+id = 11027
+name = "ManagedGrandChildPlan27"
+text = "Managed test plan with 2 test cases, one shared.\nRun exists."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+parent = 11024
+attachments = []
+tags = []
+cases = [12030, 12031]
+runs = [13027]
+
+[[test-cases]]
+id = 2001
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-UnmanagedAutomatedCase01"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [4001]
+
+[[test-cases]]
+id = 2002
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-UnmanagedAutomatedCase02"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [4002]
+
+[[test-cases]]
+id = 2003
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-UnmanagedAutomatedCase03"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [4003]
+
+[[test-cases]]
+id = 2004
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-UnmanagedAutomatedCase04"
+notes = ""
+text = "Automated test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 2005
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-UnmanagedAutomatedCase05"
+notes = ""
+text = "Automated test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 2006
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-UnmanagedAutomatedCase06"
+notes = ""
+text = "Automated test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 2007
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-UnmanagedAutomatedCase07"
+notes = ""
+text = "Automated test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 2008
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-UnmanagedAutomatedCase08"
+notes = ""
+text = "Automated test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 2009
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-UnmanagedAutomatedCase09"
+notes = ""
+text = "Automated test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 2010
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-UnmanagedAutomatedCase10"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [4010]
+
+[[test-cases]]
+id = 2011
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-UnmanagedAutomatedCase11"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = ["os.linux"]
+executions = [4011]
+
+[[test-cases]]
+id = 2012
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-UnmanagedAutomatedCase12"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = ["os.windows"]
+executions = [4012]
+
+[[test-cases]]
+id = 2013
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-UnmanagedAutomatedCase13"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 2014
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-UnmanagedAutomatedCase14"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = ["os.linux"]
+executions = []
+
+[[test-cases]]
+id = 2015
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-UnmanagedAutomatedCase15"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = ["os.windows"]
+executions = []
+
+[[test-cases]]
+id = 2016
+is_automated = true
+script = ""
+arguments = ""
+summary = "SimpleIssai-UnmanagedAutomatedCase16WithoutScript"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [4016]
+
+[[test-cases]]
+id = 2017
+is_automated = true
+script = "script:nonexistent.xyz"
+arguments = ""
+summary = "SimpleIssai-UnmanagedAutomatedCase17WithNonExistingScript"
+notes = ""
+text = "Automated test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [4017]
+
+[[test-cases]]
+id = 2018
+is_automated = true
+script = "///blabla"
+arguments = ""
+summary = "SimpleIssai-UnmanagedAutomatedCase18WithInvalidScriptUrl"
+notes = ""
+text = "Automated test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [4018]
+
+[[test-cases]]
+id = 2019
+is_automated = true
+script = ""
+arguments = ""
+summary = "SimpleIssai-UnmanagedAutomatedCase19WithoutScript"
+notes = ""
+text = "Automated test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 2020
+is_automated = true
+script = "script:nonexistent.xyz"
+arguments = ""
+summary = "SimpleIssai-UnmanagedAutomatedCase20WithNonExistingScript"
+notes = ""
+text = "Automated test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 2021
+is_automated = true
+script = "///blabla"
+arguments = ""
+summary = "SimpleIssai-UnmanagedAutomatedCase21WithInvalidScriptUrl"
+notes = ""
+text = "Automated test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 2022
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-UnmanagedAutomatedCase22"
+notes = ""
+text = "Automated test case with/without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [4022]
+
+[[test-cases]]
+id = 2023
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-UnmanagedAutomatedCase23"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [4023]
+
+[[test-cases]]
+id = 2024
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-UnmanagedAutomatedCase24"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [4024]
+
+[[test-cases]]
+id = 2025
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-UnmanagedAutomatedCase25"
+notes = ""
+text = "Automated test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 2026
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-UnmanagedAutomatedCase26"
+notes = ""
+text = "Automated test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 2027
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-UnmanagedAutomatedCase27"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [4027]
+
+[[test-cases]]
+id = 2028
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-UnmanagedAutomatedCase28"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [4028]
+
+[[test-cases]]
+id = 2029
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-UnmanagedAutomatedCase29"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [4029]
+
+[[test-cases]]
+id = 2030
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-UnmanagedAutomatedCase30"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [4030]
+
+[[test-cases]]
+id = 2031
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-UnmanagedAutomatedCase31"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [4031]
+
+[[test-cases]]
+id = 2901
+is_automated = false
+arguments = ""
+summary = "SimpleIssai-UnmanagedManualCase01"
+notes = ""
+text = "Manual test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [4901]
+
+[[test-cases]]
+id = 2902
+is_automated = false
+arguments = ""
+summary = "SimpleIssai-UnmanagedManualCase02"
+notes = ""
+text = "Manual test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [4902]
+
+[[test-cases]]
+id = 2903
+is_automated = false
+arguments = ""
+summary = "SimpleIssai-UnmanagedManualCase03"
+notes = ""
+text = "Manual test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [4903]
+
+[[test-cases]]
+id = 2904
+is_automated = false
+arguments = ""
+summary = "SimpleIssai-UnmanagedManualCase04"
+notes = ""
+text = "Manual test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 2905
+is_automated = false
+arguments = ""
+summary = "SimpleIssai-UnmanagedManualCase05"
+notes = ""
+text = "Manual test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 2906
+is_automated = false
+arguments = ""
+summary = "SimpleIssai-UnmanagedManualCase06"
+notes = ""
+text = "Manual test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 2907
+is_automated = false
+arguments = ""
+summary = "SimpleIssai-UnmanagedManualCase07"
+notes = ""
+text = "Manual test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 2908
+is_automated = false
+arguments = ""
+summary = "SimpleIssai-UnmanagedManualCase08"
+notes = ""
+text = "Manual test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [4908]
+
+[[test-cases]]
+id = 2909
+is_automated = false
+arguments = ""
+summary = "SimpleIssai-UnmanagedManualCase09"
+notes = ""
+text = "Manual test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 12001
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-ManagedAutomatedCase01"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [14001]
+
+[[test-cases]]
+id = 12002
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-ManagedAutomatedCase02"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [14002]
+
+[[test-cases]]
+id = 12003
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-ManagedAutomatedCase03"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [14003]
+
+[[test-cases]]
+id = 12004
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-ManagedAutomatedCase04"
+notes = ""
+text = "Automated test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 12005
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-ManagedAutomatedCase05"
+notes = ""
+text = "Automated test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 12006
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-ManagedAutomatedCase06"
+notes = ""
+text = "Automated test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 12007
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-ManagedAutomatedCase07"
+notes = ""
+text = "Automated test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 12008
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-ManagedAutomatedCase08"
+notes = ""
+text = "Automated test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 12009
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-ManagedAutomatedCase09"
+notes = ""
+text = "Automated test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 12010
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-ManagedAutomatedCase10"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [14010]
+
+[[test-cases]]
+id = 12011
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-ManagedAutomatedCase11"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = ["os.linux"]
+executions = [14011]
+
+[[test-cases]]
+id = 12012
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-ManagedAutomatedCase12"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = ["os.windows"]
+executions = [14012]
+
+[[test-cases]]
+id = 12013
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-ManagedAutomatedCase13"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 12014
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-ManagedAutomatedCase14"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = ["os.linux"]
+executions = []
+
+[[test-cases]]
+id = 12015
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-ManagedAutomatedCase15"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = ["os.windows"]
+executions = []
+
+[[test-cases]]
+id = 12016
+is_automated = true
+script = ""
+arguments = ""
+summary = "SimpleIssai-ManagedAutomatedCase16WithoutScript"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [14016]
+
+[[test-cases]]
+id = 12017
+is_automated = true
+script = "script:nonexistent.xyz"
+arguments = ""
+summary = "SimpleIssai-ManagedAutomatedCase17WithNonExistingScript"
+notes = ""
+text = "Automated test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [14017]
+
+[[test-cases]]
+id = 12018
+is_automated = true
+script = "///blabla"
+arguments = ""
+summary = "SimpleIssai-ManagedAutomatedCase18WithInvalidScriptUrl"
+notes = ""
+text = "Automated test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [14018]
+
+[[test-cases]]
+id = 12019
+is_automated = true
+script = ""
+arguments = ""
+summary = "SimpleIssai-ManagedAutomatedCase19WithoutScript"
+notes = ""
+text = "Automated test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 12020
+is_automated = true
+script = "script:nonexistent.xyz"
+arguments = ""
+summary = "SimpleIssai-ManagedAutomatedCase20WithNonExistingScript"
+notes = ""
+text = "Automated test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 12021
+is_automated = true
+script = "///blabla"
+arguments = ""
+summary = "SimpleIssai-ManagedAutomatedCase21WithInvalidScriptUrl"
+notes = ""
+text = "Automated test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 12022
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-ManagedAutomatedCase22"
+notes = ""
+text = "Automated test case with/without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [14022]
+
+[[test-cases]]
+id = 12023
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-ManagedAutomatedCase23"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [14023]
+
+[[test-cases]]
+id = 12024
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-ManagedAutomatedCase24"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [14024]
+
+[[test-cases]]
+id = 12025
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-ManagedAutomatedCase25"
+notes = ""
+text = "Automated test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 12026
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-ManagedAutomatedCase26"
+notes = ""
+text = "Automated test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 12027
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-ManagedAutomatedCase27"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [14027]
+
+[[test-cases]]
+id = 12028
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-ManagedAutomatedCase28"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [14028]
+
+[[test-cases]]
+id = 12029
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-ManagedAutomatedCase29"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [14029]
+
+[[test-cases]]
+id = 12030
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-ManagedAutomatedCase30"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [14030]
+
+[[test-cases]]
+id = 12031
+is_automated = true
+script = "script:run_case.py"
+arguments = ""
+summary = "SimpleIssai-ManagedAutomatedCase31"
+notes = ""
+text = "Automated test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [14031]
+
+[[test-cases]]
+id = 12901
+is_automated = false
+arguments = ""
+summary = "SimpleIssai-ManagedManualCase01"
+notes = ""
+text = "Manual test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [14901]
+
+[[test-cases]]
+id = 12902
+is_automated = false
+arguments = ""
+summary = "SimpleIssai-ManagedManualCase02"
+notes = ""
+text = "Manual test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [14902]
+
+[[test-cases]]
+id = 12903
+is_automated = false
+arguments = ""
+summary = "SimpleIssai-ManagedManualCase03"
+notes = ""
+text = "Manual test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [14903]
+
+[[test-cases]]
+id = 12904
+is_automated = false
+arguments = ""
+summary = "SimpleIssai-ManagedManualCase04"
+notes = ""
+text = "Manual test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 12905
+is_automated = false
+arguments = ""
+summary = "SimpleIssai-ManagedManualCase05"
+notes = ""
+text = "Manual test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 12906
+is_automated = false
+arguments = ""
+summary = "SimpleIssai-ManagedManualCase06"
+notes = ""
+text = "Manual test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 12907
+is_automated = false
+arguments = ""
+summary = "SimpleIssai-ManagedManualCase07"
+notes = ""
+text = "Manual test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
+[[test-cases]]
+id = 12908
+is_automated = false
+arguments = ""
+summary = "SimpleIssai-ManagedManualCase08"
+notes = ""
+text = "Manual test case with execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [14908]
+
+[[test-cases]]
+id = 12909
+is_automated = false
+arguments = ""
+summary = "SimpleIssai-ManagedManualCase09"
+notes = ""
+text = "Manual test case without execution."
+case_status = 102
+category = 101
+priority = 101
+author = 101
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+
 [[test-runs]]
 id = 3001
 summary = "UnmanagedEmptyPlan-Active-WithRun"
@@ -536,7 +2788,7 @@ executions = []
 
 [[test-runs]]
 id = 3010
-summary = "UnmanagedSinglePlan-WithRun-ManualCasesOnly-WithExecutions"
+summary = "UnmanagedSinglePlan-WithRun-UnmanagedManualCasesOnly-WithExecutions"
 notes = ""
 plan = 1010
 build = 101
@@ -548,7 +2800,7 @@ executions = [4901, 4902, 4903]
 
 [[test-runs]]
 id = 3011
-summary = "UnmanagedSinglePlan-WithRun-ManualCasesOnly-NoExecutions"
+summary = "UnmanagedSinglePlan-WithRun-UnmanagedManualCasesOnly-NoExecutions"
 notes = ""
 plan = 1011
 build = 101
@@ -560,7 +2812,7 @@ executions = []
 
 [[test-runs]]
 id = 3013
-summary = "UnmanagedSinglePlan-WithRun-AutomatedCasesOnly-WithExecutionss"
+summary = "UnmanagedSinglePlan-WithRun-UnmanagedAutomatedCasesOnly-WithExecutionss"
 notes = ""
 plan = 1013
 build = 101
@@ -572,7 +2824,7 @@ executions = [4001, 4002, 4003]
 
 [[test-runs]]
 id = 3014
-summary = "UnmanagedSinglePlan-WithRun-AutomatedCasesOnly-NoExecutions"
+summary = "UnmanagedSinglePlan-WithRun-UnmanagedAutomatedCasesOnly-NoExecutions"
 notes = ""
 plan = 1014
 build = 101
@@ -666,916 +2918,185 @@ properties = []
 tags = []
 executions = [4030, 4031]
 
-[[test-cases]]
-id = 2001
-is_automated = true
-script = "script:run_case.py"
-arguments = ""
-summary = "SimpleIssai-AutomatedCase01"
+[[test-runs]]
+id = 13001
+summary = "ManagedEmptyPlan-Active-WithRun"
 notes = ""
-text = "Automated test case with execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
-properties = []
-tags = []
-executions = [4001]
-
-[[test-cases]]
-id = 2002
-is_automated = true
-script = "script:run_case.py"
-arguments = ""
-summary = "SimpleIssai-AutomatedCase02"
-notes = ""
-text = "Automated test case with execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
-properties = []
-tags = []
-executions = [4002]
-
-[[test-cases]]
-id = 2003
-is_automated = true
-script = "script:run_case.py"
-arguments = ""
-summary = "SimpleIssai-AutomatedCase03"
-notes = ""
-text = "Automated test case with execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
-properties = []
-tags = []
-executions = [4003]
-
-[[test-cases]]
-id = 2004
-is_automated = true
-script = "script:run_case.py"
-arguments = ""
-summary = "SimpleIssai-AutomatedCase04"
-notes = ""
-text = "Automated test case without execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
+plan = 11001
+build = 101
+manager = 101
+default_tester = 102
 properties = []
 tags = []
 executions = []
 
-[[test-cases]]
-id = 2005
-is_automated = true
-script = "script:run_case.py"
-arguments = ""
-summary = "SimpleIssai-AutomatedCase05"
+[[test-runs]]
+id = 13003
+summary = "ManagedEmptyPlan-Inactive-WithRun"
 notes = ""
-text = "Automated test case without execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
+plan = 11003
+build = 101
+manager = 101
+default_tester = 102
 properties = []
 tags = []
 executions = []
 
-[[test-cases]]
-id = 2006
-is_automated = true
-script = "script:run_case.py"
-arguments = ""
-summary = "SimpleIssai-AutomatedCase06"
+[[test-runs]]
+id = 13005
+summary = "ManagedEmptyPlan-OsLinux-WithRun"
 notes = ""
-text = "Automated test case without execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
+plan = 11005
+build = 101
+manager = 101
+default_tester = 102
 properties = []
 tags = []
 executions = []
 
-[[test-cases]]
-id = 2007
-is_automated = true
-script = "script:run_case.py"
-arguments = ""
-summary = "SimpleIssai-AutomatedCase07"
+[[test-runs]]
+id = 13007
+summary = "ManagedEmptyPlan-OsWindows-WithRun"
 notes = ""
-text = "Automated test case without execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
+plan = 11007
+build = 101
+manager = 101
+default_tester = 102
 properties = []
 tags = []
 executions = []
 
-[[test-cases]]
-id = 2008
-is_automated = true
-script = "script:run_case.py"
-arguments = ""
-summary = "SimpleIssai-AutomatedCase08"
+[[test-runs]]
+id = 13010
+summary = "ManagedSinglePlan-WithRun-ManagedManualCasesOnly-WithExecutions"
 notes = ""
-text = "Automated test case without execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
+plan = 11010
+build = 101
+manager = 101
+default_tester = 102
+properties = []
+tags = []
+executions = [14901, 14902, 14903]
+
+[[test-runs]]
+id = 13011
+summary = "ManagedSinglePlan-WithRun-ManagedManualCasesOnly-NoExecutions"
+notes = ""
+plan = 11011
+build = 101
+manager = 101
+default_tester = 102
 properties = []
 tags = []
 executions = []
 
-[[test-cases]]
-id = 2009
-is_automated = true
-script = "script:run_case.py"
-arguments = ""
-summary = "SimpleIssai-AutomatedCase09"
+[[test-runs]]
+id = 13013
+summary = "ManagedSinglePlan-WithRun-ManagedAutomatedCasesOnly-WithExecutionss"
 notes = ""
-text = "Automated test case without execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
+plan = 11013
+build = 101
+manager = 101
+default_tester = 102
+properties = []
+tags = []
+executions = [14001, 14002, 14003]
+
+[[test-runs]]
+id = 13014
+summary = "ManagedSinglePlan-WithRun-ManagedAutomatedCasesOnly-NoExecutions"
+notes = ""
+plan = 11014
+build = 101
+manager = 101
+default_tester = 102
 properties = []
 tags = []
 executions = []
 
-[[test-cases]]
-id = 2010
-is_automated = true
-script = "script:run_case.py"
-arguments = ""
-summary = "SimpleIssai-AutomatedCase10"
+[[test-runs]]
+id = 13016
+summary = "ManagedSinglePlan-WithExecutions-MixedCases"
 notes = ""
-text = "Automated test case with execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
+plan = 11016
+build = 101
+manager = 101
+default_tester = 102
 properties = []
 tags = []
-executions = [4010]
+executions = [14010, 14011, 14012, 14908]
 
-[[test-cases]]
-id = 2011
-is_automated = true
-script = "script:run_case.py"
-arguments = ""
-summary = "SimpleIssai-AutomatedCase11"
+[[test-runs]]
+id = 13018
+summary = "ManagedSinglePlan-WithExecutions-FaultyCases"
 notes = ""
-text = "Automated test case with execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
+plan = 11018
+build = 101
+manager = 101
+default_tester = 102
 properties = []
-tags = ["os.linux"]
-executions = [4011]
+tags = []
+executions = [14016, 14017, 14018]
 
-[[test-cases]]
-id = 2012
-is_automated = true
-script = "script:run_case.py"
-arguments = ""
-summary = "SimpleIssai-AutomatedCase12"
+[[test-runs]]
+id = 13020
+summary = "ManagedParentPlan20"
 notes = ""
-text = "Automated test case with execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
-properties = []
-tags = ["os.windows"]
-executions = [4012]
-
-[[test-cases]]
-id = 2013
-is_automated = true
-script = "script:run_case.py"
-arguments = ""
-summary = "SimpleIssai-AutomatedCase13"
-notes = ""
-text = "Automated test case with execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
+plan = 11020
+build = 101
+manager = 101
+default_tester = 102
 properties = []
 tags = []
 executions = []
 
-[[test-cases]]
-id = 2014
-is_automated = true
-script = "script:run_case.py"
-arguments = ""
-summary = "SimpleIssai-AutomatedCase14"
+[[test-runs]]
+id = 13021
+summary = "ManagedChildPlan21"
 notes = ""
-text = "Automated test case with execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
-properties = []
-tags = ["os.linux"]
-executions = []
-
-[[test-cases]]
-id = 2015
-is_automated = true
-script = "script:run_case.py"
-arguments = ""
-summary = "SimpleIssai-AutomatedCase15"
-notes = ""
-text = "Automated test case with execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
-properties = []
-tags = ["os.windows"]
-executions = []
-
-[[test-cases]]
-id = 2016
-is_automated = true
-script = ""
-arguments = ""
-summary = "SimpleIssai-AutomatedCase16WithoutScript"
-notes = ""
-text = "Automated test case with execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
+plan = 11021
+build = 101
+manager = 101
+default_tester = 102
 properties = []
 tags = []
-executions = [4016]
+executions = [14022, 14023, 14024]
 
-[[test-cases]]
-id = 2017
-is_automated = true
-script = "script:nonexistent.xyz"
-arguments = ""
-summary = "SimpleIssai-AutomatedCase17WithNonExistingScript"
+[[test-runs]]
+id = 13023
+summary = "ManagedFamilyPlan23"
 notes = ""
-text = "Automated test case without execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
+plan = 11023
+build = 101
+manager = 101
+default_tester = 102
 properties = []
 tags = []
-executions = [4017]
+executions = [14027]
 
-[[test-cases]]
-id = 2018
-is_automated = true
-script = "///blabla"
-arguments = ""
-summary = "SimpleIssai-AutomatedCase18WithInvalidScriptUrl"
+[[test-runs]]
+id = 13024
+summary = "ManagedChildPlan24"
 notes = ""
-text = "Automated test case without execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
+plan = 11024
+build = 101
+manager = 101
+default_tester = 102
 properties = []
 tags = []
-executions = [4018]
+executions = [14028, 14029]
 
-[[test-cases]]
-id = 2019
-is_automated = true
-script = ""
-arguments = ""
-summary = "SimpleIssai-AutomatedCase19WithoutScript"
+[[test-runs]]
+id = 13027
+summary = "ManagedGrandChildPlan27"
 notes = ""
-text = "Automated test case without execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
+plan = 11027
+build = 101
+manager = 101
+default_tester = 102
 properties = []
 tags = []
-executions = []
-
-[[test-cases]]
-id = 2020
-is_automated = true
-script = "script:nonexistent.xyz"
-arguments = ""
-summary = "SimpleIssai-AutomatedCase20WithNonExistingScript"
-notes = ""
-text = "Automated test case without execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
-properties = []
-tags = []
-executions = []
-
-[[test-cases]]
-id = 2021
-is_automated = true
-script = "///blabla"
-arguments = ""
-summary = "SimpleIssai-AutomatedCase21WithInvalidScriptUrl"
-notes = ""
-text = "Automated test case without execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
-properties = []
-tags = []
-executions = []
-
-[[test-cases]]
-id = 2022
-is_automated = true
-script = "script:run_case.py"
-arguments = ""
-summary = "SimpleIssai-AutomatedCase22"
-notes = ""
-text = "Automated test case with/without execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
-properties = []
-tags = []
-executions = [4022]
-
-[[test-cases]]
-id = 2023
-is_automated = true
-script = "script:run_case.py"
-arguments = ""
-summary = "SimpleIssai-AutomatedCase23"
-notes = ""
-text = "Automated test case with execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
-properties = []
-tags = []
-executions = [4023]
-
-[[test-cases]]
-id = 2024
-is_automated = true
-script = "script:run_case.py"
-arguments = ""
-summary = "SimpleIssai-AutomatedCase24"
-notes = ""
-text = "Automated test case with execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
-properties = []
-tags = []
-executions = [4024]
-
-[[test-cases]]
-id = 2025
-is_automated = true
-script = "script:run_case.py"
-arguments = ""
-summary = "SimpleIssai-AutomatedCase25"
-notes = ""
-text = "Automated test case without execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
-properties = []
-tags = []
-executions = []
-
-[[test-cases]]
-id = 2026
-is_automated = true
-script = "script:run_case.py"
-arguments = ""
-summary = "SimpleIssai-AutomatedCase26"
-notes = ""
-text = "Automated test case without execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
-properties = []
-tags = []
-executions = []
-
-[[test-cases]]
-id = 2027
-is_automated = true
-script = "script:run_case.py"
-arguments = ""
-summary = "SimpleIssai-AutomatedCase27"
-notes = ""
-text = "Automated test case with execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
-properties = []
-tags = []
-executions = [4027]
-
-[[test-cases]]
-id = 2028
-is_automated = true
-script = "script:run_case.py"
-arguments = ""
-summary = "SimpleIssai-AutomatedCase28"
-notes = ""
-text = "Automated test case with execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
-properties = []
-tags = []
-executions = [4028]
-
-[[test-cases]]
-id = 2029
-is_automated = true
-script = "script:run_case.py"
-arguments = ""
-summary = "SimpleIssai-AutomatedCase29"
-notes = ""
-text = "Automated test case with execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
-properties = []
-tags = []
-executions = [4029]
-
-[[test-cases]]
-id = 2030
-is_automated = true
-script = "script:run_case.py"
-arguments = ""
-summary = "SimpleIssai-AutomatedCase30"
-notes = ""
-text = "Automated test case with execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
-properties = []
-tags = []
-executions = [4030]
-
-[[test-cases]]
-id = 2031
-is_automated = true
-script = "script:run_case.py"
-arguments = ""
-summary = "SimpleIssai-AutomatedCase31"
-notes = ""
-text = "Automated test case with execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
-properties = []
-tags = []
-executions = [4031]
-
-[[test-cases]]
-id = 2901
-is_automated = false
-arguments = ""
-summary = "SimpleIssai-ManualCase01"
-notes = ""
-text = "Manual test case with execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
-properties = []
-tags = []
-executions = [4901]
-
-[[test-cases]]
-id = 2902
-is_automated = false
-arguments = ""
-summary = "SimpleIssai-ManualCase02"
-notes = ""
-text = "Manual test case with execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
-properties = []
-tags = []
-executions = [4902]
-
-[[test-cases]]
-id = 2903
-is_automated = false
-arguments = ""
-summary = "SimpleIssai-ManualCase03"
-notes = ""
-text = "Manual test case with execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
-properties = []
-tags = []
-executions = [4903]
-
-[[test-cases]]
-id = 2904
-is_automated = false
-arguments = ""
-summary = "SimpleIssai-ManualCase04"
-notes = ""
-text = "Manual test case without execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
-properties = []
-tags = []
-executions = []
-
-[[test-cases]]
-id = 2905
-is_automated = false
-arguments = ""
-summary = "SimpleIssai-ManualCase05"
-notes = ""
-text = "Manual test case without execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
-properties = []
-tags = []
-executions = []
-
-[[test-cases]]
-id = 2906
-is_automated = false
-arguments = ""
-summary = "SimpleIssai-ManualCase06"
-notes = ""
-text = "Manual test case without execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
-properties = []
-tags = []
-executions = []
-
-[[test-cases]]
-id = 2907
-is_automated = false
-arguments = ""
-summary = "SimpleIssai-ManualCase07"
-notes = ""
-text = "Manual test case without execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
-properties = []
-tags = []
-executions = []
-
-[[test-cases]]
-id = 2908
-is_automated = false
-arguments = ""
-summary = "SimpleIssai-ManualCase08"
-notes = ""
-text = "Manual test case with execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
-properties = []
-tags = []
-executions = [4908]
-
-[[test-cases]]
-id = 2909
-is_automated = false
-arguments = ""
-summary = "SimpleIssai-ManualCase09"
-notes = ""
-text = "Manual test case without execution."
-case_status = 102
-category = 101
-priority = 101
-author = 101
-setup_duration = 0.0
-testing_duration = 0.0
-expected_duration = 0.0
-attachments = []
-cc_notifications = []
-comments = []
-components = []
-properties = []
-tags = []
-executions = []
+executions = [14030, 14031]
 
 [[test-executions]]
 id = 4001
@@ -1829,3 +3350,254 @@ comments = []
 properties = []
 links = []
 
+[[test-executions]]
+id = 14001
+assignee = 102
+run = 13013
+case = 12001
+build = 101
+status = 103
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+
+[[test-executions]]
+id = 14002
+assignee = 102
+run = 13013
+case = 12002
+build = 101
+status = 103
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+
+[[test-executions]]
+id = 14003
+assignee = 102
+run = 13013
+case = 12003
+build = 101
+status = 103
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+
+[[test-executions]]
+id = 14010
+assignee = 102
+run = 13016
+case = 12010
+build = 101
+status = 103
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+
+[[test-executions]]
+id = 14011
+assignee = 102
+run = 13016
+case = 12011
+build = 101
+status = 103
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+
+[[test-executions]]
+id = 14012
+assignee = 102
+run = 13016
+case = 12012
+build = 101
+status = 103
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+
+[[test-executions]]
+id = 14016
+assignee = 102
+run = 13018
+case = 12016
+build = 101
+status = 103
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+
+[[test-executions]]
+id = 14017
+assignee = 102
+run = 13018
+case = 12017
+build = 101
+status = 103
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+
+[[test-executions]]
+id = 14018
+assignee = 102
+run = 13018
+case = 12018
+build = 101
+status = 103
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+
+[[test-executions]]
+id = 14022
+assignee = 102
+run = 13021
+case = 12022
+build = 101
+status = 103
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+
+[[test-executions]]
+id = 14023
+assignee = 102
+run = 13021
+case = 12023
+build = 101
+status = 103
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+
+[[test-executions]]
+id = 14024
+assignee = 102
+run = 13021
+case = 12024
+build = 101
+status = 103
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+
+[[test-executions]]
+id = 14027
+assignee = 102
+run = 13023
+case = 12027
+build = 101
+status = 103
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+
+[[test-executions]]
+id = 14028
+assignee = 102
+run = 13024
+case = 12028
+build = 101
+status = 103
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+
+[[test-executions]]
+id = 14029
+assignee = 102
+run = 13024
+case = 12029
+build = 101
+status = 103
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+
+[[test-executions]]
+id = 14030
+assignee = 102
+run = 13027
+case = 12030
+build = 101
+status = 103
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+
+[[test-executions]]
+id = 14031
+assignee = 102
+run = 13027
+case = 12031
+build = 101
+status = 103
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+
+[[test-executions]]
+id = 14901
+assignee = 102
+run = 13010
+case = 12901
+build = 101
+status = 103
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+
+[[test-executions]]
+id = 14902
+assignee = 102
+run = 13010
+case = 12902
+build = 101
+status = 103
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+
+[[test-executions]]
+id = 14903
+assignee = 102
+run = 13010
+case = 12903
+build = 101
+status = 103
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+
+[[test-executions]]
+id = 14908
+assignee = 102
+run = 13016
+case = 12908
+build = 101
+status = 103
+expected_duration = 0.0
+comments = []
+properties = []
+links = []

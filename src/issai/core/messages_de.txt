@@ -139,6 +139,7 @@ e-run-case-script-missing Für Testfall '{0}' wurde kein Skript definiert.
 e-run-plan-failed Ausführung von Testplan '{0}' fehlgeschlagen.
 e-run-source-path-invalid Das Verzeichnis für den Quellcode '{0}' existiert nicht.
 e-run-source-path-missing Das Verzeichnis für den Quellcode wurde nicht definiert, Konfigurations-Parameter '{0}' fehlt.
+e-run-test-path-invalid Das Verzeichnis für den Testcode '{0}' existiert nicht.
 e-run-working-path-invalid Arbeitsverzeichnis '{0}' existiert nicht.
 e-run-working-path-missing Das Arbeitsverzeichnis wurde nicht definiert, Konfigurations-Parameter '{0}' fehlt.
 e-dry-run-run-assistant-failed Assistent '{0}' für Aktion {1} wird fehlschlagen: {2}.
@@ -152,6 +153,8 @@ i-run-entity-skipped {0} '{1}' wurde ausgelassen: {2}
 i-run-matrix-result Matrix-Code '{0}': {1}.
 i-run-plan-not-active Testplan ist nicht als aktiv markiert.
 i-run-plan-succeeded Testplan '{0}' wurde erfolgreich ausgeführt.
+i-run-py-unit-test-failed {0} von {1} Tests für Modul {2} fehlgeschlagen.
+i-run-py-unit-test-passed {0} Tests für Modul {1} erfolgreich ausgeführt.
 i-run-running-case Führe Testfall '{0}' aus.
 i-run-running-env Führe Test für die Environment-Properties {0} aus.
 i-run-running-plan Führe Testplan '{0}' aus.

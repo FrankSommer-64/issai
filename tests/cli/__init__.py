@@ -8,7 +8,7 @@ def test_file_path(entity_type, file_name):
     :returns: full path for specified test data file
     :rtype: str
     """
-    return os.path.join(os.environ['TEST_DATA_ROOT'], 'input', _ENTITY_TYPE_NAMES[entity_type], file_name)
+    return os.path.join(os.environ['ISSAI_TEST_DATA_PATH'], 'input', _ENTITY_TYPE_NAMES[entity_type], file_name)
 
 
 def test_runs_in_multi_version_dataset():

@@ -687,6 +687,14 @@ class TcmsActionPane(QGroupBox):
                     _entity_product = find_product_for_tcms_object(_class_id, self.__selected_entity)
                     self.__product_combo.setCurrentText(_entity_product[ATTR_NAME])
                     self._fill_version_combo(self.__product_combo.currentData())
+                    _version_id = _selected_entity.get(ATTR_PRODUCT_VERSION)
+                    if _version_id is not None:
+                        for _i in range(0, self.__version_combo.count()):
+                            _combo_version = self.__version_combo.itemData(_i)
+                            if _combo_version[ATTR_ID] == _version_id:
+                                self.__version_combo.setCurrentIndex(_i)
+                                self._version_selected(_i)
+                                break
                     self.__entities.clear()
                     self.__entities.addItem(_entity_info)
                     self.__entities.setCurrentRow(0)
@@ -721,6 +729,10 @@ class TcmsActionPane(QGroupBox):
         _output_path = self._prepare_output_path()
         if _output_path is None:
             return
+        if self.__entity_type == ENTITY_TYPE_PLAN:
+            self.__preferences.entity_used(ENTITY_TYPE_PLAN, _entity[ATTR_ID], _entity[ATTR_NAME])
+        elif self.__entity_type == ENTITY_TYPE_CASE:
+            self.__preferences.entity_used(ENTITY_TYPE_CASE, _entity[ATTR_ID], _entity[ATTR_NAME])
         _env_option = False if self.__env_option is None else self.__env_option.isChecked()
         _tree_option = False if self.__tree_option is None else self.__tree_option.isChecked()
         _runs_option = True if self.__entity_type == ENTITY_TYPE_PRODUCT else self.__runs_option.isChecked()
@@ -755,7 +767,7 @@ class TcmsActionPane(QGroupBox):
         except IssaiException as _e:
             QMessageBox.critical(self, localized_label(L_MBOX_TITLE_ERROR), str(_e), QMessageBox.StandardButton.Ok)
             return
-        self.__preferences.entity_used(TCMS_CLASS_ID_TEST_PLAN, _entity[ATTR_ID], _entity[ATTR_NAME])
+        self.__preferences.entity_used(ENTITY_TYPE_PLAN, _entity[ATTR_ID], _entity[ATTR_NAME])
         _tree_option = self.__tree_option.isChecked() if self.__entity_type == ENTITY_TYPE_PLAN else False
         _options = {OPTION_VERSION: _version, OPTION_BUILD: _build, OPTION_ENVIRONMENT: self.__env_combo.currentData(),
                     OPTION_PLAN_TREE: self.__tree_option.isChecked(),

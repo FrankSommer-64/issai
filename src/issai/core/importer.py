@@ -504,7 +504,7 @@ def _prepare_master_data(container, options, task_monitor):
                     continue
                 raise IssaiException(E_IMP_OBJECT_MUST_EXIST, _class_name, _object_name)
             if (_class_id == TCMS_CLASS_ID_BUILD and _object_name == DEFAULT_BUILD) or \
-                (_class_id == TCMS_CLASS_ID_VERSION and _object_name == DEFAULT_VERSION):
+                    (_class_id == TCMS_CLASS_ID_VERSION and _object_name == DEFAULT_VERSION):
                 # build/version with name 'unspecified' is automatically created with a version/product
                 continue
             if not _auto_create:
