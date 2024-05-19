@@ -148,6 +148,13 @@ class TaskMonitor:
         self.__lock.release()
         return _abort_requested
 
+    def check_abort(self):
+        """
+        Raise exception if abort was requested.
+        """
+        if self.abort_requested():
+            raise IssaiException(E_BACKGROUND_TASK_ABORTED)
+
     def log(self, msg_id, *msg_args):
         """
         Issues a localized progress message.

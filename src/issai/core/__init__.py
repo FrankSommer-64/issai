@@ -55,6 +55,7 @@ ISSAI_ASSETS_DIR = 'assets'
 ISSAI_TEMPLATES_DIR = 'templates'
 RESULTS_ROOT_DIR = 'results'
 TCMS_XML_RPC_CREDENTIALS_FILE_PATH = '~/.tcms.conf'
+USER_MANUAL_STEM = 'user_manual_'
 
 # GUI actions
 ACTION_NONE = 0

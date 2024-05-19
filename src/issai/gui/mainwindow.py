@@ -49,7 +49,7 @@ from issai.core.messages import *
 from issai.core.resourcemanager import container_status
 from issai.core.tcms import find_tcms_objects
 from issai.gui.dialogs import (AboutDialog, IssaiProductSelectionDialog, NoProductConfiguredDialog,
-                               exception_box, select_entity_file, select_output_dir)
+                               PdfViewerDialog, exception_box, select_entity_file, select_output_dir)
 from issai.gui.panes import TcmsActionPane, FileActionPane
 from issai.gui.settings import GuiSettings
 from issai.gui.configeditor import master_config_editor, product_config_editor, xml_rpc_credentials_editor
@@ -143,6 +143,9 @@ class MainWindow(QMainWindow):
 
         # help menu with help and about
         _help_menu = _bar.addMenu(localized_label(L_MENUBAR_ITEM_HELP))
+        _help_user_manual_action = QAction(localized_label(L_ACTION_ITEM_HELP_USER_MANUAL), self)
+        _help_user_manual_action.triggered.connect(self._user_manual)
+        _help_menu.addAction(_help_user_manual_action)
         _help_about_action = QAction(localized_label(L_ACTION_ITEM_HELP_ABOUT), self)
         _help_about_action.triggered.connect(self._about_dialog)
         _help_menu.addAction(_help_about_action)
@@ -308,6 +311,19 @@ class MainWindow(QMainWindow):
         """
         _about_dlg = AboutDialog(self)
         _about_dlg.exec()
+
+    def _user_manual(self):
+        """
+        Display user manual.
+        """
+        _locale = platform_locale()
+        _cur_dir = str(os.path.dirname(__file__))
+        _assets_path = os.path.join(_cur_dir, ISSAI_ASSETS_DIR)
+        _manual_file_path = os.path.join(_assets_path, f'{USER_MANUAL_STEM}{_locale}.pdf')
+        if not os.path.isfile(_manual_file_path):
+            _manual_file_path = os.path.join(_assets_path, f'{USER_MANUAL_STEM}en.pdf')
+        _dlg = PdfViewerDialog(self, L_DLG_TITLE_USER_MANUAL, _manual_file_path)
+        _dlg.exec()
 
     def _determine_product_config(self, products):
         """

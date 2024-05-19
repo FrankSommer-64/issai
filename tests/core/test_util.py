@@ -36,8 +36,6 @@
 Unit tests for core.util.
 """
 
-from pathlib import Path
-import os.path
 import unittest
 
 from issai.core.util import *

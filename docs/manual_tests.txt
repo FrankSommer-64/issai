@@ -1,5 +1,0 @@
-CLI
-===
-Export test case by name, case used in multiple products
-Export test plan by name, name used in multiple products
-Run test plan by name, name used in multiple products

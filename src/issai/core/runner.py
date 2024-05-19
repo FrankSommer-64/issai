@@ -208,6 +208,7 @@ def run_tcms_plan(plan, options, local_config, task_monitor):
     :rtype: TaskResult
     """
     # noinspection PyBroadException
+    task_monitor.check_abort()
     try:
         _working_path = local_config.runner_working_path()
         # create TestPlan entity from TCMS data
@@ -235,7 +236,7 @@ def run_tcms_plan(plan, options, local_config, task_monitor):
 def run_offline_plan(plan_entity, options, local_config, attachment_path, task_monitor):
     """
     Runs a test plan read from file.
-    :param TestPlanEntity plan_entity: the test plan entity
+    :param TestPlanEntity | Entity plan_entity: the test plan entity
     :param dict options: the run options. Contains the following keys:
                          'version' - the TCMS version data,
                          'build' - the TCMS build data,
@@ -246,6 +247,7 @@ def run_offline_plan(plan_entity, options, local_config, attachment_path, task_m
     :returns: execution result
     :rtype: TaskResult
     """
+    task_monitor.check_abort()
     # noinspection PyBroadException
     try:
         _working_path = local_config.runner_working_path()
@@ -257,6 +259,7 @@ def run_offline_plan(plan_entity, options, local_config, attachment_path, task_m
         _user_name = DEFAULT_USER_NAME if len(_users) == 0 else _users[0][ATTR_USERNAME]
         _env_vars = initial_env_vars(local_config, _working_path, _user_name, attachment_path)
         # run test plan
+        task_monitor.check_abort()
         _plan_result = _run_ancestor_plan(plan_entity, options, local_config, _env_vars, task_monitor)
         # store test result
         store_plan_results(_plan_result, plan_entity, options, local_config, _working_path, task_monitor)
@@ -275,6 +278,7 @@ def _run_ancestor_plan(plan_entity, options, local_config, env_vars, task_monito
     :returns: execution result; None, if plan is not runnable
     :rtype: PlanResult
     """
+    task_monitor.check_abort()
     clear_result_path(local_config)
     _plan_id = plan_entity.entity_id()
     _plan_name = plan_entity.entity_name()
@@ -336,6 +340,7 @@ def _run_plan(plan_entity, plan_id, executable_table, local_config, env_vars, ta
     :returns: execution result
     :rtype: PlanResult
     """
+    task_monitor.check_abort()
     if plan_id < 0:
         plan_id = plan_entity.entity_id()
     _result = PlanResult.from_entity(plan_entity, plan_id)
@@ -393,6 +398,7 @@ def _run_case(plan_entity, plan_id, case_id, executable_table, local_config, run
     :returns: execution result
     :rtype: CaseResult
     """
+    task_monitor.check_abort()
     _case = plan_entity.get_part(ATTR_TEST_CASES, case_id)
     _case_name = _case[ATTR_SUMMARY]
     task_monitor.log(I_RUN_RUNNING_CASE, _case[ATTR_SUMMARY])
@@ -617,6 +623,7 @@ def store_plan_results(plan_result, plan_entity, options, local_config, working_
     :param str working_path: the runner root path for output files
     :param TaskMonitor task_monitor: the progress handler
     """
+    task_monitor.check_abort()
     if options.get(OPTION_STORE_RESULT):
         store_plan_results_to_tcms(plan_result, plan_entity, options, local_config, working_path, task_monitor)
         return
@@ -719,6 +726,7 @@ def _run_assistant(assistant_name, action, entity_name, executable_table, local_
     :param TaskMonitor task_monitor: the progress handler
     :raises IssaiException: if the assistant fails
     """
+    task_monitor.check_abort()
     _assistant = local_config.get(assistant_name)
     _dry_run = task_monitor.is_dry_run()
     if _assistant is None:

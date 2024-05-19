@@ -111,7 +111,7 @@ def _check_attr_match(status, toml_data, top_level_attr_name, group_name, group_
             _value2 = _elem.get(group_attr_name)
             if _value2 is None:
                 return
-            if type(_value1) != type(_value2):
+            if type(_value1) is not type(_value2):
                 return
             if _value1 == _value2:
                 return
@@ -124,7 +124,7 @@ def _check_attr_match(status, toml_data, top_level_attr_name, group_name, group_
     _value2 = _group_element.get(group_attr_name)
     if _value2 is None:
         return
-    if type(_value1) != type(_value2):
+    if type(_value1) is not type(_value2):
         return
     if _value1 != _value2:
         _qualified_group_attr_name = f'{group_name}.{group_attr_name}'
@@ -156,12 +156,12 @@ def _check_toml_table(status, toml_table, group_name, group_desc, element_nr=-1)
             continue
         if _attr_desc[0]:
             _mandatory_status[_attr_name] = True
-        if not type(_attr_value) == _attr_desc[1]:
+        if type(_attr_value) is not _attr_desc[1]:
             status.add_issue(ContainerStatus.INVALID_TYPE, _qualified_attr_name, element_nr)
             continue
-        if type(_attr_value) == Array:
+        if type(_attr_value) is Array:
             for _elem in _attr_value:
-                if not type(_elem) == _attr_desc[2]:
+                if type(_elem) is not _attr_desc[2]:
                     _qualified_attr_name = f'{_qualified_attr_name}-elements'
                     status.add_issue(ContainerStatus.INVALID_TYPE, _qualified_attr_name, element_nr)
                     break

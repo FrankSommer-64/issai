@@ -41,14 +41,43 @@ import os.path
 from pathlib import Path
 import time
 
+from PySide6.QtCore import qVersion, QDir, QThreadPool, Qt, QPoint
+from PySide6.QtGui import QPainter, QBrush, QColor, QColorConstants, QPen, QRadialGradient, QPixmap
+from PySide6.QtWebEngineCore import QWebEngineSettings
+from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWidgets import (QWidget, QLabel, QComboBox, QProgressBar, QListWidget, QDialog, QFileDialog, QPushButton,
                                QMessageBox, QGridLayout, QVBoxLayout, QGroupBox, QListWidgetItem, QLineEdit,
                                QDialogButtonBox, QSizePolicy)
-from PySide6.QtCore import qVersion, QDir, QThreadPool, Qt, QPoint
-from PySide6.QtGui import QPainter, QBrush, QColor, QColorConstants, QPen, QRadialGradient, QPixmap
 
 from issai.core.tcms import *
 from issai.gui.workers import Worker
+
+
+class PdfViewerDialog(QDialog):
+    """
+    Dialog window to show a PDF file.
+    """
+    def __init__(self, parent, title_id, file_path):
+        """
+        Constructor
+        :param QWidget parent: the parent widget
+        :param str title_id: the window title resource ID
+        :param str file_path: the PDF file name including full path
+        """
+        super().__init__(parent)
+        self.setWindowTitle(localized_label(title_id))
+        _parent_rect = parent.contentsRect()
+        self.setGeometry(_parent_rect.x() + _PDF_VIEWER_OFFSET, _parent_rect.y() + _PDF_VIEWER_OFFSET,
+                         _PDF_VIEWER_WIDTH, _PDF_VIEWER_HEIGHT)
+        self.setStyleSheet(_STYLE_WHITE_BG)
+        _dlg_layout = QVBoxLayout()
+        _web_view = QWebEngineView()
+        _view_settings = _web_view.settings()
+        _view_settings.setAttribute(QWebEngineSettings.WebAttribute.PluginsEnabled, True)
+        _view_settings.setAttribute(QWebEngineSettings.WebAttribute.PdfViewerEnabled, True)
+        _web_view.load(f'file://{file_path}')
+        _dlg_layout.addWidget(_web_view)
+        self.setLayout(_dlg_layout)
 
 
 class AboutDialog(QDialog):
@@ -549,6 +578,9 @@ _ABOUT_DIALOG_OFFSET = 80
 _ABOUT_DIALOG_WIDTH = 560
 _ISSAI_IMAGE_SIZE = 256
 _ISSAI_IMAGE_SPACING = 16
+_PDF_VIEWER_HEIGHT = 720
+_PDF_VIEWER_OFFSET = 10
+_PDF_VIEWER_WIDTH = 640
 
 _STYLE_INPUT_FIELD = 'background-color: #ffffcc'
 _STYLE_WHITE_BG = 'background-color: white'
