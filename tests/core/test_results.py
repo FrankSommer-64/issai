@@ -1,0 +1,377 @@
+# -*- coding: utf-8 -*-
+
+# -----------------------------------------------------------------------------------------------
+# issai - Framework to run tests specified in Kiwi Test Case Management System
+#
+# Copyright (c) 2024, Frank Sommer.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+#
+# * Neither the name of the copyright holder nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# -----------------------------------------------------------------------------------------------
+
+"""
+Unit tests for core.results.
+"""
+import datetime
+import os
+import time
+import unittest
+
+from issai.core import *
+from issai.core.results import CaseResult, PlanResult, Result
+from issai.core.issai_exception import IssaiException
+
+
+DEFAULT_CASE_ID = 23
+DEFAULT_CASE_SUMMARY = 'TestCase23'
+DEFAULT_PLAN_ID = 18
+DEFAULT_PLAN_NAME = 'TestPlan23'
+DAUGHTER_PLAN_ID = DEFAULT_PLAN_ID + 1
+DAUGHTER_PLAN_NAME = 'DaughterPlan'
+SON_PLAN_ID = DEFAULT_PLAN_ID + 2
+SON_PLAN_NAME = 'SonPlan'
+GRAND_CHILD_PLAN_ID = DEFAULT_PLAN_ID + 3
+GRAND_CHILD_PLAN_NAME = 'GrandchildPlan'
+
+
+class TestResult(unittest.TestCase):
+    """
+    Tests for base class Result.
+    """
+    def test_constructor(self):
+        _result = Result(RESULT_TYPE_CASE_RESULT, DEFAULT_PLAN_ID)
+        self.assertEqual(RESULT_TYPE_CASE_RESULT, _result.result_type())
+        self.assertEqual(DEFAULT_PLAN_ID, _result.get_attr_value(ATTR_PLAN))
+        self.assertEqual(-1, _result.duration())
+        self.assertEqual(0, len(_result.get_attr_value(ATTR_OUTPUT_FILES)))
+        self.assertIsNone(_result.get_attr_value(ATTR_START_DATE))
+        self.assertIsNone(_result.get_attr_value(ATTR_STOP_DATE))
+
+    def test_start_stop(self):
+        _result = Result(RESULT_TYPE_CASE_RESULT, DEFAULT_PLAN_ID)
+        _result.mark_start()
+        self.assertIsNone(_result.get_attr_value(ATTR_STOP_DATE))
+        self.assertIsNotNone(_result.get_attr_value(ATTR_START_DATE))
+        self.assertGreaterEqual(datetime.datetime.now(), _result.get_attr_value(ATTR_START_DATE))
+        time.sleep(0.1)
+        _result.mark_end()
+        self.assertIsNotNone(_result.get_attr_value(ATTR_STOP_DATE))
+        self.assertGreaterEqual(datetime.datetime.now(), _result.get_attr_value(ATTR_STOP_DATE))
+        self.assertLessEqual(0.1, _result.duration())
+
+    def test_output_files(self):
+        _result = Result(RESULT_TYPE_CASE_RESULT, DEFAULT_PLAN_ID)
+        _result.add_output_file('file1.log')
+        _result.add_output_file('file2.log')
+        self.assertEqual(2, len(_result.get_attr_value(ATTR_OUTPUT_FILES)))
+        self.assertEqual('file1.log', _result.get_attr_value(ATTR_OUTPUT_FILES)[0])
+        self.assertEqual('file2.log', _result.get_attr_value(ATTR_OUTPUT_FILES)[1])
+
+
+class TestCaseResult(unittest.TestCase):
+    """
+    Tests for class CaseResult.
+    """
+    def test_constructor(self):
+        _result = CaseResult(DEFAULT_PLAN_ID, DEFAULT_CASE_ID, DEFAULT_CASE_SUMMARY, '')
+        self.assertEqual(RESULT_TYPE_CASE_RESULT, _result.result_type())
+        self.assertEqual(DEFAULT_PLAN_ID, _result.get_attr_value(ATTR_PLAN))
+        self.assertEqual(DEFAULT_CASE_ID, _result.get_attr_value(ATTR_CASE))
+        self.assertEqual(DEFAULT_CASE_SUMMARY, _result.get_attr_value(ATTR_CASE_NAME))
+        self.assertEqual(RESULT_STATUS_PASSED, _result.get_attr_value(ATTR_STATUS))
+        self.assertEqual('', _result.get_attr_value(ATTR_MATRIX_CODE))
+        self.assertEqual('', _result.get_attr_value(ATTR_TESTER_NAME))
+        self.assertEqual('', _result.get_attr_value(ATTR_COMMENT))
+        self.assertEqual(f'{DEFAULT_PLAN_ID}.{DEFAULT_CASE_ID}', _result.id_str())
+
+    def test_get_set_attr_value(self):
+        _result = CaseResult(DEFAULT_PLAN_ID, DEFAULT_CASE_ID, DEFAULT_CASE_SUMMARY, '')
+        # set supported attribute
+        _result.set_attr_value(ATTR_COMMENT, 'bla')
+        self.assertEqual('bla', _result.get_attr_value(ATTR_COMMENT))
+        _result.set_attr_value(ATTR_STATUS, RESULT_STATUS_ERROR)
+        self.assertEqual(RESULT_STATUS_ERROR, _result.get_attr_value(ATTR_STATUS))
+        _result.set_attr_value(ATTR_TESTER_NAME, 'tester')
+        self.assertEqual('tester', _result.get_attr_value(ATTR_TESTER_NAME))
+        # get unsupported attribute
+        self.assertRaises(IssaiException, _result.get_attr_value, ATTR_RUN)
+        self.assertRaises(IssaiException, _result.set_attr_value, ATTR_RUN, 99)
+        # set immutable attribute
+        self.assertRaises(IssaiException, _result.set_attr_value, ATTR_CASE, 99)
+        self.assertRaises(IssaiException, _result.set_attr_value, ATTR_CASE_NAME, 'bla')
+        self.assertRaises(IssaiException, _result.set_attr_value, ATTR_MATRIX_CODE, 'en')
+        self.assertRaises(IssaiException, _result.set_attr_value, ATTR_OUTPUT_FILES, ['test.log'])
+        self.assertRaises(IssaiException, _result.set_attr_value, ATTR_PLAN, 99)
+        self.assertRaises(IssaiException, _result.set_attr_value, ATTR_START_DATE, datetime.datetime.now())
+        self.assertRaises(IssaiException, _result.set_attr_value, ATTR_STOP_DATE, datetime.datetime.now())
+        # set invalid attribute value
+        self.assertRaises(IssaiException, _result.set_attr_value, ATTR_COMMENT, True)
+        self.assertRaises(IssaiException, _result.set_attr_value, ATTR_STATUS, -1)
+        self.assertRaises(IssaiException, _result.set_attr_value, ATTR_TESTER_NAME, [])
+
+    def test_append_attr_value(self):
+        _result = CaseResult(DEFAULT_PLAN_ID, DEFAULT_CASE_ID, DEFAULT_CASE_SUMMARY, '')
+        # append to supported attribute
+        _result.append_attr_value(ATTR_COMMENT, 'line1')
+        self.assertEqual('line1', _result.get_attr_value(ATTR_COMMENT))
+        _result.append_attr_value(ATTR_COMMENT, 'line2')
+        _comment_lines = _result.get_attr_value(ATTR_COMMENT).split(os.linesep)
+        self.assertEqual(2, len(_comment_lines))
+        self.assertEqual('line1', _comment_lines[0])
+        self.assertEqual('line2', _comment_lines[1])
+        # append to immutable attribute
+        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_CASE, 99)
+        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_CASE_NAME, 'bla')
+        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_MATRIX_CODE, 'en')
+        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_OUTPUT_FILES, ['test.log'])
+        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_PLAN, 99)
+        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_START_DATE, datetime.datetime.now())
+        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_STOP_DATE, datetime.datetime.now())
+        # append invalid attribute value
+        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_COMMENT, True)
+        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_STATUS, -1)
+        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_TESTER_NAME, [])
+
+    def test_merge_matrix_result(self):
+        self.verify_merge(RESULT_STATUS_PASSED, RESULT_STATUS_PASSED, RESULT_STATUS_PASSED)
+        self.verify_merge(RESULT_STATUS_PASSED, RESULT_STATUS_FAILED, RESULT_STATUS_FAILED)
+        self.verify_merge(RESULT_STATUS_PASSED, RESULT_STATUS_ERROR, RESULT_STATUS_ERROR)
+        self.verify_merge(RESULT_STATUS_FAILED, RESULT_STATUS_PASSED, RESULT_STATUS_FAILED)
+        self.verify_merge(RESULT_STATUS_FAILED, RESULT_STATUS_FAILED, RESULT_STATUS_FAILED)
+        self.verify_merge(RESULT_STATUS_FAILED, RESULT_STATUS_ERROR, RESULT_STATUS_ERROR)
+        self.verify_merge(RESULT_STATUS_ERROR, RESULT_STATUS_PASSED, RESULT_STATUS_ERROR)
+        self.verify_merge(RESULT_STATUS_ERROR, RESULT_STATUS_FAILED, RESULT_STATUS_ERROR)
+        self.verify_merge(RESULT_STATUS_ERROR, RESULT_STATUS_ERROR, RESULT_STATUS_ERROR)
+
+    def verify_merge(self, status1, status2, expected_merge_status):
+        _res1 = TestCaseResult.matrix_result('en', status1)
+        _res2 = TestCaseResult.matrix_result('de', status2)
+        _res1.merge_matrix_result(_res2)
+        self.assertEqual(expected_merge_status, _res1.get_attr_value(ATTR_STATUS))
+        self.assertEqual(_res2.get_attr_value(ATTR_STOP_DATE), _res1.get_attr_value(ATTR_STOP_DATE))
+        _comment_lines = _res1.get_attr_value(ATTR_COMMENT).split(os.linesep)
+        self.assertEqual(3, len(_comment_lines))
+        self.assertEqual('TestCase_en', _comment_lines[0])
+        self.assertTrue(_comment_lines[1].startswith("Matrix-Code 'de':"))
+        self.assertEqual('TestCase_de', _comment_lines[2])
+
+    @staticmethod
+    def matrix_result(matrix_code, status):
+        _res = CaseResult(DEFAULT_PLAN_ID, DEFAULT_CASE_ID, DEFAULT_CASE_SUMMARY, matrix_code)
+        _res.mark_start()
+        time.sleep(0.1)
+        _res.mark_end()
+        _res.set_attr_value(ATTR_STATUS, status)
+        _res.set_attr_value(ATTR_COMMENT, f'TestCase_{matrix_code}')
+        return _res
+
+    @staticmethod
+    def case_result(plan_id, case_id, status, matrix_code):
+        _res = CaseResult(plan_id, case_id, f'TestCase{case_id}', matrix_code)
+        _res.mark_start()
+        time.sleep(0.1)
+        _res.mark_end()
+        _res.set_attr_value(ATTR_STATUS, status)
+        _res.set_attr_value(ATTR_COMMENT, f'TestCase{case_id}_{matrix_code}')
+        return _res
+
+
+class TestPlanResult(unittest.TestCase):
+    """
+    Tests for class PlanResult.
+    """
+    def test_constructor(self):
+        _result = PlanResult(DEFAULT_PLAN_ID, DEFAULT_PLAN_NAME)
+        self.assertEqual(RESULT_TYPE_PLAN_RESULT, _result.result_type())
+        self.assertEqual(DEFAULT_PLAN_ID, _result.get_attr_value(ATTR_PLAN))
+        self.assertEqual(DEFAULT_PLAN_NAME, _result.get_attr_value(ATTR_PLAN_NAME))
+        self.assertEqual('', _result.get_attr_value(ATTR_NOTES))
+        self.assertEqual('', _result.get_attr_value(ATTR_SUMMARY))
+        self.assertEqual(0, len(_result.get_attr_value(ATTR_CHILD_PLAN_RESULTS)))
+        self.assertEqual(0, len(_result.get_attr_value(ATTR_CASE_RESULTS)))
+
+    def test_get_set_attr_value(self):
+        _result = PlanResult(DEFAULT_PLAN_ID, DEFAULT_PLAN_NAME)
+        # set supported attribute
+        _result.set_attr_value(ATTR_NOTES, 'bla')
+        self.assertEqual('bla', _result.get_attr_value(ATTR_NOTES))
+        _result.set_attr_value(ATTR_SUMMARY, 'bla')
+        self.assertEqual('bla', _result.get_attr_value(ATTR_SUMMARY))
+        # get unsupported attribute
+        self.assertRaises(IssaiException, _result.get_attr_value, ATTR_COMMENT)
+        self.assertRaises(IssaiException, _result.set_attr_value, ATTR_COMMENT, 'bla')
+        # set immutable attribute
+        self.assertRaises(IssaiException, _result.set_attr_value, ATTR_PLAN, 99)
+        self.assertRaises(IssaiException, _result.set_attr_value, ATTR_PLAN_NAME, 'bla')
+        self.assertRaises(IssaiException, _result.set_attr_value, ATTR_CASE_RESULTS, [])
+        self.assertRaises(IssaiException, _result.set_attr_value, ATTR_CHILD_PLAN_RESULTS, [])
+        self.assertRaises(IssaiException, _result.set_attr_value, ATTR_OUTPUT_FILES, ['test.log'])
+        self.assertRaises(IssaiException, _result.set_attr_value, ATTR_START_DATE, datetime.datetime.now())
+        self.assertRaises(IssaiException, _result.set_attr_value, ATTR_STOP_DATE, datetime.datetime.now())
+        # set invalid attribute value
+        self.assertRaises(IssaiException, _result.set_attr_value, ATTR_NOTES, True)
+        self.assertRaises(IssaiException, _result.set_attr_value, ATTR_SUMMARY, -1)
+
+    def test_append_attr_value(self):
+        _result = PlanResult(DEFAULT_PLAN_ID, DEFAULT_PLAN_NAME)
+        # append to supported attribute
+        _result.append_attr_value(ATTR_NOTES, 'line1')
+        self.assertEqual('line1', _result.get_attr_value(ATTR_NOTES))
+        _result.append_attr_value(ATTR_NOTES, 'line2')
+        _comment_lines = _result.get_attr_value(ATTR_NOTES).split(os.linesep)
+        self.assertEqual(2, len(_comment_lines))
+        self.assertEqual('line1', _comment_lines[0])
+        self.assertEqual('line2', _comment_lines[1])
+        _result.append_attr_value(ATTR_SUMMARY, 'line1')
+        self.assertEqual('line1', _result.get_attr_value(ATTR_SUMMARY))
+        _result.append_attr_value(ATTR_SUMMARY, 'line2')
+        _summary_lines = _result.get_attr_value(ATTR_SUMMARY).split(os.linesep)
+        self.assertEqual(2, len(_summary_lines))
+        self.assertEqual('line1', _summary_lines[0])
+        self.assertEqual('line2', _summary_lines[1])
+        # append to immutable attribute
+        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_PLAN, 99)
+        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_PLAN_NAME, 'bla')
+        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_CASE_RESULTS, [])
+        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_CHILD_PLAN_RESULTS, [])
+        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_OUTPUT_FILES, ['test.log'])
+        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_START_DATE, datetime.datetime.now())
+        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_STOP_DATE, datetime.datetime.now())
+        # append invalid attribute value
+        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_NOTES, True)
+        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_SUMMARY, -1)
+
+    def test_case_results(self):
+        _result = PlanResult(DEFAULT_PLAN_ID, DEFAULT_PLAN_NAME)
+        self.assertEqual(0, len(_result.case_results()))
+        _result.add_case_result(CaseResult(DEFAULT_PLAN_ID, DEFAULT_CASE_ID, DEFAULT_CASE_SUMMARY, ''))
+        _result.add_case_result(CaseResult(DEFAULT_PLAN_ID, DEFAULT_CASE_ID+1, DEFAULT_CASE_SUMMARY, ''))
+        _result.add_case_result(CaseResult(DEFAULT_PLAN_ID, DEFAULT_CASE_ID+2, DEFAULT_CASE_SUMMARY, ''))
+        _daughter = PlanResult(DAUGHTER_PLAN_ID, DAUGHTER_PLAN_NAME)
+        _daughter.add_case_result(CaseResult(DAUGHTER_PLAN_ID, DEFAULT_CASE_ID+11, DEFAULT_CASE_SUMMARY, ''))
+        _daughter.add_case_result(CaseResult(DAUGHTER_PLAN_ID, DEFAULT_CASE_ID+12, DEFAULT_CASE_SUMMARY, ''))
+        _son = PlanResult(SON_PLAN_ID, SON_PLAN_NAME)
+        _son.add_case_result(CaseResult(SON_PLAN_ID, DEFAULT_CASE_ID+21, DEFAULT_CASE_SUMMARY, ''))
+        _son.add_case_result(CaseResult(SON_PLAN_ID, DEFAULT_CASE_ID+22, DEFAULT_CASE_SUMMARY, ''))
+        _grandchild = PlanResult(GRAND_CHILD_PLAN_ID, GRAND_CHILD_PLAN_NAME)
+        _grandchild.add_case_result(CaseResult(GRAND_CHILD_PLAN_ID, DEFAULT_CASE_ID+31, DEFAULT_CASE_SUMMARY, ''))
+        _daughter.add_plan_result(_grandchild)
+        _result.add_plan_result(_daughter)
+        _result.add_plan_result(_son)
+        _case_results = _result.case_results()
+        self.assertEqual(8, len(_result.case_results()))
+        self.assertEqual(DEFAULT_CASE_ID, _case_results[0].get_attr_value(ATTR_CASE))
+        self.assertEqual(DEFAULT_CASE_ID+1, _case_results[1].get_attr_value(ATTR_CASE))
+        self.assertEqual(DEFAULT_CASE_ID+2, _case_results[2].get_attr_value(ATTR_CASE))
+        self.assertEqual(DEFAULT_CASE_ID+11, _case_results[3].get_attr_value(ATTR_CASE))
+        self.assertEqual(DEFAULT_CASE_ID+12, _case_results[4].get_attr_value(ATTR_CASE))
+        self.assertEqual(DEFAULT_CASE_ID+31, _case_results[5].get_attr_value(ATTR_CASE))
+        self.assertEqual(DEFAULT_CASE_ID+21, _case_results[6].get_attr_value(ATTR_CASE))
+        self.assertEqual(DEFAULT_CASE_ID+22, _case_results[7].get_attr_value(ATTR_CASE))
+
+    def test_plan_results(self):
+        _result = PlanResult(DEFAULT_PLAN_ID, DEFAULT_PLAN_NAME)
+        self.assertEqual(1, len(_result.plan_results()))
+        _daughter = PlanResult(DAUGHTER_PLAN_ID, DAUGHTER_PLAN_NAME)
+        _son = PlanResult(SON_PLAN_ID, SON_PLAN_NAME)
+        _grandchild = PlanResult(GRAND_CHILD_PLAN_ID, GRAND_CHILD_PLAN_NAME)
+        _daughter.add_plan_result(_grandchild)
+        _result.add_plan_result(_daughter)
+        _result.add_plan_result(_son)
+        _plan_results = _result.plan_results()
+        self.assertEqual(4, len(_result.plan_results()))
+        self.assertEqual(DEFAULT_PLAN_ID, _plan_results[0].get_attr_value(ATTR_PLAN))
+        self.assertEqual(DAUGHTER_PLAN_ID, _plan_results[1].get_attr_value(ATTR_PLAN))
+        self.assertEqual(GRAND_CHILD_PLAN_ID, _plan_results[2].get_attr_value(ATTR_PLAN))
+        self.assertEqual(SON_PLAN_ID, _plan_results[3].get_attr_value(ATTR_PLAN))
+
+    def test_result_status(self):
+        # all test cases PASSED
+        _result = TestPlanResult.result_family((1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0))
+        self.assertEqual(RESULT_STATUS_ID_PASSED, _result.result_status())
+        # failure in parent
+        _result = TestPlanResult.result_family((1, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0))
+        self.assertEqual(RESULT_STATUS_ID_FAILED, _result.result_status())
+        # error in parent
+        _result = TestPlanResult.result_family((1, 1, 1), (1, 0, 0), (1, 0, 0), (1, 0, 0))
+        self.assertEqual(RESULT_STATUS_ID_ERROR, _result.result_status())
+        # failure in daughter
+        _result = TestPlanResult.result_family((1, 0, 0), (1, 1, 0), (1, 0, 0), (1, 0, 0))
+        self.assertEqual(RESULT_STATUS_ID_FAILED, _result.result_status())
+        # error in daughter
+        _result = TestPlanResult.result_family((1, 0, 0), (1, 0, 1), (1, 0, 0), (1, 0, 0))
+        self.assertEqual(RESULT_STATUS_ID_ERROR, _result.result_status())
+        # failure in son
+        _result = TestPlanResult.result_family((1, 0, 0), (1, 0, 0), (1, 1, 0), (1, 0, 0))
+        self.assertEqual(RESULT_STATUS_ID_FAILED, _result.result_status())
+        # error in son
+        _result = TestPlanResult.result_family((1, 0, 0), (1, 0, 0), (1, 0, 1), (1, 0, 0))
+        self.assertEqual(RESULT_STATUS_ID_ERROR, _result.result_status())
+        # failure in grandchild
+        _result = TestPlanResult.result_family((1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 1, 0))
+        self.assertEqual(RESULT_STATUS_ID_FAILED, _result.result_status())
+        # error in grandchild
+        _result = TestPlanResult.result_family((1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 1))
+        self.assertEqual(RESULT_STATUS_ID_ERROR, _result.result_status())
+        # failure in daughter, error in son
+        _result = TestPlanResult.result_family((1, 0, 0), (1, 1, 0), (1, 0, 1), (1, 0, 0))
+        self.assertEqual(RESULT_STATUS_ID_ERROR, _result.result_status())
+        # failure in daughter, error in grandchild
+        _result = TestPlanResult.result_family((1, 0, 0), (1, 1, 0), (1, 0, 0), (1, 0, 1))
+        self.assertEqual(RESULT_STATUS_ID_ERROR, _result.result_status())
+        # failure in parent and daughter, error in grandchild
+        _result = TestPlanResult.result_family((1, 1, 0), (1, 1, 0), (1, 0, 0), (1, 0, 1))
+        self.assertEqual(RESULT_STATUS_ID_ERROR, _result.result_status())
+
+    @staticmethod
+    def result_family(parent_states, daughter_states, son_states, grandchild_states):
+        _parent = TestPlanResult.plan_result(DEFAULT_PLAN_ID, 10, parent_states)
+        _daughter = TestPlanResult.plan_result(DAUGHTER_PLAN_ID, 20, daughter_states)
+        _son = TestPlanResult.plan_result(SON_PLAN_ID, 30, son_states)
+        _grandchild = TestPlanResult.plan_result(GRAND_CHILD_PLAN_ID, 40, grandchild_states)
+        _daughter.add_plan_result(_grandchild)
+        _parent.add_plan_result(_daughter)
+        _parent.add_plan_result(_son)
+        return _parent
+
+    @staticmethod
+    def plan_result(plan_id, base_case_id, case_states):
+        _res = PlanResult(plan_id, f'TestPlan_{plan_id}')
+        _case_id = base_case_id
+        for i in range(0, case_states[0]):
+            _res.add_case_result(TestCaseResult.case_result(plan_id, _case_id, RESULT_STATUS_PASSED, ''))
+            _case_id += 1
+        for i in range(0, case_states[1]):
+            _res.add_case_result(TestCaseResult.case_result(plan_id, _case_id, RESULT_STATUS_FAILED, ''))
+            _case_id += 1
+        for i in range(0, case_states[2]):
+            _res.add_case_result(TestCaseResult.case_result(plan_id, _case_id, RESULT_STATUS_ERROR, ''))
+            _case_id += 1
+        return _res
+
+
+if __name__ == '__main__':
+    unittest.main()

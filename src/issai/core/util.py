@@ -131,6 +131,19 @@ def platform_locale():
     return None
 
 
+def python_value(value):
+    """
+    Convert tomlkit item to python value.
+    Currently boolean values are not wrapped by Bool by tomlkit.
+    :param value: the tomlkit value
+    :return: the pure Python value
+    """
+    try:
+        return value.unwrap()
+    except AttributeError:
+        return value
+
+
 class PropertyMatrix:
     """
     Iterable for property combinations as used in environments.

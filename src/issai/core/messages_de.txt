@@ -212,7 +212,7 @@ e-gui-output-path-invalid Ungültiges Ausgabeverzeichnis {0}.
 e-gui-write-config-data-failed Konnte Konfigurationsdaten nicht in Datei {0} schreiben. {1}.
 i-gui-about-detail-text Version {0}\nQt-Version {1}
 i-gui-about-info-text Copyright (c) 2024 Frank Sommer
-i-gui-about-text Issai - Framework zur Ausführung automatisierter Tests im Kiwi Test case management system
+i-gui-about-text Issai - Framework zur Ausführung automatisierter Tests aus dem Kiwi Test case management system
 i-gui-attribute-exists Attribut {0} ist bereits definiert.
 i-gui-clear-export-attachments Verzeichnis für Attachments {0} muss gelöscht werden. Zum Fortfahren bitte bestätigen.
 i-gui-clear-export-file Ausgabedatei {0} muss gelöscht werden. Zum Fortfahren bitte bestätigen.

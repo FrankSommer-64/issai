@@ -44,9 +44,10 @@ from issai.core import *
 from issai.core.attachments import download_attachments, list_case_result_files, upload_attachment_file
 from issai.core.builtin_runners import builtin_runner
 from issai.core.config import LocalConfig
-from issai.core.entities import CaseResult, PlanResult, TestPlanEntity, PlanResultEntity
+from issai.core.entities import TestPlanEntity, PlanResultEntity
 from issai.core.issai_exception import *
 from issai.core.messages import *
+from issai.core.results import CaseResult, PlanResult
 from issai.core.task import TaskResult
 from issai.core.tcms import (create_run_from_plan, create_tcms_object, find_tcms_objects,
                              read_test_entity_with_id, read_product_for_test_entity, read_tcms_cases,
@@ -286,7 +287,7 @@ def _run_ancestor_plan(plan_entity, options, local_config, env_vars, task_monito
     _build = plan_entity.master_data_of_type(ATTR_PRODUCT_BUILDS)[0]
     _exe_table = ExecutableTable(local_config)
     _env_opt = options.get(OPTION_ENVIRONMENT)
-    _result = PlanResult.from_entity(plan_entity, _plan_id)
+    _result = PlanResult(_plan_id, _plan_name)
     _result.mark_start()
     # noinspection PyBroadException
     try:
@@ -343,10 +344,10 @@ def _run_plan(plan_entity, plan_id, executable_table, local_config, env_vars, ta
     task_monitor.check_abort()
     if plan_id < 0:
         plan_id = plan_entity.entity_id()
-    _result = PlanResult.from_entity(plan_entity, plan_id)
-    _result.mark_start()
     _plan = plan_entity.get_part(ATTR_TEST_PLANS, plan_id)
     _plan_name = _plan[ATTR_NAME]
+    _result = PlanResult(plan_id, _plan_name)
+    _result.mark_start()
     task_monitor.log(I_RUN_RUNNING_PLAN, _plan_name)
     # noinspection PyBroadException
     try:
