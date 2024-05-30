@@ -36,7 +36,6 @@
 Issai core result classes.
 Used by runner only, the classes don't have a corresponding in TCMS.
 """
-
 from datetime import datetime
 
 from issai.core import *
@@ -94,12 +93,15 @@ class Result(dict):
         :param str attribute_name: the attribute name
         :param Any attribute_value: the attribute value
         """
+        if not isinstance(attribute_value, str) or len(attribute_value) == 0:
+            return
         _verify_attr_write(self.__result_type, attribute_name, attribute_value, True)
         _current_value = self.get(attribute_name)
         if _current_value is None or len(_current_value) == 0:
             self[attribute_name] = attribute_value
         else:
-            self[attribute_name] = f'{_current_value}{os.linesep}{attribute_value}'
+            _sep = '' if _current_value.endswith(os.linesep) else os.linesep
+            self[attribute_name] = f'{_current_value}{_sep}{attribute_value}'
 
     def mark_start(self):
         """
@@ -150,13 +152,6 @@ class CaseResult(Result):
         self[ATTR_STATUS] = RESULT_STATUS_PASSED
         self[ATTR_TESTER_NAME] = ''
         self[ATTR_COMMENT] = ''
-
-    def id_str(self):
-        """
-        :returns: identification based on plan ID and case ID
-        :rtype: str
-        """
-        return f'{self[ATTR_PLAN]}.{self[ATTR_CASE]}'
 
     def merge_matrix_result(self, case_result):
         """
@@ -210,23 +205,29 @@ class PlanResult(Result):
         Merges the result of a test plan execution for a specific matrix code.
         :param PlanResult plan_result: the test plan result
         """
+        # update parent plan attributes
         self[ATTR_STOP_DATE] = plan_result[ATTR_STOP_DATE]
+        self.append_attr_value(ATTR_SUMMARY, plan_result[ATTR_SUMMARY])
         self.append_attr_value(ATTR_NOTES, plan_result[ATTR_NOTES])
-        _overall_case_results = {}
-        for _cr in self.case_results():
-            _overall_case_results[_cr.id_str()] = _cr
-        _new_case_results = {}
-        for _cr in plan_result.case_results():
-            _new_case_results[_cr.id_str()] = _cr
-        for _cr_id, _cr in _new_case_results.items():
-            _overall_cr = _overall_case_results.get(_cr_id)
+        # update case results of parent
+        for _cr in plan_result.get_attr_value(ATTR_CASE_RESULTS):
+            _overall_cr = self.case_result(_cr.get_attr_value(ATTR_CASE))
             if _overall_cr is None:
-                _cr_status = _cr[ATTR_STATUS]
-                _cr_code = _cr[ATTR_MATRIX_CODE]
-                _cr.append_attr_value(ATTR_COMMENT, localized_message(I_RUN_MATRIX_RESULT, _cr_code, _cr_status))
+                _cr.append_attr_value(ATTR_COMMENT,
+                                      localized_message(I_RUN_MATRIX_RESULT, _cr[ATTR_MATRIX_CODE], _cr[ATTR_STATUS]))
+                _cr[ATTR_MATRIX_CODE] = ''
                 self.add_case_result(_cr)
-                continue
-            _overall_cr.merge_matrix_result(_cr)
+            else:
+                _overall_cr.merge_matrix_result(_cr)
+        # update child plans
+        for _pr in plan_result.get_attr_value(ATTR_CHILD_PLAN_RESULTS):
+            _overall_pr = self.child_plan_result(_pr.get_attr_value(ATTR_PLAN))
+            if _overall_pr is None:
+                _overall_pr = PlanResult(_pr[ATTR_PLAN], _pr[ATTR_PLAN_NAME])
+                _overall_pr[ATTR_START_DATE] = _pr[ATTR_START_DATE]
+                _overall_pr[ATTR_OUTPUT_FILES] = _pr[ATTR_OUTPUT_FILES]
+                self.add_plan_result(_overall_pr)
+            _overall_pr.merge_matrix_result(_pr)
 
     def case_results(self):
         """
@@ -247,6 +248,28 @@ class PlanResult(Result):
         for _child_plan in self.get_attr_value(ATTR_CHILD_PLAN_RESULTS):
             _results.extend(_child_plan.plan_results())
         return _results
+
+    def case_result(self, case_id):
+        """
+        :param int case_id: the test case ID
+        :returns: case result for specified case ID; None, if no such case exists
+        :rtype: CaseResult
+        """
+        for _case_result in self.get_attr_value(ATTR_CASE_RESULTS):
+            if _case_result.get_attr_value(ATTR_CASE) == case_id:
+                return _case_result
+        return None
+
+    def child_plan_result(self, plan_id):
+        """
+        :param int plan_id: the child plan ID
+        :returns: child plan result for specified plan ID; None, if no such plan exists
+        :rtype: PlanResult
+        """
+        for _child_plan_result in self.get_attr_value(ATTR_CHILD_PLAN_RESULTS):
+            if _child_plan_result.get_attr_value(ATTR_PLAN) == plan_id:
+                return _child_plan_result
+        return None
 
     def result_status(self):
         """

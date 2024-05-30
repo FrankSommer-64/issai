@@ -105,7 +105,6 @@ class TestCaseResult(unittest.TestCase):
         self.assertEqual('', _result.get_attr_value(ATTR_MATRIX_CODE))
         self.assertEqual('', _result.get_attr_value(ATTR_TESTER_NAME))
         self.assertEqual('', _result.get_attr_value(ATTR_COMMENT))
-        self.assertEqual(f'{DEFAULT_PLAN_ID}.{DEFAULT_CASE_ID}', _result.id_str())
 
     def test_get_set_attr_value(self):
         _result = CaseResult(DEFAULT_PLAN_ID, DEFAULT_CASE_ID, DEFAULT_CASE_SUMMARY, '')
@@ -167,35 +166,26 @@ class TestCaseResult(unittest.TestCase):
         self.verify_merge(RESULT_STATUS_ERROR, RESULT_STATUS_ERROR, RESULT_STATUS_ERROR)
 
     def verify_merge(self, status1, status2, expected_merge_status):
-        _res1 = TestCaseResult.matrix_result('en', status1)
-        _res2 = TestCaseResult.matrix_result('de', status2)
+        _res1 = TestCaseResult.case_result(DEFAULT_PLAN_ID, DEFAULT_CASE_ID, status1, 'en', True)
+        _res2 = TestCaseResult.case_result(DEFAULT_PLAN_ID, DEFAULT_CASE_ID, status2, 'de', True)
         _res1.merge_matrix_result(_res2)
         self.assertEqual(expected_merge_status, _res1.get_attr_value(ATTR_STATUS))
         self.assertEqual(_res2.get_attr_value(ATTR_STOP_DATE), _res1.get_attr_value(ATTR_STOP_DATE))
         _comment_lines = _res1.get_attr_value(ATTR_COMMENT).split(os.linesep)
         self.assertEqual(3, len(_comment_lines))
-        self.assertEqual('TestCase_en', _comment_lines[0])
-        self.assertTrue(_comment_lines[1].startswith("Matrix-Code 'de':"))
-        self.assertEqual('TestCase_de', _comment_lines[2])
+        self.assertEqual(f'TestCase{DEFAULT_CASE_ID}_en', _comment_lines[0])
+        self.assertLessEqual(0, _comment_lines[1].index(" 'de':"))
+        self.assertEqual(f'TestCase{DEFAULT_CASE_ID}_de', _comment_lines[2])
 
     @staticmethod
-    def matrix_result(matrix_code, status):
-        _res = CaseResult(DEFAULT_PLAN_ID, DEFAULT_CASE_ID, DEFAULT_CASE_SUMMARY, matrix_code)
-        _res.mark_start()
-        time.sleep(0.1)
-        _res.mark_end()
-        _res.set_attr_value(ATTR_STATUS, status)
-        _res.set_attr_value(ATTR_COMMENT, f'TestCase_{matrix_code}')
-        return _res
-
-    @staticmethod
-    def case_result(plan_id, case_id, status, matrix_code):
+    def case_result(plan_id, case_id, status, matrix_code, add_comment):
         _res = CaseResult(plan_id, case_id, f'TestCase{case_id}', matrix_code)
         _res.mark_start()
         time.sleep(0.1)
         _res.mark_end()
         _res.set_attr_value(ATTR_STATUS, status)
-        _res.set_attr_value(ATTR_COMMENT, f'TestCase{case_id}_{matrix_code}')
+        if add_comment:
+            _res.set_attr_value(ATTR_COMMENT, f'TestCase{case_id}_{matrix_code}')
         return _res
 
 
@@ -310,67 +300,100 @@ class TestPlanResult(unittest.TestCase):
 
     def test_result_status(self):
         # all test cases PASSED
-        _result = TestPlanResult.result_family((1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0))
+        _result = TestPlanResult.result_family((1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), '', False)
         self.assertEqual(RESULT_STATUS_ID_PASSED, _result.result_status())
         # failure in parent
-        _result = TestPlanResult.result_family((1, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0))
+        _result = TestPlanResult.result_family((1, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), '', False)
         self.assertEqual(RESULT_STATUS_ID_FAILED, _result.result_status())
         # error in parent
-        _result = TestPlanResult.result_family((1, 1, 1), (1, 0, 0), (1, 0, 0), (1, 0, 0))
+        _result = TestPlanResult.result_family((1, 1, 1), (1, 0, 0), (1, 0, 0), (1, 0, 0), '', False)
         self.assertEqual(RESULT_STATUS_ID_ERROR, _result.result_status())
         # failure in daughter
-        _result = TestPlanResult.result_family((1, 0, 0), (1, 1, 0), (1, 0, 0), (1, 0, 0))
+        _result = TestPlanResult.result_family((1, 0, 0), (1, 1, 0), (1, 0, 0), (1, 0, 0), '', False)
         self.assertEqual(RESULT_STATUS_ID_FAILED, _result.result_status())
         # error in daughter
-        _result = TestPlanResult.result_family((1, 0, 0), (1, 0, 1), (1, 0, 0), (1, 0, 0))
+        _result = TestPlanResult.result_family((1, 0, 0), (1, 0, 1), (1, 0, 0), (1, 0, 0), '', False)
         self.assertEqual(RESULT_STATUS_ID_ERROR, _result.result_status())
         # failure in son
-        _result = TestPlanResult.result_family((1, 0, 0), (1, 0, 0), (1, 1, 0), (1, 0, 0))
+        _result = TestPlanResult.result_family((1, 0, 0), (1, 0, 0), (1, 1, 0), (1, 0, 0), '', False)
         self.assertEqual(RESULT_STATUS_ID_FAILED, _result.result_status())
         # error in son
-        _result = TestPlanResult.result_family((1, 0, 0), (1, 0, 0), (1, 0, 1), (1, 0, 0))
+        _result = TestPlanResult.result_family((1, 0, 0), (1, 0, 0), (1, 0, 1), (1, 0, 0), '', False)
         self.assertEqual(RESULT_STATUS_ID_ERROR, _result.result_status())
         # failure in grandchild
-        _result = TestPlanResult.result_family((1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 1, 0))
+        _result = TestPlanResult.result_family((1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 1, 0), '', False)
         self.assertEqual(RESULT_STATUS_ID_FAILED, _result.result_status())
         # error in grandchild
-        _result = TestPlanResult.result_family((1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 1))
+        _result = TestPlanResult.result_family((1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 1), '', False)
         self.assertEqual(RESULT_STATUS_ID_ERROR, _result.result_status())
         # failure in daughter, error in son
-        _result = TestPlanResult.result_family((1, 0, 0), (1, 1, 0), (1, 0, 1), (1, 0, 0))
+        _result = TestPlanResult.result_family((1, 0, 0), (1, 1, 0), (1, 0, 1), (1, 0, 0), '', False)
         self.assertEqual(RESULT_STATUS_ID_ERROR, _result.result_status())
         # failure in daughter, error in grandchild
-        _result = TestPlanResult.result_family((1, 0, 0), (1, 1, 0), (1, 0, 0), (1, 0, 1))
+        _result = TestPlanResult.result_family((1, 0, 0), (1, 1, 0), (1, 0, 0), (1, 0, 1), '', False)
         self.assertEqual(RESULT_STATUS_ID_ERROR, _result.result_status())
         # failure in parent and daughter, error in grandchild
-        _result = TestPlanResult.result_family((1, 1, 0), (1, 1, 0), (1, 0, 0), (1, 0, 1))
+        _result = TestPlanResult.result_family((1, 1, 0), (1, 1, 0), (1, 0, 0), (1, 0, 1), '', False)
         self.assertEqual(RESULT_STATUS_ID_ERROR, _result.result_status())
 
+    def test_merge_matrix_result(self):
+        _result = PlanResult(DEFAULT_PLAN_ID, DEFAULT_PLAN_NAME)
+        # merge first matrix result
+        _result_en = TestPlanResult.result_family((2, 0, 0), (2, 0, 0), (2, 0, 0), (2, 0, 0), 'en', True)
+        _result.merge_matrix_result(_result_en)
+        self.verify_merge(_result, _result_en)
+        # merge second matrix result
+        _result_de = TestPlanResult.result_family((2, 0, 0), (2, 0, 0), (2, 0, 0), (1, 1, 0), 'de', True)
+        _result.merge_matrix_result(_result_de)
+        self.verify_merge(_result, _result_de)
+
     @staticmethod
-    def result_family(parent_states, daughter_states, son_states, grandchild_states):
-        _parent = TestPlanResult.plan_result(DEFAULT_PLAN_ID, 10, parent_states)
-        _daughter = TestPlanResult.plan_result(DAUGHTER_PLAN_ID, 20, daughter_states)
-        _son = TestPlanResult.plan_result(SON_PLAN_ID, 30, son_states)
-        _grandchild = TestPlanResult.plan_result(GRAND_CHILD_PLAN_ID, 40, grandchild_states)
+    def result_family(parent_states, daughter_states, son_states, grandchild_states, matrix_code, add_texts):
+        _parent = TestPlanResult.plan_result(DEFAULT_PLAN_ID, 10, parent_states, matrix_code, add_texts)
+        _daughter = TestPlanResult.plan_result(DAUGHTER_PLAN_ID, 20, daughter_states, matrix_code, add_texts)
+        _son = TestPlanResult.plan_result(SON_PLAN_ID, 30, son_states, matrix_code, add_texts)
+        _grandchild = TestPlanResult.plan_result(GRAND_CHILD_PLAN_ID, 40, grandchild_states, matrix_code,
+                                                 add_texts)
         _daughter.add_plan_result(_grandchild)
         _parent.add_plan_result(_daughter)
         _parent.add_plan_result(_son)
         return _parent
 
     @staticmethod
-    def plan_result(plan_id, base_case_id, case_states):
+    def plan_result(plan_id, base_case_id, case_states, matrix_code, add_texts):
         _res = PlanResult(plan_id, f'TestPlan_{plan_id}')
+        if add_texts:
+            _matrix_code = '' if len(matrix_code) == 0 else f'_{matrix_code}'
+            _res[ATTR_SUMMARY] = f'TestPlan_{plan_id}{_matrix_code}_summary'
+            _res[ATTR_NOTES] = f'TestPlan_{plan_id}{_matrix_code}_notes'
         _case_id = base_case_id
         for i in range(0, case_states[0]):
-            _res.add_case_result(TestCaseResult.case_result(plan_id, _case_id, RESULT_STATUS_PASSED, ''))
+            _res.add_case_result(TestCaseResult.case_result(plan_id, _case_id, RESULT_STATUS_PASSED,
+                                                            matrix_code, False))
             _case_id += 1
         for i in range(0, case_states[1]):
-            _res.add_case_result(TestCaseResult.case_result(plan_id, _case_id, RESULT_STATUS_FAILED, ''))
+            _res.add_case_result(TestCaseResult.case_result(plan_id, _case_id, RESULT_STATUS_FAILED,
+                                                            matrix_code, False))
             _case_id += 1
         for i in range(0, case_states[2]):
-            _res.add_case_result(TestCaseResult.case_result(plan_id, _case_id, RESULT_STATUS_ERROR, ''))
+            _res.add_case_result(TestCaseResult.case_result(plan_id, _case_id, RESULT_STATUS_ERROR,
+                                                            matrix_code, False))
             _case_id += 1
         return _res
+
+    def verify_merge(self, overall_result, specific_result):
+        self.assertEqual(specific_result.get_attr_value(ATTR_STOP_DATE), overall_result.get_attr_value(ATTR_STOP_DATE))
+        _overall_plan_results = overall_result.plan_results()
+        _specific_plan_results = specific_result.plan_results()
+        self.assertEqual(len(_specific_plan_results), len(_overall_plan_results))
+        for i in range(0, len(_overall_plan_results)):
+            self.assertEqual(_specific_plan_results[i].get_attr_value(ATTR_SUMMARY),
+                             _overall_plan_results[i].get_attr_value(ATTR_SUMMARY).split(os.linesep)[-1])
+            self.assertEqual(_specific_plan_results[i].get_attr_value(ATTR_NOTES),
+                             _overall_plan_results[i].get_attr_value(ATTR_NOTES).split(os.linesep)[-1])
+        _overall_case_results = overall_result.case_results()
+        _specific_case_results = specific_result.case_results()
+        self.assertEqual(len(_specific_case_results), len(_overall_case_results))
 
 
 if __name__ == '__main__':
