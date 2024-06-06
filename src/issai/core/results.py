@@ -34,7 +34,7 @@
 
 """
 Issai core result classes.
-Used by runner only, the classes don't have a corresponding in TCMS.
+Used by runner only, the classes don't have a counterpart in TCMS.
 """
 from datetime import datetime
 

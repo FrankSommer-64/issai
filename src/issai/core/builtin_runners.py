@@ -103,7 +103,7 @@ def py_unit_test(runtime_env, venv_path, _case_name, modules):
                     _overall_stdout.append(localized_message(I_RUN_PY_UNIT_TEST_FAILED,
                                                              _error_count, _test_result.testsRun, _m))
                     _err_msg = _test_runner.stream.read()
-                    _overall_stderr.extend(_test_result.errors)
+                    _overall_stderr.extend(_test_result.errors[1])
     except BaseException as _e:
         _overall_rc = -1
         _overall_stderr.append(str(_e))
