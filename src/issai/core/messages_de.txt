@@ -9,6 +9,7 @@ e-internal-error Interner Fehler: {0}
 e-invalid-action Kann Aktion nicht verarbeiten {0}.
 e-invalid-entity-type Kann Entity-Typ {0} nicht verarbeiten.
 e-load-container-failed Konnte Entity-Datei {0} nicht laden. {1}
+e-not-master-data-class {0} ist keine Master-Data-Klasse.
 e-read-attachment-failed Error: Konnte Attachment {0} nicht einlesen: {1}.
 e-read-file-failed Konnte Datei {0} nicht einlesen. {1}.
 e-unknown-entity-attr Interner Fehler: Entity '{0}' hat kein Attribut '{1}'.

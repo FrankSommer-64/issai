@@ -141,18 +141,19 @@ class TestCaseResult(unittest.TestCase):
         self.assertEqual(2, len(_comment_lines))
         self.assertEqual('line1', _comment_lines[0])
         self.assertEqual('line2', _comment_lines[1])
-        # append to immutable attribute
-        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_CASE, 99)
+        # immutable non-string attributes must ignore appends
+        self.verify_append_ignored(_result, ATTR_CASE, 99)
+        self.verify_append_ignored(_result, ATTR_OUTPUT_FILES, ['test.log'])
+        self.verify_append_ignored(_result, ATTR_PLAN, 99)
+        self.verify_append_ignored(_result, ATTR_START_DATE, datetime.datetime.now())
+        self.verify_append_ignored(_result, ATTR_STOP_DATE, datetime.datetime.now())
+        # immutable string attributes must raise exception
         self.assertRaises(IssaiException, _result.append_attr_value, ATTR_CASE_NAME, 'bla')
         self.assertRaises(IssaiException, _result.append_attr_value, ATTR_MATRIX_CODE, 'en')
-        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_OUTPUT_FILES, ['test.log'])
-        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_PLAN, 99)
-        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_START_DATE, datetime.datetime.now())
-        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_STOP_DATE, datetime.datetime.now())
-        # append invalid attribute value
-        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_COMMENT, True)
-        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_STATUS, -1)
-        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_TESTER_NAME, [])
+        # append invalid attribute value must be ignored
+        self.verify_append_ignored(_result, ATTR_COMMENT, True)
+        self.verify_append_ignored(_result, ATTR_STATUS, -1)
+        self.verify_append_ignored(_result, ATTR_TESTER_NAME, [])
 
     def test_merge_matrix_result(self):
         self.verify_merge(RESULT_STATUS_PASSED, RESULT_STATUS_PASSED, RESULT_STATUS_PASSED)
@@ -176,6 +177,11 @@ class TestCaseResult(unittest.TestCase):
         self.assertEqual(f'TestCase{DEFAULT_CASE_ID}_en', _comment_lines[0])
         self.assertLessEqual(0, _comment_lines[1].index(" 'de':"))
         self.assertEqual(f'TestCase{DEFAULT_CASE_ID}_de', _comment_lines[2])
+
+    def verify_append_ignored(self, result, attr_name, attr_value):
+        _orig_value = result.get_attr_value(attr_name)
+        result.append_attr_value(attr_name, attr_value)
+        self.assertEqual(_orig_value, result.get_attr_value(attr_name))
 
     @staticmethod
     def case_result(plan_id, case_id, status, matrix_code, add_comment):
@@ -242,17 +248,18 @@ class TestPlanResult(unittest.TestCase):
         self.assertEqual(2, len(_summary_lines))
         self.assertEqual('line1', _summary_lines[0])
         self.assertEqual('line2', _summary_lines[1])
-        # append to immutable attribute
-        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_PLAN, 99)
+        # immutable non-string attributes must ignore appends
+        self.verify_append_ignored(_result, ATTR_PLAN, 99)
+        self.verify_append_ignored(_result, ATTR_CASE_RESULTS, [])
+        self.verify_append_ignored(_result, ATTR_CHILD_PLAN_RESULTS, [])
+        self.verify_append_ignored(_result, ATTR_OUTPUT_FILES, ['test.log'])
+        self.verify_append_ignored(_result, ATTR_START_DATE, datetime.datetime.now())
+        self.verify_append_ignored(_result, ATTR_STOP_DATE, datetime.datetime.now())
+        # immutable string attributes must raise exception
         self.assertRaises(IssaiException, _result.append_attr_value, ATTR_PLAN_NAME, 'bla')
-        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_CASE_RESULTS, [])
-        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_CHILD_PLAN_RESULTS, [])
-        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_OUTPUT_FILES, ['test.log'])
-        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_START_DATE, datetime.datetime.now())
-        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_STOP_DATE, datetime.datetime.now())
         # append invalid attribute value
-        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_NOTES, True)
-        self.assertRaises(IssaiException, _result.append_attr_value, ATTR_SUMMARY, -1)
+        self.verify_append_ignored(_result, ATTR_NOTES, True)
+        self.verify_append_ignored(_result, ATTR_SUMMARY, -1)
 
     def test_case_results(self):
         _result = PlanResult(DEFAULT_PLAN_ID, DEFAULT_PLAN_NAME)
@@ -394,6 +401,11 @@ class TestPlanResult(unittest.TestCase):
         _overall_case_results = overall_result.case_results()
         _specific_case_results = specific_result.case_results()
         self.assertEqual(len(_specific_case_results), len(_overall_case_results))
+
+    def verify_append_ignored(self, result, attr_name, attr_value):
+        _orig_value = result.get_attr_value(attr_name)
+        result.append_attr_value(attr_name, attr_value)
+        self.assertEqual(_orig_value, result.get_attr_value(attr_name))
 
 
 if __name__ == '__main__':

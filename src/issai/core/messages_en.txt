@@ -9,6 +9,7 @@ e-internal-error Internal Error: {0}
 e-invalid-action Cannot process action {0}.
 e-invalid-entity-type Cannot process entity type {0}.
 e-load-container-failed Could not load entity file {0}. {1}
+e-not-master-data-class {0} is not a master data class.
 e-read-attachment-failed Error: Could not read attachment {0}: {1}.
 e-read-file-failed Could not read file {0}. {1}.
 e-unknown-entity-attr Internal error: entity '{0}' has no attribute '{1}'.

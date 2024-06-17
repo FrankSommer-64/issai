@@ -57,7 +57,7 @@ def builtin_runner(function_name):
 def py_unit_test(runtime_env, venv_path, _case_name, modules):
     """
     Runs Python unit tests for specified module(s) and/or package(s).
-    :param mapping runtime_env: the local issai runtime environment
+    :param os._Environ runtime_env: the local issai runtime environment
     :param str venv_path: the path to virtual Python environment, may be None
     :param str _case_name: the test case name
     :param str modules: the module(s) to test, separated by comma
