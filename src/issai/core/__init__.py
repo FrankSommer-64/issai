@@ -369,7 +369,7 @@ def tcms_class_id_for_master_data_type(data_type):
     :returns: TCMS class ID matching entity element name
     :rtype: int
     """
-    return _MASTER_DATA_TYPE_TCMS_CLASS_IDS.get(data_type)
+    return MASTER_DATA_TYPE_TCMS_CLASS_IDS.get(data_type)
 
 
 def master_data_type_for_tcms_class(class_id):
@@ -378,7 +378,7 @@ def master_data_type_for_tcms_class(class_id):
     :returns: master data element name matching TCMS class ID
     :rtype: str
     """
-    return _MASTER_DATA_CLASS_DATA_TYPES.get(class_id)
+    return MASTER_DATA_CLASS_DATA_TYPES.get(class_id)
 
 
 def is_master_data_tcms_class(class_id):
@@ -387,7 +387,7 @@ def is_master_data_tcms_class(class_id):
     :returns: True, if specified TCMS class ID is part of entity master data
     :rtype: bool
     """
-    return class_id in _MASTER_DATA_CLASS_DATA_TYPES.keys()
+    return class_id in MASTER_DATA_CLASS_DATA_TYPES.keys()
 
 
 def tcms_class_name_for_id(tcms_class_id):
@@ -429,27 +429,27 @@ _DATA_TYPE_TCMS_CLASS_IDS = {ATTR_CASE_CATEGORIES: TCMS_CLASS_ID_CATEGORY,
                              ATTR_TEST_PLANS: TCMS_CLASS_TEST_PLAN,
                              ATTR_TEST_RUNS: TCMS_CLASS_TEST_RUN}
 
-_MASTER_DATA_TYPE_TCMS_CLASS_IDS = {ATTR_CASE_CATEGORIES: TCMS_CLASS_ID_CATEGORY,
-                                    ATTR_CASE_COMPONENTS: TCMS_CLASS_ID_COMPONENT,
-                                    ATTR_CASE_PRIORITIES: TCMS_CLASS_ID_PRIORITY,
-                                    ATTR_CASE_STATUSES: TCMS_CLASS_ID_TEST_CASE_STATUS,
-                                    ATTR_EXECUTION_STATUSES: TCMS_CLASS_ID_TEST_EXECUTION_STATUS,
-                                    ATTR_PLAN_TYPES: TCMS_CLASS_ID_PLAN_TYPE,
-                                    ATTR_PRODUCT_BUILDS: TCMS_CLASS_ID_BUILD,
-                                    ATTR_PRODUCT_CLASSIFICATIONS: TCMS_CLASS_ID_CLASSIFICATION,
-                                    ATTR_PRODUCT_VERSIONS: TCMS_CLASS_ID_VERSION,
-                                    ATTR_TCMS_USERS: TCMS_CLASS_ID_USER}
+MASTER_DATA_TYPE_TCMS_CLASS_IDS = {ATTR_CASE_CATEGORIES: TCMS_CLASS_ID_CATEGORY,
+                                   ATTR_CASE_COMPONENTS: TCMS_CLASS_ID_COMPONENT,
+                                   ATTR_CASE_PRIORITIES: TCMS_CLASS_ID_PRIORITY,
+                                   ATTR_CASE_STATUSES: TCMS_CLASS_ID_TEST_CASE_STATUS,
+                                   ATTR_EXECUTION_STATUSES: TCMS_CLASS_ID_TEST_EXECUTION_STATUS,
+                                   ATTR_PLAN_TYPES: TCMS_CLASS_ID_PLAN_TYPE,
+                                   ATTR_PRODUCT_BUILDS: TCMS_CLASS_ID_BUILD,
+                                   ATTR_PRODUCT_CLASSIFICATIONS: TCMS_CLASS_ID_CLASSIFICATION,
+                                   ATTR_PRODUCT_VERSIONS: TCMS_CLASS_ID_VERSION,
+                                   ATTR_TCMS_USERS: TCMS_CLASS_ID_USER}
 
-_MASTER_DATA_CLASS_DATA_TYPES = {TCMS_CLASS_ID_CATEGORY: ATTR_CASE_CATEGORIES,
-                                 TCMS_CLASS_ID_COMPONENT: ATTR_CASE_COMPONENTS,
-                                 TCMS_CLASS_ID_PRIORITY: ATTR_CASE_PRIORITIES,
-                                 TCMS_CLASS_ID_TEST_CASE_STATUS: ATTR_CASE_STATUSES,
-                                 TCMS_CLASS_ID_TEST_EXECUTION_STATUS: ATTR_EXECUTION_STATUSES,
-                                 TCMS_CLASS_ID_PLAN_TYPE: ATTR_PLAN_TYPES,
-                                 TCMS_CLASS_ID_BUILD: ATTR_PRODUCT_BUILDS,
-                                 TCMS_CLASS_ID_CLASSIFICATION: ATTR_PRODUCT_CLASSIFICATIONS,
-                                 TCMS_CLASS_ID_VERSION: ATTR_PRODUCT_VERSIONS,
-                                 TCMS_CLASS_ID_USER: ATTR_TCMS_USERS}
+MASTER_DATA_CLASS_DATA_TYPES = {TCMS_CLASS_ID_CATEGORY: ATTR_CASE_CATEGORIES,
+                                TCMS_CLASS_ID_COMPONENT: ATTR_CASE_COMPONENTS,
+                                TCMS_CLASS_ID_PRIORITY: ATTR_CASE_PRIORITIES,
+                                TCMS_CLASS_ID_TEST_CASE_STATUS: ATTR_CASE_STATUSES,
+                                TCMS_CLASS_ID_TEST_EXECUTION_STATUS: ATTR_EXECUTION_STATUSES,
+                                TCMS_CLASS_ID_PLAN_TYPE: ATTR_PLAN_TYPES,
+                                TCMS_CLASS_ID_BUILD: ATTR_PRODUCT_BUILDS,
+                                TCMS_CLASS_ID_CLASSIFICATION: ATTR_PRODUCT_CLASSIFICATIONS,
+                                TCMS_CLASS_ID_VERSION: ATTR_PRODUCT_VERSIONS,
+                                TCMS_CLASS_ID_USER: ATTR_TCMS_USERS}
 
 _TCMS_CLASS_DATA_TYPES = {TCMS_CLASS_ID_PRODUCT: ATTR_PRODUCT, TCMS_CLASS_ID_ENVIRONMENT: ATTR_ENVIRONMENTS,
                           TCMS_CLASS_ID_TEST_CASE: ATTR_TEST_CASES, TCMS_CLASS_ID_TEST_EXECUTION: ATTR_TEST_EXECUTIONS,

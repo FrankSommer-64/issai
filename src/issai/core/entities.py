@@ -40,6 +40,7 @@ Test plans and test cases are also subject to export/import and can be executed.
 Test plan results and test case results can be imported to TCMS.
 """
 
+import copy
 import re
 
 from tomlkit import aot, array, dump, inline_table, integer, load, table, TOMLDocument
@@ -203,7 +204,7 @@ class Entity(dict):
         :param str data_type: the master data type
         :param dict|list value: the attribute value(s)
         """
-        self[ATTR_MASTER_DATA].add_attribute(data_type, value)
+        self[ATTR_MASTER_DATA].add_object(data_type, value)
 
     def master_data_object(self, data_type, object_id):
         """
@@ -657,7 +658,7 @@ class SpecificationEntity(Entity):
                     del _objects[object_id]
                 _objects[_new_object_id] = replacement_value
         # eventually update references
-        _references_desc = _CLASS_REFERENCES.get(class_id)
+        _references_desc = CLASS_REFERENCES.get(class_id)
         if _references_desc is not None:
             for _tcms_class_id, _attrs in _references_desc.items():
                 _entity_data_type = data_type_for_tcms_class(_tcms_class_id)
@@ -667,7 +668,7 @@ class SpecificationEntity(Entity):
                 if _entity_objects is None:
                     continue
                 _replace_references(_entity_objects, _attrs, object_id, _new_object_id)
-        self[ATTR_MASTER_DATA].replace_attribute(class_id, object_id, replacement_value)
+        self[ATTR_MASTER_DATA].replace_object(class_id, object_id, replacement_value)
 
     def fill_product_data(self, product):
         for _k, _v in product.items():
@@ -1015,7 +1016,7 @@ class MasterData(dict):
         Constructor.
         """
         super().__init__()
-        for _mtype in _MASTER_DATA_TYPES:
+        for _mtype in MASTER_DATA_TYPES:
             self[_mtype] = {}
 
     def object_count(self):
@@ -1032,6 +1033,7 @@ class MasterData(dict):
         :param int object_id: the object's TCMS ID
         :returns: the object found or None, if no such object exists
         :rtype: dict
+        :raises IssaiException: if specified data type is not allowed
         """
         _objects = self.get(data_type)
         if _objects is None:
@@ -1044,10 +1046,11 @@ class MasterData(dict):
         :param str data_type: the master data type
         :returns: the attributes
         :rtype: list
+        :raises IssaiException: if specified data type is not allowed
         """
-        if data_type in _MASTER_DATA_TYPES:
-            return [_obj for _obj in self[data_type].values()]
-        return []
+        if data_type not in MASTER_DATA_TYPES:
+            raise IssaiException(E_INTERNAL_ERROR, localized_message(E_NOT_MASTER_DATA_CLASS, data_type))
+        return [_obj for _obj in self[data_type].values()]
 
     def objects_of_class(self, class_id):
         """
@@ -1055,58 +1058,63 @@ class MasterData(dict):
         :param int class_id: the TCMS class ID
         :returns: the objects, None, if class is not a master data type
         :rtype: dict
+        :raises IssaiException: if specified TCMS class ID is not allowed
         """
         _data_type = master_data_type_for_tcms_class(class_id)
-        return None if _data_type is None else self[_data_type]
+        if _data_type is None:
+            raise IssaiException(E_INTERNAL_ERROR, localized_message(E_NOT_MASTER_DATA_CLASS, class_id))
+        return self[_data_type]
 
-    def add_attribute(self, data_type, value):
+    def add_object(self, data_type, value):
         """
-        Adds the specified attribute.
+        Adds the specified object.
         :param str data_type: the master data type
-        :param dict|list value: the attribute value(s)
+        :param dict|list value: the object value(s)
+        :raises IssaiException: if specified data type is not allowed
         """
+        value = copy.deepcopy(value)
         if data_type == ATTR_CASE_COMPONENTS:
             # special case components, where attribute cases is a set
             # no need to distinguish value type here, always called with a list
-            _stored_components = self[ATTR_CASE_COMPONENTS]
             for _component in value:
                 _component_id = _component[ATTR_ID]
-                _case_id = _component[ATTR_CASES]
-                _stored_component = _stored_components.get(_component_id)
+                _case_ids = _component[ATTR_CASES]
+                _stored_component = self[ATTR_CASE_COMPONENTS].get(_component_id)
                 if _stored_component is None:
-                    _component[ATTR_CASES] = set()
-                    if _case_id is not None:
-                        _component[ATTR_CASES].add(_case_id)
-                    _stored_components[_component_id] = _component
+                    _component[ATTR_CASES] = set(_component[ATTR_CASES])
+                    self[ATTR_CASE_COMPONENTS][_component_id] = _component
                 else:
-                    _stored_component[ATTR_CASES].add(_case_id)
+                    for _case_id in _case_ids:
+                        if _case_id is not None:
+                            _stored_component[ATTR_CASES].add(_case_id)
             return
-        if data_type in _MASTER_DATA_TYPES:
+        if data_type in MASTER_DATA_TYPES:
             if isinstance(value, dict):
                 self[data_type][value[ATTR_ID]] = value
             else:
                 for _v in value:
                     self[data_type][_v[ATTR_ID]] = _v
             return
-        raise IssaiException(E_INTERNAL_ERROR, f'{data_type} is not a master data type')
+        raise IssaiException(E_INTERNAL_ERROR, localized_message(E_NOT_MASTER_DATA_CLASS, data_type))
 
-    def replace_attribute(self, class_id, object_id, replacement_value):
+    def replace_object(self, class_id, object_id, replacement_value):
         """
-        Replaces an attribute, because it doesn't exist in TCMS or another object shall be used instead.
+        Replaces an object, because it doesn't exist in TCMS or another object shall be used instead.
         Updates all references to the replaced object to match the replacement.
         :param int class_id: the TCMS class ID
         :param int object_id: the TCMS object ID
-        :param dict replacement_value: the new attribute value
+        :param dict replacement_value: the new object value
+        :raises IssaiException: if specified TCMS class ID is not allowed
         """
         _new_object_id = replacement_value[ATTR_ID]
         # eventually update object in data type
-        _objects = self.objects_of_class(class_id)
-        if _objects is not None:
+        if class_id in MASTER_DATA_TYPE_TCMS_CLASS_IDS:
+            _objects = self.objects_of_class(class_id)
             if object_id in _objects:
                 del _objects[object_id]
             _objects[_new_object_id] = replacement_value
         # eventually update references
-        _references_desc = _CLASS_REFERENCES.get(class_id)
+        _references_desc = CLASS_REFERENCES.get(class_id)
         if _references_desc is not None:
             for _tcms_class_id, _attrs in _references_desc.items():
                 _entity_data_type = master_data_type_for_tcms_class(_tcms_class_id)
@@ -1294,46 +1302,35 @@ def _matching_properties(properties, property_patterns):
     return _matches
 
 
-_CLASS_REFERENCES = {TCMS_CLASS_ID_BUILD: {TCMS_CLASS_ID_TEST_EXECUTION: [ATTR_BUILD],
-                                           TCMS_CLASS_ID_TEST_RUN: [ATTR_BUILD]},
-                     TCMS_CLASS_ID_CATEGORY: {TCMS_CLASS_ID_TEST_CASE: [ATTR_CATEGORY]},
-                     TCMS_CLASS_ID_COMPONENT: {TCMS_CLASS_ID_TEST_CASE: [ATTR_COMPONENT]},
-                     TCMS_CLASS_ID_PLAN_TYPE: {TCMS_CLASS_ID_TEST_PLAN: [ATTR_TYPE]},
-                     TCMS_CLASS_ID_PRIORITY: {TCMS_CLASS_ID_TEST_CASE: [ATTR_PRIORITY]},
-                     TCMS_CLASS_ID_PRODUCT: {TCMS_CLASS_ID_CATEGORY: [ATTR_PRODUCT],
-                                             TCMS_CLASS_ID_COMPONENT: [ATTR_PRODUCT],
-                                             TCMS_CLASS_ID_TEST_PLAN: [ATTR_PRODUCT],
-                                             TCMS_CLASS_ID_VERSION: [ATTR_PRODUCT]},
-                     TCMS_CLASS_ID_TEST_CASE: {TCMS_CLASS_ID_TEST_EXECUTION: [ATTR_CASE],
-                                               TCMS_CLASS_ID_TEST_PLAN: [ATTR_CASES],
-                                               TCMS_CLASS_ID_TEST_RUN: [ATTR_CASES]},
-                     TCMS_CLASS_ID_TEST_CASE_STATUS: {TCMS_CLASS_ID_TEST_CASE: [ATTR_CASE_STATUS]},
-                     TCMS_CLASS_ID_TEST_EXECUTION: {TCMS_CLASS_ID_TEST_CASE: [ATTR_EXECUTIONS],
-                                                    TCMS_CLASS_ID_TEST_RUN: [ATTR_EXECUTIONS]},
-                     TCMS_CLASS_ID_TEST_EXECUTION_STATUS: {TCMS_CLASS_ID_TEST_EXECUTION: [ATTR_STATUS]},
-                     TCMS_CLASS_ID_TEST_PLAN: {TCMS_CLASS_ID_TEST_PLAN: [ATTR_PARENT],
-                                               TCMS_CLASS_ID_TEST_RUN: [ATTR_PLAN]},
-                     TCMS_CLASS_ID_TEST_RUN: {TCMS_CLASS_ID_TEST_EXECUTION: [ATTR_RUN],
-                                              TCMS_CLASS_ID_TEST_PLAN: [ATTR_RUNS]},
-                     TCMS_CLASS_ID_USER: {TCMS_CLASS_ID_COMPONENT: [ATTR_INITIAL_OWNER, ATTR_INITIAL_QA_CONTACT],
-                                          TCMS_CLASS_ID_TEST_CASE: [ATTR_AUTHOR, ATTR_DEFAULT_TESTER, ATTR_REVIEWER],
-                                          TCMS_CLASS_ID_TEST_EXECUTION: [ATTR_ASSIGNEE, ATTR_TESTED_BY],
-                                          TCMS_CLASS_ID_TEST_PLAN: [ATTR_AUTHOR],
-                                          TCMS_CLASS_ID_TEST_RUN: [ATTR_DEFAULT_TESTER, ATTR_MANAGER]},
-                     TCMS_CLASS_ID_VERSION: {TCMS_CLASS_ID_BUILD: [ATTR_VERSION],
-                                             TCMS_CLASS_ID_TEST_PLAN: [ATTR_PRODUCT_VERSION]}}
+CLASS_REFERENCES = {TCMS_CLASS_ID_BUILD: {TCMS_CLASS_ID_TEST_EXECUTION: [ATTR_BUILD],
+                                          TCMS_CLASS_ID_TEST_RUN: [ATTR_BUILD]},
+                    TCMS_CLASS_ID_CATEGORY: {TCMS_CLASS_ID_TEST_CASE: [ATTR_CATEGORY]},
+                    TCMS_CLASS_ID_COMPONENT: {TCMS_CLASS_ID_TEST_CASE: [ATTR_COMPONENT]},
+                    TCMS_CLASS_ID_PLAN_TYPE: {TCMS_CLASS_ID_TEST_PLAN: [ATTR_TYPE]},
+                    TCMS_CLASS_ID_PRIORITY: {TCMS_CLASS_ID_TEST_CASE: [ATTR_PRIORITY]},
+                    TCMS_CLASS_ID_PRODUCT: {TCMS_CLASS_ID_CATEGORY: [ATTR_PRODUCT],
+                                            TCMS_CLASS_ID_COMPONENT: [ATTR_PRODUCT],
+                                            TCMS_CLASS_ID_TEST_PLAN: [ATTR_PRODUCT],
+                                            TCMS_CLASS_ID_VERSION: [ATTR_PRODUCT]},
+                    TCMS_CLASS_ID_TEST_CASE: {TCMS_CLASS_ID_TEST_EXECUTION: [ATTR_CASE],
+                                              TCMS_CLASS_ID_TEST_PLAN: [ATTR_CASES],
+                                              TCMS_CLASS_ID_TEST_RUN: [ATTR_CASES]},
+                    TCMS_CLASS_ID_TEST_CASE_STATUS: {TCMS_CLASS_ID_TEST_CASE: [ATTR_CASE_STATUS]},
+                    TCMS_CLASS_ID_TEST_EXECUTION: {TCMS_CLASS_ID_TEST_CASE: [ATTR_EXECUTIONS],
+                                                   TCMS_CLASS_ID_TEST_RUN: [ATTR_EXECUTIONS]},
+                    TCMS_CLASS_ID_TEST_EXECUTION_STATUS: {TCMS_CLASS_ID_TEST_EXECUTION: [ATTR_STATUS]},
+                    TCMS_CLASS_ID_TEST_PLAN: {TCMS_CLASS_ID_TEST_PLAN: [ATTR_PARENT],
+                                              TCMS_CLASS_ID_TEST_RUN: [ATTR_PLAN]},
+                    TCMS_CLASS_ID_TEST_RUN: {TCMS_CLASS_ID_TEST_EXECUTION: [ATTR_RUN],
+                                             TCMS_CLASS_ID_TEST_PLAN: [ATTR_RUNS]},
+                    TCMS_CLASS_ID_USER: {TCMS_CLASS_ID_COMPONENT: [ATTR_INITIAL_OWNER, ATTR_INITIAL_QA_CONTACT],
+                                         TCMS_CLASS_ID_TEST_CASE: [ATTR_AUTHOR, ATTR_DEFAULT_TESTER, ATTR_REVIEWER],
+                                         TCMS_CLASS_ID_TEST_EXECUTION: [ATTR_ASSIGNEE, ATTR_TESTED_BY],
+                                         TCMS_CLASS_ID_TEST_PLAN: [ATTR_AUTHOR],
+                                         TCMS_CLASS_ID_TEST_RUN: [ATTR_DEFAULT_TESTER, ATTR_MANAGER]},
+                    TCMS_CLASS_ID_VERSION: {TCMS_CLASS_ID_BUILD: [ATTR_VERSION],
+                                            TCMS_CLASS_ID_TEST_PLAN: [ATTR_PRODUCT_VERSION]}}
 
-_MASTER_DATA_TYPE_TCMS_CLASS_IDS = {ATTR_CASE_CATEGORIES: TCMS_CLASS_ID_CATEGORY,
-                                    ATTR_CASE_COMPONENTS: TCMS_CLASS_ID_COMPONENT,
-                                    ATTR_CASE_PRIORITIES: TCMS_CLASS_ID_PRIORITY,
-                                    ATTR_CASE_STATUSES: TCMS_CLASS_ID_TEST_CASE_STATUS,
-                                    ATTR_EXECUTION_STATUSES: TCMS_CLASS_ID_TEST_EXECUTION_STATUS,
-                                    ATTR_PLAN_TYPES: TCMS_CLASS_ID_PLAN_TYPE,
-                                    ATTR_PRODUCT_BUILDS: TCMS_CLASS_ID_BUILD,
-                                    ATTR_PRODUCT_CLASSIFICATIONS: TCMS_CLASS_ID_CLASSIFICATION,
-                                    ATTR_PRODUCT_VERSIONS: TCMS_CLASS_ID_VERSION,
-                                    ATTR_TCMS_USERS: TCMS_CLASS_ID_USER}
-
-_MASTER_DATA_TYPES = {ATTR_CASE_CATEGORIES, ATTR_CASE_COMPONENTS, ATTR_CASE_PRIORITIES, ATTR_CASE_STATUSES,
-                      ATTR_EXECUTION_STATUSES, ATTR_PLAN_TYPES, ATTR_PRODUCT_BUILDS, ATTR_PRODUCT_CLASSIFICATIONS,
-                      ATTR_PRODUCT_VERSIONS, ATTR_TCMS_USERS}
+MASTER_DATA_TYPES = {ATTR_CASE_CATEGORIES, ATTR_CASE_COMPONENTS, ATTR_CASE_PRIORITIES, ATTR_CASE_STATUSES,
+                     ATTR_EXECUTION_STATUSES, ATTR_PLAN_TYPES, ATTR_PRODUCT_BUILDS, ATTR_PRODUCT_CLASSIFICATIONS,
+                     ATTR_PRODUCT_VERSIONS, ATTR_TCMS_USERS}
