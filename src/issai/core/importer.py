@@ -38,7 +38,7 @@ Functions to import entities from files to TCMS.
 
 from issai.core.attachments import (attachment_file_path, upload_attachment_file, upload_attachment, url_file_name,
                                     url_object_id)
-from issai.core.entities import Entity, ProductEntity, SpecificationEntity, PlanResultEntity
+from issai.core.entities import *
 from issai.core.task import TaskMonitor, TaskResult
 from issai.core.tcms import *
 
@@ -63,19 +63,19 @@ def import_file(entity, options, file_path, task_monitor):
     _object_count = entity.object_count()
     task_monitor.set_operation_count(_object_count + _attachment_count)
     task_monitor.set_dry_run(options.get(OPTION_DRY_RUN))
-    if entity.holds_entity_with_type(ENTITY_TYPE_CASE):
+    if isinstance(entity, TestCaseEntity):
         _import_case_container(entity, options, task_monitor)
         _result = TaskResult(0, localized_message(I_GUI_IMPORT_CASE_SUCCESSFUL, entity.entity_name()))
         _failure_message = localized_message(E_GUI_IMPORT_CASE_FAILED, entity.entity_name())
-    elif entity.holds_entity_with_type(ENTITY_TYPE_PLAN):
+    elif isinstance(entity, TestPlanEntity):
         _import_plan_container(entity, options, task_monitor)
         _result = TaskResult(0, localized_message(I_GUI_IMPORT_PLAN_SUCCESSFUL, entity.entity_name()))
         _failure_message = localized_message(E_GUI_IMPORT_PLAN_FAILED, entity.entity_name())
-    elif entity.holds_entity_with_type(ENTITY_TYPE_PRODUCT):
+    elif isinstance(entity, ProductEntity):
         _import_product(entity, options, task_monitor)
         _result = TaskResult(0, localized_message(I_GUI_IMPORT_PRODUCT_SUCCESSFUL, entity.entity_name()))
         _failure_message = localized_message(E_GUI_IMPORT_PRODUCT_FAILED, entity.entity_name())
-    elif entity.holds_entity_with_type(ENTITY_TYPE_PLAN_RESULT):
+    elif isinstance(entity, PlanResultEntity):
         _result = _import_plan_result_entity(entity, options, task_monitor)
         _failure_message = localized_message(E_GUI_IMPORT_PLAN_RESULT_FAILED, entity.entity_id())
     else:
@@ -90,7 +90,7 @@ def import_file(entity, options, file_path, task_monitor):
             task_monitor.operations_processed(1)
             for _object_id, _urls in _object_infos.items():
                 for _url in _urls:
-                    if entity.holds_entity_with_type(ENTITY_TYPE_PLAN_RESULT):
+                    if isinstance(entity, PlanResultEntity):
                         # separate handling for results
                         _file_path = attachment_file_path(_input_path, _url, TCMS_CLASS_ID_TEST_EXECUTION, _object_id)
                         _tcms_file_name = f'testexecution_{_object_id}_{_url}'
@@ -140,7 +140,7 @@ def _import_plan_result_entity(plan_result, options, task_monitor):
 def _import_case_container(container, options, task_monitor):
     """
     Imports a test case from file.
-    :param Entity container: the entity to import
+    :param TestCaseEntity container: the entity to import
     :param dict options: the import control options
     :param TaskMonitor task_monitor: the progress handler
     :raises IssaiException: if import fails
@@ -153,7 +153,7 @@ def _import_case_container(container, options, task_monitor):
 def _import_environments(container, options, task_monitor):
     """
     Imports environments from file.
-    :param Entity container: the container holding the environments data
+    :param SpecificationEntity container: the container holding the environments data
     :param dict options: the import control options
     :param TaskMonitor task_monitor: the progress handler
     :raises IssaiException: if import fails
@@ -182,7 +182,7 @@ def _import_environments(container, options, task_monitor):
 def _import_cases(container, product_existed, task_monitor):
     """
     Imports test cases from file.
-    :param Entity container: the container holding the test cases data
+    :param SpecificationEntity container: the container holding the test cases data
     :param bool product_existed: indicates whether product existed prior to import
     :param TaskMonitor task_monitor: the progress handler
     :raises IssaiException: if import fails
@@ -394,7 +394,7 @@ def _import_case_result(case_result, options, task_monitor):
 def _import_plan_container(container, options, task_monitor):
     """
     Imports a test plan from file.
-    :param Entity container: the container to import
+    :param TestPlanEntity container: the container to import
     :param dict options: the import control options
     :param TaskMonitor task_monitor: the progress handler
     :raises IssaiException: if import fails
@@ -569,7 +569,7 @@ def _prepare_tcms_for_import(container, options, task_monitor):
     """
     Compares product and master data in specified container against TCMS.
     Creates missing objects, if applicable and adjusts foreign key references.
-    :param Entity container: the container data
+    :param SpecificationEntity container: the container data
     :param dict options: the import options
     :param TaskMonitor task_monitor: the progress handler
     :returns: True, if product already exists in TCMS; False, if product has been created
@@ -587,7 +587,7 @@ def _prepare_product(container, options, task_monitor):
     Compares product data of specified container against TCMS.
     Creates a product, if it doesn't exist in TCMS and imported entity is a complete product.
     Adjust product references, if necessary.
-    :param Entity container: the container data
+    :param SpecificationEntity container: the container data
     :param dict options: the import options
     :param TaskMonitor task_monitor: the progress handler
     :returns: True, if product already exists in TCMS; False, if product has been created

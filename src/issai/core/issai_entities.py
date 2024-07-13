@@ -34,10 +34,10 @@
 
 """
 Issai entity classes.
-The entities model central objects of Issai: products, test plans, test cases, test plan results and test case results.
+The entities model central objects of Issai: products, test plans, test cases and test plan results.
 Products can be exported from and imported to TCMS.
 Test plans and test cases are also subject to export/import and can be executed.
-Test plan results and test case results can be imported to TCMS.
+Test plan results can be imported to TCMS.
 """
 
 import copy
@@ -51,6 +51,224 @@ from issai.core.checks import verify_entity_attr_name, verify_master_data_attr, 
 from issai.core.issai_exception import IssaiException
 from issai.core.messages import *
 from issai.core.util import python_value
+
+
+MASTER_DATA_GROUPS = {ATTR_CASE_CATEGORIES, ATTR_CASE_COMPONENTS, ATTR_CASE_PRIORITIES, ATTR_CASE_STATUSES,
+                      ATTR_EXECUTION_STATUSES, ATTR_PLAN_TYPES, ATTR_PRODUCT_BUILDS, ATTR_PRODUCT_CLASSIFICATIONS,
+                      ATTR_PRODUCT_VERSIONS, ATTR_TCMS_USERS}
+SPEC_GROUPS = {ATTR_ENVIRONMENTS, ATTR_TEST_CASES, ATTR_TEST_EXECUTIONS, ATTR_TEST_PLANS, ATTR_TEST_RUNS}
+TEST_OBJECT_GROUPS = {ATTR_TEST_CASES, ATTR_TEST_EXECUTIONS, ATTR_TEST_PLANS, ATTR_TEST_PLAN_RESULTS, ATTR_TEST_RUNS,
+                      ATTR_TEST_CASE_RESULTS, ATTR_TEST_PLAN_RESULTS}
+
+_DEP_SORTED_ENTITY_ATTRIBUTES = [ATTR_PRODUCT_CLASSIFICATIONS, ATTR_ENVIRONMENTS, ATTR_CASE_PRIORITIES,
+                                 ATTR_CASE_STATUSES, ATTR_EXECUTION_STATUSES, ATTR_TCMS_USERS, ATTR_COMPONENTS,
+                                 ATTR_PRODUCT, ATTR_CASE_CATEGORIES, ATTR_PRODUCT_VERSIONS, ATTR_PRODUCT_BUILDS,
+                                 ATTR_TEST_CASES, ATTR_TEST_PLANS, ATTR_TEST_RUNS, ATTR_TEST_EXECUTIONS]
+
+_DEP_SORTED_TCMS_CLASS_IDS = [TCMS_CLASS_ID_CLASSIFICATION, TCMS_CLASS_ID_ENVIRONMENT, TCMS_CLASS_ID_PRIORITY,
+                              TCMS_CLASS_ID_TEST_CASE_STATUS, TCMS_CLASS_ID_TEST_EXECUTION_STATUS, TCMS_CLASS_ID_USER,
+                              TCMS_CLASS_ID_COMPONENT, TCMS_CLASS_ID_PRODUCT, TCMS_CLASS_ID_CATEGORY,
+                              TCMS_CLASS_ID_VERSION, TCMS_CLASS_ID_BUILD, TCMS_CLASS_ID_TEST_CASE,
+                              TCMS_CLASS_ID_TEST_PLAN, TCMS_CLASS_ID_TEST_RUN, TCMS_CLASS_ID_TEST_EXECUTION]
+
+
+def class_ids_ordered_by_dependency():
+    """
+    :returns: Issai relevant TCMS class ID's, classes without references to other classes first
+    :rtype: list[int]
+    """
+    return _DEP_SORTED_TCMS_CLASS_IDS
+
+
+def entity_attributes_ordered_by_dependency():
+    """
+    :returns: Issai relevant entity attributes, attributes containing objects without references to other objects first
+    :rtype: list[str]
+    """
+    return _DEP_SORTED_ENTITY_ATTRIBUTES
+
+
+class IssaiEntity(dict):
+    """
+    Base class for all types of issai entities.
+    Entities consist of four parts:
+    - header data (entity type, entity ID, entity name)
+    - master data (builds, categories, components, environments, versions, )
+    - product
+    - test objects (test plans, test cases, test runs, test executions, test plan results)
+    - optional environments
+    All data except for header is stored under a "group" attribute in a dictionary with object ID as key.
+    """
+    def __init__(self, entity_type, entity_id, entity_name):
+        """
+        Constructor.
+        :param str entity_type: the entity type as used in TOML files (product, test-case, test-plan, test-plan-result)
+        :param int entity_id: product ID for products, test plan ID for test plans and test plan results,
+                              test case ID for test cases
+        :param str entity_name: product name for products, test plan name for test plans and test plan results,
+                          test case summary for test cases
+        """
+        super().__init__()
+        self[ATTR_ENTITY_TYPE] = entity_type
+        self[ATTR_ENTITY_ID] = entity_id
+        self[ATTR_ENTITY_NAME] = entity_name
+        self[ATTR_PRODUCT] = {}
+        for _group in MASTER_DATA_GROUPS:
+            self[_group] = {}
+
+    def entity_id(self):
+        """
+        :returns: the entity's ID
+        :rtype: int
+        """
+        return self[ATTR_ENTITY_ID]
+
+    def entity_name(self):
+        """
+        :returns: the entity's name
+        :rtype: str
+        """
+        return self[ATTR_ENTITY_NAME]
+
+    def entity_type(self):
+        """
+        :returns: the entity's type name
+        :rtype: str
+        """
+        return self[ATTR_ENTITY_TYPE]
+
+    # noinspection PyMethodMayBeStatic
+    def attachments(self):
+        """
+        Returns all attachment file URLs referenced by this entity. For products, test plans and test cases these are
+        the files to download from TCMS; for test plan results the files to upload to TCMS.
+        :returns: attachment file URLs as two-staged dict {class ID: {object ID: [URLs]}}
+        :rtype: dict
+        """
+        # no attachments specific to base class
+        return {}
+
+    # noinspection PyMethodMayBeStatic
+    def attachment_count(self):
+        """
+        :returns: number of attachment file references by this entity
+        :rtype: int
+        """
+        # no attachments specific to base class
+        return 0
+
+    def object_count(self):
+        """
+        :returns: number of essential objects in this entity, needed for accurate progress information
+        :rtype: int
+        """
+        # base class responsible for master data only, product always part of entity
+        return self.master_data_object_count() + 1
+
+    def master_data_object_count(self):
+        """
+        :returns: number of master data objects in this entity
+        :rtype: int
+        """
+        return sum([len(self[_group]) for _group in MASTER_DATA_GROUPS])
+
+    def group_object_count(self, group):
+        """
+        :param str group: the desired group name
+        :returns: number of objects in specified group
+        :rtype: int
+        """
+        return len(self[group]) if group in self else 0
+
+    def group_attachments(self, group, tcms_class_id):
+        """
+        Returns all attachment file URLs referenced by objects of specified group.
+        :param str group: the desired group name
+        :param int tcms_class_id: the TCMS class ID of all group objects
+        :returns: attachment file URLs as two-staged dict {class ID: {object ID: [URLs]}}
+        :rtype: dict
+        """
+        _group_attachments = {}
+        for _object in self[group].values():
+            _object_attachments = _object[ATTR_ATTACHMENTS]
+            if len(_object_attachments) > 0:
+                _group_attachments[_object[ATTR_ID]] = _object_attachments
+        return {} if len(_group_attachments) == 0 else {tcms_class_id: _group_attachments}
+
+    def group_attachment_count(self, group):
+        """
+        :param str group: the desired group name
+        :returns: number of attachment files in specified group
+        :rtype: int
+        """
+        return sum([len(_object[ATTR_ATTACHMENTS]) for _object in self[group].values()])
+
+
+class IssaiSpecificationEntity(IssaiEntity):
+    """
+    Base class for test specification entities (products, test cases and test plans).
+    """
+    def __init__(self, entity_type, entity_id, entity_name):
+        """
+        Constructor.
+        :param str entity_type: the entity type as used in TOML files (product, test-case, test-plan)
+        :param int entity_id: product ID for products, test case ID for test cases, test plan ID for test plans
+        :param str entity_name: product name for products, test case summary for test cases,
+                                test plan name for test plans
+        """
+        super().__init__(entity_type, entity_id, entity_name)
+        for _group in SPEC_GROUPS:
+            self[_group] = {}
+
+    def object_count(self):
+        """
+        :returns: number of essential objects in this entity, needed for accurate progress information
+        :rtype: int
+        """
+        return super().object_count() + sum([len(self[_group]) for _group in SPEC_GROUPS])
+
+    def attachments(self):
+        """
+        Returns all attachment file URLs referenced by this entity.
+        For products, test plans and test cases these are the files to download from TCMS.
+        :returns: attachment file URLs as two-staged dict {class ID: {object ID: [URLs]}}
+        :rtype: dict
+        """
+        _attachments = super().attachments()
+        _attachments.update(self.group_attachments(ATTR_TEST_CASES, TCMS_CLASS_ID_TEST_CASE))
+        _attachments.update(self.group_attachments(ATTR_TEST_PLANS, TCMS_CLASS_ID_TEST_PLAN))
+        return _attachments
+
+    def attachment_count(self):
+        """
+        :returns: number of attachment file references by this entity
+        :rtype: int
+        """
+        # no attachments specific to base class
+        _count = super().attachment_count()
+        _count += self.group_attachment_count(ATTR_TEST_CASES)
+        _count += self.group_attachment_count(ATTR_TEST_PLANS)
+        return _count
+
+    def referenced_ids_for_class(self, tcms_class_id):
+        """
+        :param int tcms_class_id: the TCMS class
+        :returns: TCMS ID's of all objects of specified class referenced by other entity objects
+        :rtype: list[int]
+        """
+        _ref_desc = CLASS_REFERENCES.get(tcms_class_id)
+        if _ref_desc is None:
+            return []
+        _referenced_ids = set()
+        for _group, _attrs in _ref_desc.items():
+            if _group not in self:
+                continue
+            for _object in self[_group].values():
+                for _attr in _attrs:
+                    _referenced_ids.add(_object[_attr])
+        return list(_referenced_ids)
+
+# OLD
 
 
 class Entity(dict):
@@ -170,7 +388,7 @@ class Entity(dict):
         _count = 1 if ATTR_PRODUCT in self else 0
         if ATTR_MASTER_DATA in self:
             _count += self[ATTR_MASTER_DATA].object_count()
-        for _attr in (ATTR_TEST_CASES, ATTR_TEST_EXECUTIONS, ATTR_TEST_PLANS, ATTR_TEST_RUNS,
+        for _attr in (ATTR_TEST_CASES, ATTR_TEST_EXECUTIONS, ATTR_TEST_PLANS, ATTR_TEST_PLAN_RESULTS, ATTR_TEST_RUNS,
                       ATTR_TEST_CASE_RESULTS, ATTR_TEST_PLAN_RESULTS):
             if _attr in self:
                 _count += len(self[_attr])
@@ -1016,7 +1234,7 @@ class MasterData(dict):
         Constructor.
         """
         super().__init__()
-        for _mtype in MASTER_DATA_TYPES:
+        for _mtype in MASTER_DATA_GROUPS:
             self[_mtype] = {}
 
     def object_count(self):
@@ -1048,7 +1266,7 @@ class MasterData(dict):
         :rtype: list
         :raises IssaiException: if specified data type is not allowed
         """
-        if data_type not in MASTER_DATA_TYPES:
+        if data_type not in MASTER_DATA_GROUPS:
             raise IssaiException(E_INTERNAL_ERROR, localized_message(E_NOT_MASTER_DATA_CLASS, data_type))
         return [_obj for _obj in self[data_type].values()]
 
@@ -1088,7 +1306,7 @@ class MasterData(dict):
                         if _case_id is not None:
                             _stored_component[ATTR_CASES].add(_case_id)
             return
-        if data_type in MASTER_DATA_TYPES:
+        if data_type in MASTER_DATA_GROUPS:
             if isinstance(value, dict):
                 self[data_type][value[ATTR_ID]] = value
             else:
@@ -1303,35 +1521,34 @@ def _matching_properties(properties, property_patterns):
     return _matches
 
 
-CLASS_REFERENCES = {TCMS_CLASS_ID_BUILD: {TCMS_CLASS_ID_TEST_EXECUTION: [ATTR_BUILD],
-                                          TCMS_CLASS_ID_TEST_RUN: [ATTR_BUILD]},
-                    TCMS_CLASS_ID_CATEGORY: {TCMS_CLASS_ID_TEST_CASE: [ATTR_CATEGORY]},
-                    TCMS_CLASS_ID_COMPONENT: {TCMS_CLASS_ID_TEST_CASE: [ATTR_COMPONENT]},
-                    TCMS_CLASS_ID_PLAN_TYPE: {TCMS_CLASS_ID_TEST_PLAN: [ATTR_TYPE]},
-                    TCMS_CLASS_ID_PRIORITY: {TCMS_CLASS_ID_TEST_CASE: [ATTR_PRIORITY]},
-                    TCMS_CLASS_ID_PRODUCT: {TCMS_CLASS_ID_CATEGORY: [ATTR_PRODUCT],
-                                            TCMS_CLASS_ID_COMPONENT: [ATTR_PRODUCT],
-                                            TCMS_CLASS_ID_TEST_PLAN: [ATTR_PRODUCT],
-                                            TCMS_CLASS_ID_VERSION: [ATTR_PRODUCT]},
-                    TCMS_CLASS_ID_TEST_CASE: {TCMS_CLASS_ID_TEST_EXECUTION: [ATTR_CASE],
-                                              TCMS_CLASS_ID_TEST_PLAN: [ATTR_CASES],
-                                              TCMS_CLASS_ID_TEST_RUN: [ATTR_CASES]},
-                    TCMS_CLASS_ID_TEST_CASE_STATUS: {TCMS_CLASS_ID_TEST_CASE: [ATTR_CASE_STATUS]},
-                    TCMS_CLASS_ID_TEST_EXECUTION: {TCMS_CLASS_ID_TEST_CASE: [ATTR_EXECUTIONS],
-                                                   TCMS_CLASS_ID_TEST_RUN: [ATTR_EXECUTIONS]},
-                    TCMS_CLASS_ID_TEST_EXECUTION_STATUS: {TCMS_CLASS_ID_TEST_EXECUTION: [ATTR_STATUS]},
-                    TCMS_CLASS_ID_TEST_PLAN: {TCMS_CLASS_ID_TEST_PLAN: [ATTR_PARENT],
-                                              TCMS_CLASS_ID_TEST_RUN: [ATTR_PLAN]},
-                    TCMS_CLASS_ID_TEST_RUN: {TCMS_CLASS_ID_TEST_EXECUTION: [ATTR_RUN],
-                                             TCMS_CLASS_ID_TEST_PLAN: [ATTR_RUNS]},
-                    TCMS_CLASS_ID_USER: {TCMS_CLASS_ID_COMPONENT: [ATTR_INITIAL_OWNER, ATTR_INITIAL_QA_CONTACT],
-                                         TCMS_CLASS_ID_TEST_CASE: [ATTR_AUTHOR, ATTR_DEFAULT_TESTER, ATTR_REVIEWER],
-                                         TCMS_CLASS_ID_TEST_EXECUTION: [ATTR_ASSIGNEE, ATTR_TESTED_BY],
-                                         TCMS_CLASS_ID_TEST_PLAN: [ATTR_AUTHOR],
-                                         TCMS_CLASS_ID_TEST_RUN: [ATTR_DEFAULT_TESTER, ATTR_MANAGER]},
-                    TCMS_CLASS_ID_VERSION: {TCMS_CLASS_ID_BUILD: [ATTR_VERSION],
-                                            TCMS_CLASS_ID_TEST_PLAN: [ATTR_PRODUCT_VERSION]}}
-
-MASTER_DATA_TYPES = {ATTR_CASE_CATEGORIES, ATTR_CASE_COMPONENTS, ATTR_CASE_PRIORITIES, ATTR_CASE_STATUSES,
-                     ATTR_EXECUTION_STATUSES, ATTR_PLAN_TYPES, ATTR_PRODUCT_BUILDS, ATTR_PRODUCT_CLASSIFICATIONS,
-                     ATTR_PRODUCT_VERSIONS, ATTR_TCMS_USERS}
+# Descriptor table for object references.
+# Outer key TCMS class being referenced, inner key entity group name, inner value list of attribute names
+# referencing an object of the TCMS class
+CLASS_REFERENCES = {TCMS_CLASS_ID_BUILD: {ATTR_TEST_EXECUTIONS: [ATTR_BUILD],
+                                          ATTR_TEST_RUNS: [ATTR_BUILD]},
+                    TCMS_CLASS_ID_CATEGORY: {ATTR_TEST_CASES: [ATTR_CATEGORY]},
+                    TCMS_CLASS_ID_COMPONENT: {ATTR_TEST_CASES: [ATTR_COMPONENT]},
+                    TCMS_CLASS_ID_PLAN_TYPE: {ATTR_TEST_PLANS: [ATTR_TYPE]},
+                    TCMS_CLASS_ID_PRIORITY: {ATTR_TEST_CASES: [ATTR_PRIORITY]},
+                    TCMS_CLASS_ID_PRODUCT: {ATTR_CASE_CATEGORIES: [ATTR_PRODUCT],
+                                            ATTR_CASE_COMPONENTS: [ATTR_PRODUCT],
+                                            ATTR_TEST_PLANS: [ATTR_PRODUCT],
+                                            ATTR_PRODUCT_VERSIONS: [ATTR_PRODUCT]},
+                    TCMS_CLASS_ID_TEST_CASE: {ATTR_TEST_EXECUTIONS: [ATTR_CASE],
+                                              ATTR_TEST_PLANS: [ATTR_CASES],
+                                              ATTR_TEST_RUNS: [ATTR_CASES]},
+                    TCMS_CLASS_ID_TEST_CASE_STATUS: {ATTR_TEST_CASES: [ATTR_CASE_STATUS]},
+                    TCMS_CLASS_ID_TEST_EXECUTION: {ATTR_TEST_CASES: [ATTR_EXECUTIONS],
+                                                   ATTR_TEST_RUNS: [ATTR_EXECUTIONS]},
+                    TCMS_CLASS_ID_TEST_EXECUTION_STATUS: {ATTR_TEST_EXECUTIONS: [ATTR_STATUS]},
+                    TCMS_CLASS_ID_TEST_PLAN: {ATTR_TEST_PLANS: [ATTR_PARENT],
+                                              ATTR_TEST_RUNS: [ATTR_PLAN]},
+                    TCMS_CLASS_ID_TEST_RUN: {ATTR_TEST_EXECUTIONS: [ATTR_RUN],
+                                             ATTR_TEST_PLANS: [ATTR_RUNS]},
+                    TCMS_CLASS_ID_USER: {ATTR_CASE_COMPONENTS: [ATTR_INITIAL_OWNER, ATTR_INITIAL_QA_CONTACT],
+                                         ATTR_TEST_CASES: [ATTR_AUTHOR, ATTR_DEFAULT_TESTER, ATTR_REVIEWER],
+                                         ATTR_TEST_EXECUTIONS: [ATTR_ASSIGNEE, ATTR_TESTED_BY],
+                                         ATTR_TEST_PLANS: [ATTR_AUTHOR],
+                                         ATTR_TEST_RUNS: [ATTR_DEFAULT_TESTER, ATTR_MANAGER]},
+                    TCMS_CLASS_ID_VERSION: {ATTR_PRODUCT_BUILDS: [ATTR_VERSION],
+                                            ATTR_TEST_PLANS: [ATTR_PRODUCT_VERSION]}}

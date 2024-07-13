@@ -101,8 +101,8 @@ T_TEST_CASE = {'id': 84, 'is_automated': True, 'arguments': "tc112",
                'tags': ["oslinux"], 'executions': []}
 T_NEW_PRODUCT = {'id': 22, 'name': "SimpleIssai", 'classification': 1,
                  'description': "Product for test of issai without versions and builds."}
-T_NEW_USER = {'id': 18, 'email': "newtester@issai.local", 'first_name': "Perfect", 'is_active': True, 'is_staff': True,
-              'is_superuser': False, 'last_name': "Tester", 'username': "newtester"}
+T_DB_USER_TMADMIN = {'id': 4, 'email': "tmadmin@issai.local", 'first_name': "Master", 'is_active': True,
+                     'is_staff': True, 'is_superuser': True, 'last_name': "OfDesaster", 'username': "tmadmin"}
 
 
 class TestEntitiesMasterData(unittest.TestCase):
@@ -151,8 +151,8 @@ class TestEntitiesMasterData(unittest.TestCase):
     def test_replace_object(self):
         _default_master_data = TestEntitiesMasterData._default_master_data()
         _master_data = TestEntitiesMasterData._default_master_data()
-        _master_data.replace_object(TCMS_CLASS_ID_PRODUCT, 8, T_NEW_PRODUCT)
-        self._verify_replace(_default_master_data, _master_data, TCMS_CLASS_ID_PRODUCT, 8, T_NEW_PRODUCT[ATTR_ID])
+        _master_data.replace_object(TCMS_CLASS_ID_USER, 5, T_DB_USER_TMADMIN)
+        self._verify_replace(_default_master_data, _master_data, TCMS_CLASS_ID_USER, 5, T_DB_USER_TMADMIN[ATTR_ID])
         # TODO
 
     def test_toml_conversion(self):
