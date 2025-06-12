@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------------------------------------
 # issai - front end to run and export tests managed by Kiwi test case management system
 #
-# Copyright (c) 2024, Frank Sommer.
+# Copyright (c) 2025, Frank Sommer.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -219,19 +219,11 @@ CFG_PAR_TCMS_XML_RPC_USERNAME = 'tcms.username'
 CFG_PAR_TESTING_ROOT_PATH = 'testing-root-path'
 CFG_VAR_CONFIG_ROOT = 'config-root'
 
-# entity type IDs
-ENTITY_TYPE_PRODUCT = 0
-ENTITY_TYPE_CASE = 1
-ENTITY_TYPE_PLAN = 2
-ENTITY_TYPE_CASE_RESULT = 3
-ENTITY_TYPE_PLAN_RESULT = 4
-
-# entity type names
-ENTITY_TYPE_NAME_PRODUCT = 'product'
-ENTITY_TYPE_NAME_CASE = 'test-case'
-ENTITY_TYPE_NAME_PLAN = 'test-plan'
-ENTITY_TYPE_NAME_CASE_RESULT = 'test-case-result'
-ENTITY_TYPE_NAME_PLAN_RESULT = 'test-plan-result'
+# entity types
+ENTITY_TYPE_PRODUCT = 'product'
+ENTITY_TYPE_CASE = 'test-case'
+ENTITY_TYPE_PLAN = 'test-plan'
+ENTITY_TYPE_PLAN_RESULT = 'test-plan-result'
 
 # environment variables
 ENVA_ATTACHMENTS_PATH = 'ISSAI_ATTACHMENTS_PATH'
@@ -273,7 +265,7 @@ RESULT_STATUS_ERROR = 'ERROR'
 RESULT_STATUS_FAILED = 'FAILED'
 
 # result types
-RESULT_TYPE_CASE_RESULT = ENTITY_TYPE_CASE_RESULT
+RESULT_TYPE_CASE_RESULT = 'test-case-result'
 RESULT_TYPE_PLAN_RESULT = ENTITY_TYPE_PLAN_RESULT
 
 # runner types

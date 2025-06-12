@@ -3,7 +3,7 @@
 # -----------------------------------------------------------------------------------------------
 # issai - Framework to run tests specified in Kiwi Test Case Management System
 #
-# Copyright (c) 2024, Frank Sommer.
+# Copyright (c) 2025, Frank Sommer.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -38,8 +38,7 @@ Localized message support.
 
 import os
 
-from issai.core import (ASSISTANT_ACTION_INIT, ENTITY_TYPE_CASE, ENTITY_TYPE_CASE_RESULT,
-                        ENTITY_TYPE_PLAN, ENTITY_TYPE_PLAN_RESULT)
+from issai.core import ASSISTANT_ACTION_INIT, ENTITY_TYPE_CASE, ENTITY_TYPE_PLAN, ENTITY_TYPE_PLAN_RESULT
 from issai.core.util import platform_locale
 
 # General messages
@@ -49,8 +48,10 @@ E_BACKGROUND_TASK_FAILED = 'e-background-task-failed'
 E_CONTAINER_NOT_RUNNABLE = 'e-container-not-runnable'
 E_DIR_NOT_EMPTY = 'e-dir-not-empty'
 E_DOWNLOAD_ATTACHMENT_FAILED = 'e-download-attachment-failed'
+E_ENTITY_OBJECT_EXISTS = 'e-entity-object-exists'
 E_INTERNAL_ERROR = 'e-internal-error'
 E_INVALID_ACTION = 'e-invalid-action'
+E_INVALID_ENTITY_GROUP = 'e-invalid-entity-group'
 E_INVALID_ENTITY_TYPE = 'e-invalid-entity-type'
 E_LOAD_CONTAINER_FAILED = 'e-load-container-failed'
 E_NOT_MASTER_DATA_CLASS = 'e-not-master-data-class'
@@ -505,8 +506,6 @@ def entity_type_name(entity_type):
         return localized_label(L_TEST_CASE)
     elif entity_type == ENTITY_TYPE_PLAN_RESULT:
         return localized_label(L_TEST_PLAN_RESULT)
-    elif entity_type == ENTITY_TYPE_CASE_RESULT:
-        return localized_label(L_TEST_CASE_RESULT)
     else:
         return localized_label(L_PRODUCT)
 

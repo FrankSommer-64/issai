@@ -1,0 +1,172 @@
+entity-type = "product"
+entity-name = "Dummy"
+entity-id = 6
+
+[master-data]
+case-priorities = [
+    {id = 2, value = "hoch", is_active = true},
+]
+execution-statuses = [
+    {id = 1, name = "IDLE", weight = 0, icon = "fa fa-question-circle-o", color = "#72767b"},
+]
+case-statuses = [
+    {id = 2, name = "CONFIRMED", description = "", is_confirmed = true},
+]
+product-versions = [
+    {id = 9, value = "unspecified", product = 6},
+    {id = 10, value = "v0.9", product = 6},
+]
+tcms-users = [
+    {email = "frsommer@sherpa.local", first_name = "Frank", id = 5, is_active = true, is_staff = true, is_superuser = true, last_name = "Developer", username = "frsommer"},
+]
+plan-types = [
+    {id = 2, name = "Integration", description = ""},
+]
+product-builds = [
+    {id = 10, name = "unspecified", version = 9, is_active = true},
+    {id = 11, name = "unspecified", version = 10, is_active = true},
+]
+case-categories = [
+    {id = 17, name = "--default--", product = 6, description = ""},
+]
+product-classifications = [
+    {id = 1, name = "Anwendung"},
+]
+
+[[products]]
+id = 6
+name = "Dummy"
+description = "Zum rumspielen"
+classification = 1
+
+[[products]]
+id = 36
+name = "Dummy2"
+description = "Zum rumspielen"
+classification = 1
+
+[[environments]]
+id = 1
+name = "Coaly-Linux-EN"
+description = "Operating system Linux (Ubuntu 20.04)\nSystem language English"
+properties = [{"$COALY_LANG" = "'en'"}, {LANG = "en_US"}, {LANGUAGE = "en_US.UTF-8"}, {"platform.system" = "'Linux'"}]
+
+[[environments]]
+id = 2
+name = "Issai-EN"
+description = "Issai with English locale"
+properties = [{LANG = "en_US"}, {LANGUAGE = "en_US.UTF-8"}]
+
+[[test-plans]]
+id = 9
+name = "Dummyplan"
+text = "Top level test plan"
+is_active = true
+product_version = 10
+product = 6
+author = 5
+type = 2
+attachments = ["https://schakal-tm.sherpa.local/uploads/attachments/testplans_testplan/9/issai.toml"]
+tags = []
+cases = [14]
+runs = [5]
+run = 5
+
+[[test-plans]]
+id = 10
+name = "Sub-Dummyplan"
+text = "Teil test plan"
+is_active = true
+product_version = 10
+product = 6
+author = 5
+type = 2
+parent = 9
+attachments = []
+tags = []
+cases = [15]
+runs = []
+
+[[test-plans]]
+id = 11
+name = "Inactive Sub-Dummyplan"
+text = "Teil test plan"
+is_active = false
+product_version = 10
+product = 6
+author = 5
+type = 2
+attachments = []
+tags = []
+cases = []
+runs = []
+
+[[test-runs]]
+id = 5
+summary = "Top level test plan"
+notes = ""
+plan = 9
+build = 11
+manager = 5
+default_tester = 5
+properties = []
+tags = []
+executions = [7]
+
+[[test-cases]]
+id = 14
+is_automated = true
+script = "dummyscript"
+arguments = "dummyarg"
+summary = "Dummy Testcase 1"
+notes = ""
+text = "Blablabla"
+case_status = 2
+category = 17
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = ["https://schakal-tm.sherpa.local/uploads/attachments/testcases_testcase/14/issai.toml"]
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [7]
+
+[[test-cases]]
+id = 15
+is_automated = true
+script = ""
+arguments = ""
+summary = "Dummy Testcase 2"
+notes = ""
+text = "Blabla"
+case_status = 2
+category = 17
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = [{lang = "de"}]
+tags = ["os_linux"]
+executions = []
+
+[[test-executions]]
+id = 7
+assignee = 5
+run = 5
+case = 14
+build = 11
+status = 1
+expected_duration = 0.0
+comments = []
+properties = []
+links = []

@@ -3,7 +3,7 @@
 # -----------------------------------------------------------------------------------------------
 # issai - Framework to run tests specified in Kiwi Test Case Management System
 #
-# Copyright (c) 2024, Frank Sommer.
+# Copyright (c) 2025, Frank Sommer.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -68,13 +68,26 @@ class Result(dict):
         """
         return self.__result_type
 
+    def core_result(self):
+        """
+        :returns: core result data without auxiliary information (cases and child plans of a test plan,
+                  matrix code of a test case)
+        :rtype: dict
+        """
+        _result = dict()
+        for _attr in _BASE_CORE_RESULT_ATTRS:
+            _result[_attr] = self[_attr]
+        for _attr in _SPECIFIC_CORE_RESULT_ATTRS[self.__result_type]:
+            _result[_attr] = self[_attr]
+        return _result
+
     def get_attr_value(self, attribute_name):
         """
         :param str attribute_name: the attribute name
         :returns: value of attribute with specified name
         :rtype: Any
         """
-        if attribute_name not in _CORE_RESULT_ATTRIBUTES[self.__result_type]:
+        if attribute_name not in _RESULT_ATTRIBUTES_DESC[self.__result_type]:
             raise IssaiException(E_TOML_ENTITY_ATTR_NAME_INVALID, attribute_name, entity_type_name(self.__result_type))
         return python_value(self.get(attribute_name))
 
@@ -205,11 +218,11 @@ class PlanResult(Result):
         Merges the result of a test plan execution for a specific matrix code.
         :param PlanResult plan_result: the test plan result
         """
-        # update parent plan attributes
+        # update plan result attributes
         self[ATTR_STOP_DATE] = plan_result[ATTR_STOP_DATE]
         self.append_attr_value(ATTR_SUMMARY, plan_result[ATTR_SUMMARY])
         self.append_attr_value(ATTR_NOTES, plan_result[ATTR_NOTES])
-        # update case results of parent
+        # update direct case results
         for _cr in plan_result.get_attr_value(ATTR_CASE_RESULTS):
             _overall_cr = self.case_result(_cr.get_attr_value(ATTR_CASE))
             if _overall_cr is None:
@@ -231,20 +244,20 @@ class PlanResult(Result):
 
     def case_results(self):
         """
-        :returns: test case results of this plan and all descendants
-        :rtype: list
+        :returns: core test case results of this plan and all descendants
+        :rtype: list[dict]
         """
-        _results = [_cr for _cr in self.get_attr_value(ATTR_CASE_RESULTS)]
+        _results = [_cr.core_result() for _cr in self.get_attr_value(ATTR_CASE_RESULTS)]
         for _child_plan in self.get_attr_value(ATTR_CHILD_PLAN_RESULTS):
             _results.extend(_child_plan.case_results())
         return _results
 
     def plan_results(self):
         """
-        :returns: results of this plan and all descendants
-        :rtype: list
+        :returns: core results of this plan and all descendants
+        :rtype: list[dict]
         """
-        _results = [self]
+        _results = [self.core_result()]
         for _child_plan in self.get_attr_value(ATTR_CHILD_PLAN_RESULTS):
             _results.extend(_child_plan.plan_results())
         return _results
@@ -252,10 +265,10 @@ class PlanResult(Result):
     def case_result(self, case_id):
         """
         :param int case_id: the test case ID
-        :returns: case result for specified case ID; None, if no such case exists
+        :returns: case result for this plan and case ID; None, if no such case exists
         :rtype: CaseResult
         """
-        for _case_result in self.get_attr_value(ATTR_CASE_RESULTS):
+        for _case_result in self[ATTR_CASE_RESULTS]:
             if _case_result.get_attr_value(ATTR_CASE) == case_id:
                 return _case_result
         return None
@@ -273,18 +286,22 @@ class PlanResult(Result):
 
     def result_status(self):
         """
-        Returns test plan execution status. Data type is int since it's used to indicate the task result code.
+        | Returns overall execution status for all test cases contained in this plan and eventual descendants.
+        | Overall status is ERROR if at least one test case execution resulted in an error.
+        | Overall status is FAILED if no test case encountered an error,
+          but at least one test case execution resulted in a failure.
+        | Overall status is PASSED if all test cases passed.
+        | Data type is int since it's used to indicate the task result code.
         :returns: overall execution status for all contained test cases
         :rtype: int
         """
         _overall_status = RESULT_STATUS_ID_PASSED
-        for _pr in self.plan_results():
-            for _cr in _pr.get_attr_value(ATTR_CASE_RESULTS):
-                _case_status = _cr[ATTR_STATUS]
-                if _case_status == RESULT_STATUS_ERROR:
-                    return RESULT_STATUS_ID_ERROR
-                if _case_status == RESULT_STATUS_FAILED:
-                    _overall_status = RESULT_STATUS_ID_FAILED
+        for _cr in self.case_results():
+            _case_status = _cr[ATTR_STATUS]
+            if _case_status == RESULT_STATUS_ERROR:
+                return RESULT_STATUS_ID_ERROR
+            if _case_status == RESULT_STATUS_FAILED:
+                _overall_status = RESULT_STATUS_ID_FAILED
         return _overall_status
 
 
@@ -297,7 +314,7 @@ def _verify_attr_write(result_type_id, attr_name, attr_value, append_allowed=Fal
     :param bool append_allowed: indicates whether attribute allows a value to be appended
     :raises IssaiException: if attribute name is invalid, attribute is immutable or value has wrong type
     """
-    _attr_desc = _CORE_RESULT_ATTRIBUTES[result_type_id].get(attr_name)
+    _attr_desc = _RESULT_ATTRIBUTES_DESC[result_type_id].get(attr_name)
     if _attr_desc is None:
         raise IssaiException(E_TOML_ENTITY_ATTR_NAME_INVALID, attr_name, entity_type_name(result_type_id))
     if not isinstance(attr_value, _attr_desc[0]):
@@ -310,10 +327,17 @@ def _verify_attr_write(result_type_id, attr_name, attr_value, append_allowed=Fal
         raise IssaiException(E_TOML_ENTITY_ATTR_IMMUTABLE, entity_type_name(result_type_id), attr_name)
 
 
-# Descriptors for attributes of core result objects.
+# Core result attributes
+_BASE_CORE_RESULT_ATTRS = (ATTR_OUTPUT_FILES, ATTR_PLAN, ATTR_START_DATE, ATTR_STOP_DATE)
+_SPECIFIC_CORE_RESULT_ATTRS = {
+    RESULT_TYPE_CASE_RESULT: (ATTR_CASE, ATTR_CASE_NAME, ATTR_COMMENT, ATTR_STATUS, ATTR_TESTER_NAME),
+    RESULT_TYPE_PLAN_RESULT: (ATTR_NOTES, ATTR_PLAN_NAME, ATTR_SUMMARY)
+}
+
+# Descriptors for attributes of result objects.
 # Keys are attribute names, value indicates the data type and whether the attribute is writable by methods
 # set_attr_value or append_attr_value.
-_CORE_RESULT_ATTRIBUTES = {
+_RESULT_ATTRIBUTES_DESC = {
     RESULT_TYPE_CASE_RESULT: {ATTR_CASE: (int, False), ATTR_CASE_NAME: (str, False), ATTR_COMMENT: (str, True),
                               ATTR_MATRIX_CODE: (str, False), ATTR_OUTPUT_FILES: (list, False),
                               ATTR_PLAN: (int, False), ATTR_START_DATE: (datetime, False), ATTR_STATUS: (str, True),

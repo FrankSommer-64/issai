@@ -1,0 +1,14 @@
+# test plan result where stop_date is not a date
+entity-type = "test-plan-result"
+entity-id = 21
+entity-name = "ManagedSinglePlanWithRuns"
+
+[[test-plan-results]]
+run_id = 21
+plan-name = "ManagedSinglePlanWithRuns"
+start_date = 2023-03-24T11:35:18
+stop_date = true
+output-files = ['xissai.log']
+notes = ""
+summary = "ok"
+

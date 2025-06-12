@@ -3,7 +3,7 @@
 # -----------------------------------------------------------------------------------------------
 # issai - Framework to run tests specified in Kiwi Test Case Management System
 #
-# Copyright (c) 2024, Frank Sommer.
+# Copyright (c) 2025, Frank Sommer.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -49,12 +49,16 @@ DEFAULT_CASE_ID = 23
 DEFAULT_CASE_SUMMARY = 'TestCase23'
 DEFAULT_PLAN_ID = 18
 DEFAULT_PLAN_NAME = 'TestPlan23'
+DAUGHTER_CASES_BASE = 20
 DAUGHTER_PLAN_ID = DEFAULT_PLAN_ID + 1
 DAUGHTER_PLAN_NAME = 'DaughterPlan'
-SON_PLAN_ID = DEFAULT_PLAN_ID + 2
-SON_PLAN_NAME = 'SonPlan'
+GRAND_CHILD_CASES_BASE = 40
 GRAND_CHILD_PLAN_ID = DEFAULT_PLAN_ID + 3
 GRAND_CHILD_PLAN_NAME = 'GrandchildPlan'
+PARENT_CASES_BASE = 10
+SON_CASES_BASE = 30
+SON_PLAN_ID = DEFAULT_PLAN_ID + 2
+SON_PLAN_NAME = 'SonPlan'
 
 
 class TestResult(unittest.TestCase):
@@ -264,46 +268,45 @@ class TestPlanResult(unittest.TestCase):
     def test_case_results(self):
         _result = PlanResult(DEFAULT_PLAN_ID, DEFAULT_PLAN_NAME)
         self.assertEqual(0, len(_result.case_results()))
-        _result.add_case_result(CaseResult(DEFAULT_PLAN_ID, DEFAULT_CASE_ID, DEFAULT_CASE_SUMMARY, ''))
-        _result.add_case_result(CaseResult(DEFAULT_PLAN_ID, DEFAULT_CASE_ID+1, DEFAULT_CASE_SUMMARY, ''))
-        _result.add_case_result(CaseResult(DEFAULT_PLAN_ID, DEFAULT_CASE_ID+2, DEFAULT_CASE_SUMMARY, ''))
-        _daughter = PlanResult(DAUGHTER_PLAN_ID, DAUGHTER_PLAN_NAME)
-        _daughter.add_case_result(CaseResult(DAUGHTER_PLAN_ID, DEFAULT_CASE_ID+11, DEFAULT_CASE_SUMMARY, ''))
-        _daughter.add_case_result(CaseResult(DAUGHTER_PLAN_ID, DEFAULT_CASE_ID+12, DEFAULT_CASE_SUMMARY, ''))
-        _son = PlanResult(SON_PLAN_ID, SON_PLAN_NAME)
-        _son.add_case_result(CaseResult(SON_PLAN_ID, DEFAULT_CASE_ID+21, DEFAULT_CASE_SUMMARY, ''))
-        _son.add_case_result(CaseResult(SON_PLAN_ID, DEFAULT_CASE_ID+22, DEFAULT_CASE_SUMMARY, ''))
-        _grandchild = PlanResult(GRAND_CHILD_PLAN_ID, GRAND_CHILD_PLAN_NAME)
-        _grandchild.add_case_result(CaseResult(GRAND_CHILD_PLAN_ID, DEFAULT_CASE_ID+31, DEFAULT_CASE_SUMMARY, ''))
-        _daughter.add_plan_result(_grandchild)
-        _result.add_plan_result(_daughter)
-        _result.add_plan_result(_son)
+        _result = TestPlanResult.result_family((3, 0, 0), (2, 0, 0), (2, 0, 0), (1, 0, 0), '', False)
         _case_results = _result.case_results()
         self.assertEqual(8, len(_result.case_results()))
-        self.assertEqual(DEFAULT_CASE_ID, _case_results[0].get_attr_value(ATTR_CASE))
-        self.assertEqual(DEFAULT_CASE_ID+1, _case_results[1].get_attr_value(ATTR_CASE))
-        self.assertEqual(DEFAULT_CASE_ID+2, _case_results[2].get_attr_value(ATTR_CASE))
-        self.assertEqual(DEFAULT_CASE_ID+11, _case_results[3].get_attr_value(ATTR_CASE))
-        self.assertEqual(DEFAULT_CASE_ID+12, _case_results[4].get_attr_value(ATTR_CASE))
-        self.assertEqual(DEFAULT_CASE_ID+31, _case_results[5].get_attr_value(ATTR_CASE))
-        self.assertEqual(DEFAULT_CASE_ID+21, _case_results[6].get_attr_value(ATTR_CASE))
-        self.assertEqual(DEFAULT_CASE_ID+22, _case_results[7].get_attr_value(ATTR_CASE))
+        self.assertEqual(PARENT_CASES_BASE, _case_results[0][ATTR_CASE])
+        self.assertEqual(PARENT_CASES_BASE+1, _case_results[1][ATTR_CASE])
+        self.assertEqual(PARENT_CASES_BASE+2, _case_results[2][ATTR_CASE])
+        self.assertEqual(DAUGHTER_CASES_BASE, _case_results[3][ATTR_CASE])
+        self.assertEqual(DAUGHTER_CASES_BASE+1, _case_results[4][ATTR_CASE])
+        self.assertEqual(GRAND_CHILD_CASES_BASE, _case_results[5][ATTR_CASE])
+        self.assertEqual(SON_CASES_BASE, _case_results[6][ATTR_CASE])
+        self.assertEqual(SON_CASES_BASE+1, _case_results[7][ATTR_CASE])
 
     def test_plan_results(self):
         _result = PlanResult(DEFAULT_PLAN_ID, DEFAULT_PLAN_NAME)
         self.assertEqual(1, len(_result.plan_results()))
-        _daughter = PlanResult(DAUGHTER_PLAN_ID, DAUGHTER_PLAN_NAME)
-        _son = PlanResult(SON_PLAN_ID, SON_PLAN_NAME)
-        _grandchild = PlanResult(GRAND_CHILD_PLAN_ID, GRAND_CHILD_PLAN_NAME)
-        _daughter.add_plan_result(_grandchild)
-        _result.add_plan_result(_daughter)
-        _result.add_plan_result(_son)
+        _result = TestPlanResult.result_family((1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), '', False)
         _plan_results = _result.plan_results()
         self.assertEqual(4, len(_result.plan_results()))
-        self.assertEqual(DEFAULT_PLAN_ID, _plan_results[0].get_attr_value(ATTR_PLAN))
-        self.assertEqual(DAUGHTER_PLAN_ID, _plan_results[1].get_attr_value(ATTR_PLAN))
-        self.assertEqual(GRAND_CHILD_PLAN_ID, _plan_results[2].get_attr_value(ATTR_PLAN))
-        self.assertEqual(SON_PLAN_ID, _plan_results[3].get_attr_value(ATTR_PLAN))
+        self.assertEqual(DEFAULT_PLAN_ID, _plan_results[0][ATTR_PLAN])
+        self.assertEqual(DAUGHTER_PLAN_ID, _plan_results[1][ATTR_PLAN])
+        self.assertEqual(GRAND_CHILD_PLAN_ID, _plan_results[2][ATTR_PLAN])
+        self.assertEqual(SON_PLAN_ID, _plan_results[3][ATTR_PLAN])
+
+    def test_case_result(self):
+        _result = TestPlanResult.result_family((3, 0, 0), (2, 0, 0), (2, 0, 0), (1, 0, 0), '', False)
+        self.assertEqual(PARENT_CASES_BASE, _result.case_result(PARENT_CASES_BASE)[ATTR_CASE])
+        self.assertEqual(PARENT_CASES_BASE+1, _result.case_result(PARENT_CASES_BASE+1)[ATTR_CASE])
+        self.assertEqual(PARENT_CASES_BASE+2, _result.case_result(PARENT_CASES_BASE+2)[ATTR_CASE])
+        self.assertIsNone(_result.case_result(999))
+
+    def test_child_plan_results(self):
+        _result = TestPlanResult.result_family((3, 0, 0), (2, 0, 0), (2, 0, 0), (1, 0, 0), '', False)
+        _daughter_result = _result.child_plan_result(DAUGHTER_PLAN_ID)
+        self.assertEqual(DAUGHTER_PLAN_ID, _daughter_result[ATTR_PLAN])
+        self.assertEqual(SON_PLAN_ID, _result.child_plan_result(SON_PLAN_ID)[ATTR_PLAN])
+        self.assertEqual(GRAND_CHILD_PLAN_ID, _daughter_result.child_plan_result(GRAND_CHILD_PLAN_ID)[ATTR_PLAN])
+        self.assertIsNone(_result.child_plan_result(DEFAULT_PLAN_ID))
+        self.assertIsNone(_result.child_plan_result(GRAND_CHILD_PLAN_ID))
+        self.assertIsNone(_daughter_result.child_plan_result(999))
 
     def test_result_status(self):
         # all test cases PASSED
@@ -356,11 +359,12 @@ class TestPlanResult(unittest.TestCase):
 
     @staticmethod
     def result_family(parent_states, daughter_states, son_states, grandchild_states, matrix_code, add_texts):
-        _parent = TestPlanResult.plan_result(DEFAULT_PLAN_ID, 10, parent_states, matrix_code, add_texts)
-        _daughter = TestPlanResult.plan_result(DAUGHTER_PLAN_ID, 20, daughter_states, matrix_code, add_texts)
-        _son = TestPlanResult.plan_result(SON_PLAN_ID, 30, son_states, matrix_code, add_texts)
-        _grandchild = TestPlanResult.plan_result(GRAND_CHILD_PLAN_ID, 40, grandchild_states, matrix_code,
-                                                 add_texts)
+        _parent = TestPlanResult.plan_result(DEFAULT_PLAN_ID, PARENT_CASES_BASE, parent_states, matrix_code, add_texts)
+        _daughter = TestPlanResult.plan_result(DAUGHTER_PLAN_ID, DAUGHTER_CASES_BASE, daughter_states, matrix_code,
+                                               add_texts)
+        _son = TestPlanResult.plan_result(SON_PLAN_ID, SON_CASES_BASE, son_states, matrix_code, add_texts)
+        _grandchild = TestPlanResult.plan_result(GRAND_CHILD_PLAN_ID, GRAND_CHILD_CASES_BASE, grandchild_states,
+                                                 matrix_code, add_texts)
         _daughter.add_plan_result(_grandchild)
         _parent.add_plan_result(_daughter)
         _parent.add_plan_result(_son)
@@ -394,10 +398,10 @@ class TestPlanResult(unittest.TestCase):
         _specific_plan_results = specific_result.plan_results()
         self.assertEqual(len(_specific_plan_results), len(_overall_plan_results))
         for i in range(0, len(_overall_plan_results)):
-            self.assertEqual(_specific_plan_results[i].get_attr_value(ATTR_SUMMARY),
-                             _overall_plan_results[i].get_attr_value(ATTR_SUMMARY).split(os.linesep)[-1])
-            self.assertEqual(_specific_plan_results[i].get_attr_value(ATTR_NOTES),
-                             _overall_plan_results[i].get_attr_value(ATTR_NOTES).split(os.linesep)[-1])
+            self.assertEqual(_specific_plan_results[i][ATTR_SUMMARY],
+                             _overall_plan_results[i][ATTR_SUMMARY].split(os.linesep)[-1])
+            self.assertEqual(_specific_plan_results[i][ATTR_NOTES],
+                             _overall_plan_results[i][ATTR_NOTES].split(os.linesep)[-1])
         _overall_case_results = overall_result.case_results()
         _specific_case_results = specific_result.case_results()
         self.assertEqual(len(_specific_case_results), len(_overall_case_results))

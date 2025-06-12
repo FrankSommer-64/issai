@@ -1,0 +1,12 @@
+# def _replace_references(_entity_objects, _attrs, object_id, _new_object_id):
+# iteriert über alle Objekte in _entity_objects
+# iteriert über alle Attribute des Objekts, deren Name in _attrs enthalten ist
+# falls das Attribut den Wert object_id besitzt, wird es durch den Wert _new_object_id ersetzt
+# Sonderfall: Attribut kann auch eine Liste von ints sein !
+
+# für die Tests brauchen wir nur die Attribute ID, Name/Summary und die referenzierenden Attribute
+'''
+{"product-builds": {10: {"id": 10, "name": "unspecified", "version": 1}},
+                   {11: {"id": 11, "name": "unspecified", "version": 2}}
+}'''
+

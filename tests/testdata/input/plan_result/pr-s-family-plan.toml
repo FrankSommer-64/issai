@@ -1,0 +1,124 @@
+entity-type = "test-plan-result"
+entity-id = 15
+entity-name = "ManagedFamilyPlanWithRuns"
+
+[[test-plan-results]]
+run_id = 15
+plan-name = "ManagedFamilyPlanWithRuns"
+start_date = 2023-03-24T15:00:00
+stop_date = 2023-03-24T16:59:59
+output-files = ['xissai.log']
+notes = ""
+summary = "ok"
+
+[[test-plan-results]]
+run_id = 16
+plan-name = "ManagedDaughterPlanWithRuns"
+start_date = 2023-03-24T15:30:00
+stop_date = 2023-03-24T15:59:59
+summary = "ok"
+
+[[test-plan-results]]
+run_id = 17
+plan-name = "ManagedSonPlanWithRuns"
+start_date = 2023-03-24T16:00:00
+stop_date = 2023-03-24T16:29:59
+summary = "ok"
+
+[[test-plan-results]]
+run_id = 19
+plan-name = "ManagedGrandchildPlanWithRuns"
+start_date = 2023-03-24T16:30:00
+stop_date = 2023-03-24T16:59:55
+summary = "ok"
+
+[[test-case-results]]
+execution_id = 26
+case-name = "SimpleIssai-SharedCaseWithExecutions01"
+start_date = 2023-03-24T15:00:01
+stop_date = 2023-03-24T15:14:59
+output-files = []
+status = "PASSED"
+tester-name = "tester"
+comment = "partially manual tested"
+
+[[test-case-results]]
+execution_id = 27
+case-name = "SimpleIssai-SharedCaseWithExecutions02"
+start_date = 2023-03-24T15:10:01
+stop_date = 2023-03-24T15:29:59
+output-files = []
+status = "PASSED"
+tester-name = "tester"
+comment = "well well"
+
+[[test-case-results]]
+execution_id = 28
+case-name = "SimpleIssai-SharedCaseWithExecutions03"
+start_date = 2023-03-24T15:30:01
+stop_date = 2023-03-24T15:39:59
+output-files = []
+status = "PASSED"
+tester-name = "tester"
+comment = "partially manual tested"
+
+[[test-case-results]]
+execution_id = 29
+case-name = "SimpleIssai-SharedCaseWithExecutions04"
+start_date = 2023-03-24T15:40:01
+stop_date = 2023-03-24T15:49:59
+output-files = []
+status = "PASSED"
+tester-name = "tester"
+comment = "well well"
+
+[[test-case-results]]
+execution_id = 30
+case-name = "SimpleIssai-ExclusiveCaseWithExecutions22"
+start_date = 2023-03-24T15:50:01
+stop_date = 2023-03-24T15:59:58
+output-files = []
+status = "PASSED"
+tester-name = "tester"
+comment = "well well"
+
+[[test-case-results]]
+execution_id = 31
+case-name = "SimpleIssai-SharedCaseWithExecutions05"
+start_date = 2023-03-24T16:00:01
+stop_date = 2023-03-24T16:09:59
+output-files = []
+status = "PASSED"
+tester-name = "tester"
+comment = "partially manual tested"
+
+[[test-case-results]]
+execution_id = 32
+case-name = "SimpleIssai-SharedCaseWithExecutions06"
+start_date = 2023-03-24T16:10:01
+stop_date = 2023-03-24T16:19:59
+output-files = []
+status = "PASSED"
+tester-name = "tester"
+comment = "well well"
+
+[[test-case-results]]
+execution_id = 33
+case-name = "SimpleIssai-ExclusiveCaseWithExecutions23"
+start_date = 2023-03-24T16:20:01
+stop_date = 2023-03-24T16:29:58
+output-files = []
+status = "PASSED"
+tester-name = "tester"
+comment = "well well"
+
+[[test-case-results]]
+execution_id = 34
+case-name = "SimpleIssai-ExclusiveCaseWithExecutions24"
+start_date = 2023-03-24T16:30:01
+stop_date = 2023-03-24T16:59:58
+output-files = []
+status = "PASSED"
+tester-name = "tester"
+comment = "well well"
+

@@ -5,8 +5,10 @@ e-background-task-failed Hintergrund-Job fehlgeschlagen. {0}.
 e-container-not-runnable Datei {0} muss einen Testplan enthalten.
 e-dir-not-empty Verzeichnis {0} muss leer sein.
 e-download-attachment-failed Fehler: Attachment {0} konnte nicht heruntergeladen werden. {1}.
+e-entity-object-exists Interner Fehler: Kann Objekt ID {2} nicht zu Group '{1}' in Entity '{0}' hinzufügen, Objekt existiert bereits.
 e-internal-error Interner Fehler: {0}
 e-invalid-action Kann Aktion nicht verarbeiten {0}.
+e-invalid-entity-group Interner Fehler: Entity '{0}' hat keine Group '{1}'.
 e-invalid-entity-type Kann Entity-Typ {0} nicht verarbeiten.
 e-load-container-failed Konnte Entity-Datei {0} nicht laden. {1}
 e-not-master-data-class {0} ist keine Master-Data-Klasse.
@@ -212,7 +214,7 @@ e-gui-no-version-selected Keine Version ausgewählt.
 e-gui-output-path-invalid Ungültiges Ausgabeverzeichnis {0}.
 e-gui-write-config-data-failed Konnte Konfigurationsdaten nicht in Datei {0} schreiben. {1}.
 i-gui-about-detail-text Version {0}\nQt-Version {1}
-i-gui-about-info-text Copyright (c) 2024 Frank Sommer
+i-gui-about-info-text Copyright (c) 2025 Frank Sommer
 i-gui-about-text Issai - Framework zur Ausführung automatisierter Tests aus dem Kiwi Test case management system
 i-gui-attribute-exists Attribut {0} ist bereits definiert.
 i-gui-clear-export-attachments Verzeichnis für Attachments {0} muss gelöscht werden. Zum Fortfahren bitte bestätigen.

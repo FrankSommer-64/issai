@@ -1,0 +1,5 @@
+# test plan result without mandatory [[test-plan-results]] group
+entity-type = "test-plan-result"
+entity-id = 21
+entity-name = "ManagedSinglePlanWithRuns"
+

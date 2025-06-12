@@ -1,0 +1,84 @@
+# label scheme none, one version, one build
+entity-type = "product"
+entity-name = "Dummy"
+entity-id = 1
+
+[master-data]
+product-versions = [
+    {id = 1, value = "unspecified", product = 1},
+]
+execution-statuses = [
+    {id = 1, name = "IDLE", weight = 0, icon = "fa fa-question-circle-o", color = "#72767b"},
+    {id = 4, name = "PASSED", weight = 20, icon = "fa fa-check-circle-o", color = "#92d400"},
+    {id = 5, name = "FAILED", weight = -30, icon = "fa fa-times-circle-o", color = "#cc0000"},
+    {id = 6, name = "BLOCKED", weight = -10, icon = "fa fa-stop-circle-o", color = "#cc0000"},
+    {id = 7, name = "ERROR", weight = -20, icon = "fa fa-minus-circle-o", color = "#cc0000"},
+]
+product-classifications = [
+    {id = 1, name = "Application"},
+]
+case-categories = [
+    {id = 2, name = "--default--", product = 1, description = ""},
+]
+plan-types = [
+    {id = 2, name = "Dummy", description = ""},
+]
+case-statuses = [
+    {id = 1, name = "PROPOSED", description = "", is_confirmed = false},
+    {id = 2, name = "CONFIRMED", description = "", is_confirmed = true},
+]
+case-priorities = [
+    {id = 1, value = "critical", is_active = true},
+    {id = 2, value = "high", is_active = true},
+    {id = 3, value = "medium", is_active = true},
+]
+tcms-users = [
+    {email = "issai@issai.local", first_name = "Dummy", id = 1, is_active = true, is_staff = true, is_superuser = true, last_name = "Tester", username = "tester"},
+]
+product-builds = [
+    {id = 1, name = "unspecified", version = 1, is_active = true},
+]
+
+[product]
+id = 1
+name = "Dummy"
+description = "Unit test project"
+classification = 1
+
+[[test-plans]]
+id = 1
+name = "DummyPlan"
+text = "Top level test plan"
+is_active = true
+product_version = 1
+product = 1
+author = 1
+type = 2
+attachments = []
+tags = []
+cases = [1]
+runs = []
+
+[[test-cases]]
+id = 1
+is_automated = true
+script = "unit_test"
+arguments = "all"
+summary = "Dummy Testcase 1"
+notes = ""
+text = "Blablabla"
+case_status = 2
+category = 2
+priority = 2
+author = 1
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+

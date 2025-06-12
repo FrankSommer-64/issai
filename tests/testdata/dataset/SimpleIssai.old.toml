@@ -1,0 +1,2052 @@
+# Complete product to execute system tests for labeling scheme "none".
+# "Managed" entities are always executed with option 'update TCMS', "Unmanaged" entities without
+entity-type = "product"
+entity-name = "SimpleIssai"
+entity-id = 201
+
+[master-data]
+case-categories = [
+    {id = 101, name = "--default--", product = 201, description = ""},
+]
+case-components = [
+    {id = 101, name = "cli", product = 201, initial_owner = 3, initial_qa_contact = 3, description = "Issai command line interface", cases = []},
+    {id = 102, name = "core", product = 201, initial_owner = 3, initial_qa_contact = 3, description = "Issai core", cases = []},
+    {id = 103, name = "gui", product = 201, initial_owner = 3, initial_qa_contact = 3, description = "Issai graphical user interface", cases = []},
+]
+case-priorities = [
+    {id = 101, value = "high", is_active = true},
+]
+case-statuses = [
+    {id = 101, name = "PROPOSED", description = "", is_confirmed = false},
+    {id = 102, name = "CONFIRMED", description = "", is_confirmed = true},
+]
+execution-statuses = [
+    {id = 101, name = "ERROR", weight = -20, icon = "fa fa-minus-circle", color = "#cc0000"},
+    {id = 102, name = "FAILED", weight = -30, icon = "fa fa-times-circle-o", color = "#cc0000"},
+    {id = 103, name = "IDLE", weight = 0, icon = "fa fa-question-circle-o", color = "#72767B"},
+    {id = 104, name = "PASSED", weight = 20, icon = "fa fa-check-circle-o", color = "#92d400"},
+]
+plan-types = [
+    {id = 101, name = "Integration", description = ""},
+    {id = 102, name = "System", description = ""},
+]
+product-builds = [
+    {id = 101, is_active = true, name = "unspecified", version = 101},
+]
+product-classifications = [
+    {id = 101, name = "Application"},
+]
+product-versions = [
+    {id = 101, product = 201, value = "unspecified"},
+]
+tcms-users = [
+    {email = "", first_name = "Master", id = 101, is_active = true, is_staff = true, is_superuser = true, last_name = "De Desaster", username = "tmadmin"},
+    {email = "", first_name = "Human", id = 102, is_active = true, is_staff = true, is_superuser = false, last_name = "Tester", username = "tester"},
+]
+
+[product]
+id = 201
+name = "SimpleIssai"
+description = "Product to test Issai without versions and builds other than default."
+classification = 101
+
+[[environments]]
+id = 301
+name = "SimpleIssaiSystemTest"
+description = "Settings for system tests of product SimpleIssai"
+properties = [{LANG = "en"}]
+
+[[test-plans]]
+# options: update-tcms=False
+# expected result: PASSED
+id = 1001
+name = "UnmanagedEmptyPlan-Active-WithRun"
+text = "Empty active test plan with test run, without any test cases."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = []
+cases = []
+runs = [3001]
+
+[[test-plans]]
+# options: update-tcms=False
+# expected result: FAILED
+# reason: run does not exist
+id = 1002
+name = "UnmanagedEmptyPlan-Active-NoRun"
+text = "Empty active test plan without test run and test cases."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = []
+cases = []
+runs = []
+
+[[test-plans]]
+# options: update-tcms=False
+# expected result: -
+# reason: inactive plans are skipped
+id = 1003
+name = "UnmanagedEmptyPlan-Inactive-WithRun"
+text = "Empty inactive test plan with test run, without any test cases."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = []
+cases = []
+runs = [3003]
+
+[[test-plans]]
+# options: update-tcms=False
+# expected result: -
+# reason: inactive plans are skipped
+id = 1004
+name = "UnmanagedEmptyPlan-Inactive-NoRun"
+text = "Empty inactive test plan without test run and test cases."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = []
+cases = []
+runs = []
+
+[[test-plans]]
+# options: update-tcms=False
+# expected result: PASSED/-
+# reason: -/plans not matching tagged operating system are skipped
+id = 1005
+name = "UnmanagedEmptyPlan-OsLinux-WithRun"
+text = "Empty active test plan with test run, without any test cases. Tagged with os.linux"
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = ["os.linux"]
+cases = []
+runs = [3005]
+
+[[test-plans]]
+# options: update-tcms=False
+# expected result: FAILED/-
+# reason: run does not exist/plans not matching tagged operating system are skipped
+id = 1006
+name = "UnmanagedEmptyPlan-OsLinux-NoRun"
+text = "Empty inactive test plan without test run and test cases."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = ["os.linux"]
+cases = []
+runs = []
+
+[[test-plans]]
+# options: update-tcms=False
+# expected result: PASSED/-
+# reason: -/plans not matching tagged operating system are skipped
+id = 1007
+name = "UnmanagedEmptyPlan-OsWindows-WithRun"
+text = "Empty active test plan with test run, without any test cases. Tagged with os.linux"
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = ["os.windows"]
+cases = []
+runs = [3007]
+
+[[test-plans]]
+# options: update-tcms=False
+# expected result: FAILED/-
+# reason: run does not exist/plans not matching tagged operating system are skipped
+id = 1008
+name = "UnmanagedEmptyPlan-OsWindows-NoRun"
+text = "Empty inactive test plan without test run and test cases."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = ["os.windows"]
+cases = []
+runs = []
+
+[[test-plans]]
+# options: update-tcms=False
+# expected result: PASSED
+id = 1010
+name = "UnmanagedSinglePlan-WithRun-ManualCasesOnly-WithExecutions"
+text = "Unmanaged test plan with three manual test cases.\nTest run for default build exists.\nAll test executions exist."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = []
+cases = [2901, 2902, 2903]
+runs = [3010]
+
+[[test-plans]]
+# options: update-tcms=False
+# expected result: PASSED
+id = 1011
+name = "UnmanagedSinglePlan-WithRun-ManualCasesOnly-NoExecutions"
+text = "Unmanaged test plan with three manual test cases.\nTest run for default build exists.\nNo test executions exist."
+is_active = true
+product_version = 101
+product = 201
+author = 101
+type = 102
+attachments = []
+tags = []
+cases = [2904, 2905, 2906]
+runs = [3011]
+
+#TODO update from here
+[[test-plans]]
+id = 14
+name = "ManualFamilyPlanWithoutRuns"
+text = "Unmanaged test plan with two test cases used also by other plans.\nCovers two active and one inactive child plan.\nNo test runs exist."
+is_active = true
+product_version = 12
+product = 8
+author = 5
+type = 5
+attachments = []
+tags = []
+cases = [42, 43]
+runs = []
+
+[[test-plans]]
+id = 15
+name = "ManualDaughterPlanWithoutRuns"
+text = "Unmanaged child test plan with one exclusive test case and two test cases used also by other plans.\nCovers one active child plan.\nNo test runs exist."
+is_active = true
+product_version = 12
+product = 8
+author = 5
+type = 5
+parent = 14
+attachments = []
+tags = []
+cases = [21, 44, 45]
+runs = []
+
+[[test-plans]]
+id = 16
+name = "ManualSonPlanWithoutRuns"
+text = "Unmanaged child test plan with one exclusive test case and two test cases used also by other plans.\nNo test runs exist."
+is_active = true
+product_version = 12
+product = 8
+author = 5
+type = 5
+parent = 14
+attachments = []
+tags = []
+cases = [22, 46, 47]
+runs = []
+
+[[test-plans]]
+id = 17
+name = "ManualGrandchildPlanWithoutRuns"
+text = "Unmanaged test plan with one exclusive test plan.\nNo test runs exist."
+is_active = true
+product_version = 12
+product = 8
+author = 5
+type = 5
+parent = 15
+attachments = []
+tags = []
+cases = [23]
+runs = []
+
+[[test-plans]]
+id = 18
+name = "ManualInactiveChildPlanWithoutRuns"
+text = "Inactive child test plan.\nNo test run exists."
+is_active = false
+product_version = 12
+product = 8
+author = 5
+type = 5
+parent = 14
+attachments = []
+tags = []
+cases = []
+runs = []
+
+[[test-plans]]
+id = 19
+name = "ManualLooseGrandchildPlanWithoutRuns"
+text = "Child test plan below inactive parent.\nNo test runs exist."
+is_active = true
+product_version = 12
+product = 8
+author = 5
+type = 5
+parent = 18
+attachments = []
+tags = []
+cases = [42]
+runs = []
+
+[[test-plans]]
+id = 20
+name = "ManualFamilyPlanWithRuns"
+text = "Unmanaged test plan with two test cases used also by other plans.\nCovers two active and one inactive child plan.\nTest run for default build exist."
+is_active = true
+product_version = 12
+product = 8
+author = 5
+type = 5
+attachments = []
+tags = []
+cases = [48, 49]
+runs = [7]
+
+[[test-plans]]
+id = 21
+name = "ManualDaughterPlanWithRuns"
+text = "Unmanaged child test plan with one exclusive test case and two test cases used also by other plans.\nCovers one active child plan.\nTest run for default build exists."
+is_active = true
+product_version = 12
+product = 8
+author = 5
+type = 5
+parent = 20
+attachments = []
+tags = []
+cases = [39, 50, 51]
+runs = [8]
+
+[[test-plans]]
+id = 22
+name = "ManualSonPlanWithRuns"
+text = "Unmanaged child test plan with one exclusive test case and two test cases used also by other plans.\nTest run for default build exists."
+is_active = true
+product_version = 12
+product = 8
+author = 5
+type = 5
+parent = 20
+attachments = []
+tags = []
+cases = [40, 52, 53]
+runs = [9]
+
+[[test-plans]]
+id = 23
+name = "ManualInactiveChildPlanWithRuns"
+text = "Inactive child test plan without test cases.\nTest run for default build exists."
+is_active = false
+product_version = 12
+product = 8
+author = 5
+type = 5
+parent = 20
+attachments = []
+tags = []
+cases = []
+runs = [12]
+
+[[test-plans]]
+id = 24
+name = "ManualGrandchildPlanWithRuns"
+text = "Unmanaged test plan with one exclusive test plan.\nTest run for default build exists."
+is_active = true
+product_version = 12
+product = 8
+author = 5
+type = 5
+parent = 21
+attachments = []
+tags = []
+cases = [41]
+runs = [10]
+
+[[test-plans]]
+id = 25
+name = "ManualLooseGrandchildPlanWithRuns"
+text = "Child test plan below inactive parent.\nTest run for default build exists."
+is_active = true
+product_version = 12
+product = 8
+author = 5
+type = 5
+parent = 23
+attachments = []
+tags = []
+cases = [48]
+runs = [11]
+
+[[test-plans]]
+id = 26
+name = "ManagedFamilyPlanWithoutRuns"
+text = "Managed test plan with two shared test cases and three child plans.\nNo test runs exist."
+is_active = true
+product_version = 12
+product = 8
+author = 5
+type = 5
+attachments = []
+tags = []
+cases = [42, 43]
+runs = []
+
+[[test-plans]]
+id = 27
+name = "ManagedDaughterPlanWithoutRuns"
+text = "Managed child test plan with three test cases and one child plan.\nNo test runs exist."
+is_active = true
+product_version = 12
+product = 8
+author = 5
+type = 5
+parent = 26
+attachments = []
+tags = []
+cases = [44, 45, 57]
+runs = []
+
+[[test-plans]]
+id = 28
+name = "ManagedSonPlanWithoutRuns"
+text = "Managed child test plan with three test cases.\nNo test runs exist."
+is_active = true
+product_version = 12
+product = 8
+author = 5
+type = 5
+parent = 26
+attachments = []
+tags = []
+cases = [46, 47, 58]
+runs = []
+
+[[test-plans]]
+id = 29
+name = "ManagedInactiveChildPlanWithoutRuns"
+text = "Managed child test plan without test cases, inactive.\nNo test runs exist."
+is_active = true
+product_version = 12
+product = 8
+author = 5
+type = 5
+parent = 26
+attachments = []
+tags = []
+cases = []
+runs = []
+
+[[test-plans]]
+id = 30
+name = "ManagedGrandchildPlanWithoutRuns"
+text = "Managed grandchild test plan with one test case.\nNo test runs exist."
+is_active = true
+product_version = 12
+product = 8
+author = 5
+type = 5
+parent = 27
+attachments = []
+tags = []
+cases = [59]
+runs = []
+
+[[test-plans]]
+id = 31
+name = "ManagedLooseGrandchildPlanWithoutRuns"
+text = "Managed grandchild test plan with one test case, under inactive parent plan.\nNo test runs exist."
+is_active = true
+product_version = 12
+product = 8
+author = 5
+type = 5
+parent = 29
+attachments = []
+tags = []
+cases = [45]
+runs = []
+
+[[test-plans]]
+id = 32
+name = "ManagedSinglePlanWithoutRuns"
+text = "Managed test plan with three exclusive test cases.\nNo test runs exist."
+is_active = true
+product_version = 12
+product = 8
+author = 5
+type = 5
+attachments = []
+tags = []
+cases = [54, 55, 56]
+runs = []
+
+[[test-plans]]
+id = 42
+name = "ManagedFamilyPlanWithRuns"
+text = "Managed test plan with two shared test cases and three child plans.\nTest run for default build exists.."
+is_active = true
+product_version = 12
+product = 8
+author = 5
+type = 5
+attachments = []
+tags = []
+cases = [48, 49]
+runs = [15]
+
+[[test-plans]]
+id = 43
+name = "ManagedDaughterPlanWithRuns"
+text = "Managed child test plan with three test cases and one child plan.\nTest run for default build exists.."
+is_active = true
+product_version = 12
+product = 8
+author = 5
+type = 5
+parent = 42
+attachments = []
+tags = []
+cases = [50, 51, 75]
+runs = [16]
+
+[[test-plans]]
+id = 44
+name = "ManagedSonPlanWithRuns"
+text = "Managed child test plan with three test cases.\nTest run for default build exists.."
+is_active = true
+product_version = 12
+product = 8
+author = 5
+type = 5
+parent = 42
+attachments = []
+tags = []
+cases = [52, 53, 76]
+runs = [17]
+
+[[test-plans]]
+id = 45
+name = "ManagedInactiveChildPlanWithRuns"
+text = "Managed child test plan With test cases, inactive.\nTest run for default build exists.."
+is_active = true
+product_version = 12
+product = 8
+author = 5
+type = 5
+parent = 42
+attachments = []
+tags = []
+cases = []
+runs = [18]
+
+[[test-plans]]
+id = 46
+name = "ManagedGrandchildPlanWithRuns"
+text = "Managed grandchild test plan with one test case.\nTest run for default build exists.."
+is_active = true
+product_version = 12
+product = 8
+author = 5
+type = 5
+parent = 43
+attachments = []
+tags = []
+cases = [77]
+runs = [19]
+
+[[test-plans]]
+id = 47
+name = "ManagedLooseGrandchildPlanWithRuns"
+text = "Managed grandchild test plan with one test case, under inactive parent plan.\nTest run for default build exists.."
+is_active = true
+product_version = 12
+product = 8
+author = 5
+type = 5
+parent = 45
+attachments = []
+tags = []
+cases = [51]
+runs = [20]
+
+[[test-plans]]
+id = 48
+name = "ManagedSinglePlanWithRuns"
+text = "Managed test plan with three exclusive test cases.\nTest run for default build exists.."
+is_active = true
+product_version = 12
+product = 8
+author = 5
+type = 5
+attachments = []
+tags = []
+cases = [72, 73, 74]
+runs = [21]
+
+[[test-plans]]
+id = 54
+name = "ManagedFamilyPlanWithRuns2"
+text = "Managed test plan with two shared test cases and three child plans.\nTest run for default build exists."
+is_active = true
+extra_link = "https://schakal.sherpa.local/company_rules.html"
+product_version = 12
+product = 8
+author = 5
+type = 5
+attachments = ["https://schakal-tm.sherpa.local/uploads/attachments/testplans_testplan/54/issai.toml"]
+tags = ["oslinux"]
+cases = [48, 49]
+runs = [25]
+
+[[test-runs]]
+id = 6
+summary = "ManualSingleRun"
+notes = ""
+plan = 13
+build = 13
+manager = 5
+default_tester = 5
+properties = []
+tags = []
+executions = [8, 9, 10]
+
+[[test-runs]]
+id = 7
+start_date = 2023-03-24T15:00:00
+stop_date = 2023-03-24T16:59:59
+summary = "ok"
+notes = ""
+plan = 20
+build = 13
+manager = 5
+default_tester = 5
+properties = []
+tags = []
+executions = [11, 12]
+
+[[test-runs]]
+id = 8
+summary = "ManualDaughterRun"
+notes = ""
+plan = 21
+build = 13
+manager = 5
+default_tester = 5
+properties = []
+tags = []
+executions = [13, 14, 15]
+
+[[test-runs]]
+id = 9
+summary = "ManualSonRun"
+notes = ""
+plan = 22
+build = 13
+manager = 5
+default_tester = 5
+properties = []
+tags = []
+executions = [16, 17, 18]
+
+[[test-runs]]
+id = 10
+summary = "ManualGrandchildRun"
+notes = ""
+plan = 24
+build = 13
+manager = 5
+default_tester = 5
+properties = []
+tags = []
+executions = [19]
+
+[[test-runs]]
+id = 11
+summary = "ManualLooseGrandchildRun"
+notes = ""
+plan = 25
+build = 13
+manager = 5
+default_tester = 5
+properties = []
+tags = []
+executions = [20]
+
+[[test-runs]]
+id = 12
+summary = "ManualInactiveChildRun"
+notes = ""
+plan = 23
+build = 13
+manager = 5
+default_tester = 5
+properties = []
+tags = []
+executions = []
+
+[[test-runs]]
+id = 15
+start_date = 2023-03-24T15:00:00
+stop_date = 2023-03-24T16:59:59
+summary = "ok"
+notes = ""
+plan = 42
+build = 13
+manager = 5
+default_tester = 5
+properties = []
+tags = []
+executions = [26, 27]
+
+[[test-runs]]
+id = 16
+start_date = 2023-03-24T15:30:00
+stop_date = 2023-03-24T15:59:59
+summary = "ok"
+notes = ""
+plan = 43
+build = 13
+manager = 5
+default_tester = 5
+properties = []
+tags = []
+executions = [28, 29, 30]
+
+[[test-runs]]
+id = 17
+start_date = 2023-03-24T16:00:00
+stop_date = 2023-03-24T16:29:59
+summary = "ok"
+notes = ""
+plan = 44
+build = 13
+manager = 5
+default_tester = 5
+properties = []
+tags = []
+executions = [31, 32, 33]
+
+[[test-runs]]
+id = 18
+summary = "ManagedInactiveChildRun"
+notes = ""
+plan = 45
+build = 13
+manager = 5
+default_tester = 5
+properties = []
+tags = []
+executions = []
+
+[[test-runs]]
+id = 19
+start_date = 2023-03-24T16:30:00
+stop_date = 2023-03-24T16:59:55
+summary = "ok"
+notes = ""
+plan = 46
+build = 13
+manager = 5
+default_tester = 5
+properties = []
+tags = []
+executions = [34]
+
+[[test-runs]]
+id = 20
+summary = "ManagedLooseGrandchildRun"
+notes = ""
+plan = 47
+build = 13
+manager = 5
+default_tester = 5
+properties = []
+tags = []
+executions = [35]
+
+[[test-runs]]
+id = 21
+start_date = 2023-03-24T15:00:00
+stop_date = 2023-03-24T16:59:59
+summary = "ok"
+notes = ""
+plan = 48
+build = 13
+manager = 5
+default_tester = 5
+properties = []
+tags = []
+executions = [36, 37, 38]
+
+[[test-runs]]
+id = 25
+summary = "ManagedFamilyRun2"
+notes = "only run"
+plan = 54
+build = 13
+manager = 4
+default_tester = 4
+properties = []
+tags = ["debian_only"]
+executions = [41, 42]
+
+[[test-cases]]
+id = 77
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-ExclusiveCaseWithExecutions24"
+notes = ""
+text = "Test case used by exactly one test plan.\nTest execution for default build exists."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [34]
+history = [{history_id = 173, history_date = 2022-12-08T14:29:59, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithExecutions24\n+SimpleIssai-ExclusiveCaseWithExecutions24", history_type = "~", history_user_id = 5}, {history_id = 158, history_date = 2022-12-07T16:57:16, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithExecutions23\n+ExclusiveCaseWithExecutions24\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 157, history_date = 2022-12-07T16:56:56, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 47
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-SharedCaseWithoutExecutions06"
+notes = ""
+text = "Test case used by more than one test plan.\nNo test executions exist."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+history = [{history_id = 214, history_date = 2022-12-08T14:31:41, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-SharedCaseWithoutExecutions06\n+SimpleIssai-SharedCaseWithoutExecutions06", history_type = "~", history_user_id = 5}, {history_id = 97, history_date = 2022-12-05T15:20:10, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-SharedCaseWithoutExecutions05\n+SharedCaseWithoutExecutions06\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 96, history_date = 2022-12-05T15:19:54, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 53
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-SharedCaseWithExecutions06"
+notes = ""
+text = "Test case used by more than one test plan.\nTest executions for default build exists."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [18, 32]
+history = [{history_id = 213, history_date = 2022-12-08T14:31:41, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-SharedCaseWithExecutions06\n+SimpleIssai-SharedCaseWithExecutions06", history_type = "~", history_user_id = 5}, {history_id = 109, history_date = 2022-12-05T15:22:59, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-SharedCaseWithExecutions05\n+SharedCaseWithExecutions06\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 108, history_date = 2022-12-05T15:22:43, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 46
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-SharedCaseWithoutExecutions05"
+notes = ""
+text = "Test case used by more than one test plan.\nNo test executions exist."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+history = [{history_id = 209, history_date = 2022-12-08T14:31:40, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-SharedCaseWithoutExecutions05\n+SimpleIssai-SharedCaseWithoutExecutions05", history_type = "~", history_user_id = 5}, {history_id = 95, history_date = 2022-12-05T15:19:49, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-SharedCaseWithoutExecutions04\n+SharedCaseWithoutExecutions05\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 94, history_date = 2022-12-05T15:19:33, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 44
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-SharedCaseWithoutExecutions03"
+notes = ""
+text = "Test case used by more than one test plan.\nNo test executions exist."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+history = [{history_id = 207, history_date = 2022-12-08T14:31:39, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-SharedCaseWithoutExecutions03\n+SimpleIssai-SharedCaseWithoutExecutions03", history_type = "~", history_user_id = 5}, {history_id = 91, history_date = 2022-12-05T15:19:05, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-SharedCaseWithoutExecutions02\n+SharedCaseWithoutExecutions03\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 90, history_date = 2022-12-05T15:18:47, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 43
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-SharedCaseWithoutExecutions02"
+notes = ""
+text = "Test case used by more than one test plan.\nNo test executions exist."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+history = [{history_id = 208, history_date = 2022-12-08T14:31:40, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-SharedCaseWithoutExecutions02\n+SimpleIssai-SharedCaseWithoutExecutions02", history_type = "~", history_user_id = 5}, {history_id = 89, history_date = 2022-12-05T15:18:42, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-SharedCaseWithoutExecutions01\n+SharedCaseWithoutExecutions02\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 88, history_date = 2022-12-05T15:18:24, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 42
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-SharedCaseWithoutExecutions01"
+notes = ""
+text = "Test case used by more than one test plan.\nNo test executions exist."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+history = [{history_id = 212, history_date = 2022-12-08T14:31:40, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-SharedCaseWithoutExecutions01\n+SimpleIssai-SharedCaseWithoutExecutions01", history_type = "~", history_user_id = 5}, {history_id = 87, history_date = 2022-12-05T15:18:18, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithoutExecutions01\n+SharedCaseWithoutExecutions01\n--- text\n+++ text\n@@ -1,2 +1,2 @@\n-Test case used by exactly one test plan.\n+Test case used by more than one test plan.\n No test executions exist.\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 86, history_date = 2022-12-05T15:17:20, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 22
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-ExclusiveCaseWithoutExecutions05"
+notes = ""
+text = "Test case used by exactly one test plan.\nNo test executions exist."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+history = [{history_id = 202, history_date = 2022-12-08T14:30:05, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithoutExecutions05\n+SimpleIssai-ExclusiveCaseWithoutExecutions05", history_type = "~", history_user_id = 5}, {history_id = 47, history_date = 2022-12-05T14:55:46, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithoutExecutions04\n+ExclusiveCaseWithoutExecutions05\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 46, history_date = 2022-12-05T14:54:14, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 73
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-ExclusiveCaseWithExecutions20"
+notes = ""
+text = "Test case used by exactly one test plan.\nTest execution for default build exists."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [37]
+history = [{history_id = 197, history_date = 2022-12-08T14:30:04, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithExecutions20\n+SimpleIssai-ExclusiveCaseWithExecutions20", history_type = "~", history_user_id = 5}, {history_id = 150, history_date = 2022-12-07T16:55:34, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithExecutions19\n+ExclusiveCaseWithExecutions20\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 149, history_date = 2022-12-07T16:55:16, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 55
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-ExclusiveCaseWithoutExecutions14"
+notes = ""
+text = "Test case used by exactly one test plan.\nNo test executions exist."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+history = [{history_id = 163, history_date = 2022-12-08T14:29:57, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithoutExecutions14\n+SimpleIssai-ExclusiveCaseWithoutExecutions14", history_type = "~", history_user_id = 5}, {history_id = 113, history_date = 2022-12-07T16:36:47, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithoutExecutions13\n+ExclusiveCaseWithoutExecutions14\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 112, history_date = 2022-12-07T16:36:30, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 52
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-SharedCaseWithExecutions05"
+notes = ""
+text = "Test case used by more than one test plan.\nTest executions for default build exists."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [17, 31]
+history = [{history_id = 217, history_date = 2022-12-08T14:31:41, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-SharedCaseWithExecutions05\n+SimpleIssai-SharedCaseWithExecutions05", history_type = "~", history_user_id = 5}, {history_id = 107, history_date = 2022-12-05T15:22:39, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-SharedCaseWithExecutions04\n+SharedCaseWithExecutions05\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 106, history_date = 2022-12-05T15:22:21, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 45
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-SharedCaseWithoutExecutions04"
+notes = ""
+text = "Test case used by more than one test plan.\nNo test executions exist."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+history = [{history_id = 216, history_date = 2022-12-08T14:31:41, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-SharedCaseWithoutExecutions04\n+SimpleIssai-SharedCaseWithoutExecutions04", history_type = "~", history_user_id = 5}, {history_id = 93, history_date = 2022-12-05T15:19:28, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-SharedCaseWithoutExecutions03\n+SharedCaseWithoutExecutions04\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 92, history_date = 2022-12-05T15:19:13, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 54
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-ExclusiveCaseWithoutExecutions13"
+notes = ""
+text = "Test case used by exactly one test plan.\nNo test executions exist."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+history = [{history_id = 203, history_date = 2022-12-08T14:30:06, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithoutExecutions13\n+SimpleIssai-ExclusiveCaseWithoutExecutions13", history_type = "~", history_user_id = 5}, {history_id = 111, history_date = 2022-12-07T16:36:22, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithoutExecutions12\n+ExclusiveCaseWithoutExecutions13\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 110, history_date = 2022-12-07T16:35:48, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 25
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-ExclusiveCaseWithoutExecutions08"
+notes = ""
+text = "Test case used by exactly one test plan.\nNo test executions exist."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+history = [{history_id = 199, history_date = 2022-12-08T14:30:05, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithoutExecutions08\n+SimpleIssai-ExclusiveCaseWithoutExecutions08", history_type = "~", history_user_id = 5}, {history_id = 53, history_date = 2022-12-05T14:57:23, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithoutExecutions07\n+ExclusiveCaseWithoutExecutions08\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 52, history_date = 2022-12-05T14:57:04, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 72
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-ExclusiveCaseWithExecutions19"
+notes = ""
+text = "Test case used by exactly one test plan.\nTest execution for default build exists."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [36]
+history = [{history_id = 206, history_date = 2022-12-08T14:30:06, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithExecutions19\n+SimpleIssai-ExclusiveCaseWithExecutions19", history_type = "~", history_user_id = 5}, {history_id = 148, history_date = 2022-12-07T16:55:11, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithExecutions18\n+ExclusiveCaseWithExecutions19\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 147, history_date = 2022-12-07T16:54:54, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 41
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-ExclusiveCaseWithExecutions12"
+notes = ""
+text = "Test case used by exactly one test plan.\nTest execution exists for default build exists."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [19]
+history = [{history_id = 187, history_date = 2022-12-08T14:30:02, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithExecutions12\n+SimpleIssai-ExclusiveCaseWithExecutions12", history_type = "~", history_user_id = 5}, {history_id = 85, history_date = 2022-12-05T15:07:10, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithExecutions11\n+ExclusiveCaseWithExecutions12\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 84, history_date = 2022-12-05T15:06:26, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 19
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-ExclusiveCaseWithoutExecutions02"
+notes = ""
+text = "Test case used by exactly one test plan.\nNo test executions exist."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+history = [{history_id = 183, history_date = 2022-12-08T14:30:02, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithoutExecutions02\n+SimpleIssai-ExclusiveCaseWithoutExecutions02", history_type = "~", history_user_id = 5}, {history_id = 42, history_date = 2022-12-05T14:47:50, history_change_reason = "--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 39, history_date = 2022-12-05T14:41:15, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithoutExecutions01\n+ExclusiveCaseWithoutExecutions02", history_type = "~", history_user_id = 5}, {history_id = 38, history_date = 2022-12-05T14:40:47, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 48
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-SharedCaseWithExecutions01"
+notes = ""
+text = "Test case used by more than one test plan.\nTest executions for default build exists."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [11, 20, 26, 41]
+history = [{history_id = 210, history_date = 2022-12-08T14:31:40, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-SharedCaseWithExecutions01\n+SimpleIssai-SharedCaseWithExecutions01", history_type = "~", history_user_id = 5}, {history_id = 99, history_date = 2022-12-05T15:21:19, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-SharedCaseWithoutExecutions06\n+SharedCaseWithExecutions01\n--- text\n+++ text\n@@ -1,2 +1,2 @@\n Test case used by more than one test plan.\n-No test executions exist.\n+Test executions for default build exists.\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 98, history_date = 2022-12-05T15:20:42, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 74
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-ExclusiveCaseWithExecutions21"
+notes = ""
+text = "Test case used by exactly one test plan.\nTest execution for default build exists."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [38]
+history = [{history_id = 166, history_date = 2022-12-08T14:29:58, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithExecutions21\n+SimpleIssai-ExclusiveCaseWithExecutions21", history_type = "~", history_user_id = 5}, {history_id = 152, history_date = 2022-12-07T16:55:59, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithExecutions20\n+ExclusiveCaseWithExecutions21\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 151, history_date = 2022-12-07T16:55:42, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 20
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-ExclusiveCaseWithoutExecutions03"
+notes = ""
+text = "Test case used by exactly one test plan.\nNo test executions exist."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+history = [{history_id = 162, history_date = 2022-12-08T14:29:57, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithoutExecutions03\n+SimpleIssai-ExclusiveCaseWithoutExecutions03", history_type = "~", history_user_id = 5}, {history_id = 43, history_date = 2022-12-05T14:48:20, history_change_reason = "--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 41, history_date = 2022-12-05T14:41:38, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithoutExecutions02\n+ExclusiveCaseWithoutExecutions03", history_type = "~", history_user_id = 5}, {history_id = 40, history_date = 2022-12-05T14:41:20, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 58
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-ExclusiveCaseWithoutExecutions17"
+notes = ""
+text = "Test case used by exactly one test plan.\nNo test executions exist."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+history = [{history_id = 196, history_date = 2022-12-08T14:30:04, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithoutExecutions17\n+SimpleIssai-ExclusiveCaseWithoutExecutions17", history_type = "~", history_user_id = 5}, {history_id = 119, history_date = 2022-12-07T16:38:38, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithoutExecutions16\n+ExclusiveCaseWithoutExecutions17\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 118, history_date = 2022-12-07T16:38:22, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 50
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-SharedCaseWithExecutions03"
+notes = ""
+text = "Test case used by more than one test plan.\nTest executions for default build exists."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [14, 28]
+history = [{history_id = 218, history_date = 2022-12-08T14:31:42, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-SharedCaseWithExecutions03\n+SimpleIssai-SharedCaseWithExecutions03", history_type = "~", history_user_id = 5}, {history_id = 103, history_date = 2022-12-05T15:21:57, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-SharedCaseWithExecutions02\n+SharedCaseWithExecutions03\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 102, history_date = 2022-12-05T15:21:42, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 21
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-ExclusiveCaseWithoutExecutions04"
+notes = ""
+text = "Test case used by exactly one test plan.\nNo test executions exist."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+history = [{history_id = 177, history_date = 2022-12-08T14:30:00, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithoutExecutions04\n+SimpleIssai-ExclusiveCaseWithoutExecutions04", history_type = "~", history_user_id = 5}, {history_id = 45, history_date = 2022-12-05T14:54:08, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithoutExecutions03\n+ExclusiveCaseWithoutExecutions04\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 44, history_date = 2022-12-05T14:53:45, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 18
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-ExclusiveCaseWithoutExecutions01"
+notes = ""
+text = "Test case used by exactly one test plan.\nNo test executions exist."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+history = [{history_id = 159, history_date = 2022-12-08T14:29:57, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithoutExecutions01\n+SimpleIssai-ExclusiveCaseWithoutExecutions01", history_type = "~", history_user_id = 5}, {history_id = 37, history_date = 2022-12-05T14:38:56, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-OrphanCaseWithoutExecutions\n+ExclusiveCaseWithoutExecutions01\n--- text\n+++ text\n@@ -1,2 +1,2 @@\n-Test case not used by any test plan.\n+Test case used by exactly one test plan.\n No test executions exist.\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 36, history_date = 2022-12-05T14:38:03, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 75
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-ExclusiveCaseWithExecutions22"
+notes = ""
+text = "Test case used by exactly one test plan.\nTest execution for default build exists."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [30]
+history = [{history_id = 174, history_date = 2022-12-08T14:30:00, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithExecutions22\n+SimpleIssai-ExclusiveCaseWithExecutions22", history_type = "~", history_user_id = 5}, {history_id = 154, history_date = 2022-12-07T16:56:29, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithExecutions21\n+ExclusiveCaseWithExecutions22\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 153, history_date = 2022-12-07T16:56:05, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 51
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-SharedCaseWithExecutions04"
+notes = ""
+text = "Test case used by more than one test plan.\nTest executions for default build exists."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [15, 29, 35]
+history = [{history_id = 211, history_date = 2022-12-08T14:31:40, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-SharedCaseWithExecutions04\n+SimpleIssai-SharedCaseWithExecutions04", history_type = "~", history_user_id = 5}, {history_id = 105, history_date = 2022-12-05T15:22:17, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-SharedCaseWithExecutions03\n+SharedCaseWithExecutions04\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 104, history_date = 2022-12-05T15:22:02, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 59
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-ExclusiveCaseWithoutExecutions18"
+notes = ""
+text = "Test case used by exactly one test plan.\nNo test executions exist."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+history = [{history_id = 168, history_date = 2022-12-08T14:29:58, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithoutExecutions18\n+SimpleIssai-ExclusiveCaseWithoutExecutions18", history_type = "~", history_user_id = 5}, {history_id = 121, history_date = 2022-12-07T16:39:00, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithoutExecutions17\n+ExclusiveCaseWithoutExecutions18\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 120, history_date = 2022-12-07T16:38:44, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 76
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-ExclusiveCaseWithExecutions23"
+notes = ""
+text = "Test case used by exactly one test plan.\nTest execution for default build exists."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [33]
+history = [{history_id = 178, history_date = 2022-12-08T14:30:00, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithExecutions23\n+SimpleIssai-ExclusiveCaseWithExecutions23", history_type = "~", history_user_id = 5}, {history_id = 156, history_date = 2022-12-07T16:56:51, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithExecutions22\n+ExclusiveCaseWithExecutions23\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 155, history_date = 2022-12-07T16:56:34, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 57
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-ExclusiveCaseWithoutExecutions16"
+notes = ""
+text = "Test case used by exactly one test plan.\nNo test executions exist."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+history = [{history_id = 171, history_date = 2022-12-08T14:29:59, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithoutExecutions16\n+SimpleIssai-ExclusiveCaseWithoutExecutions16", history_type = "~", history_user_id = 5}, {history_id = 117, history_date = 2022-12-07T16:37:46, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithoutExecutions15\n+ExclusiveCaseWithoutExecutions16\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 116, history_date = 2022-12-07T16:37:21, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 56
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-ExclusiveCaseWithoutExecutions15"
+notes = ""
+text = "Test case used by exactly one test plan.\nNo test executions exist."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+history = [{history_id = 170, history_date = 2022-12-08T14:29:59, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithoutExecutions15\n+SimpleIssai-ExclusiveCaseWithoutExecutions15", history_type = "~", history_user_id = 5}, {history_id = 115, history_date = 2022-12-07T16:37:13, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithoutExecutions14\n+ExclusiveCaseWithoutExecutions15\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 114, history_date = 2022-12-07T16:36:54, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 39
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-ExclusiveCaseWithExecutions10"
+notes = ""
+text = "Test case used by exactly one test plan.\nTest execution exists for default build exists."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [13]
+history = [{history_id = 182, history_date = 2022-12-08T14:30:01, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithExecutions10\n+SimpleIssai-ExclusiveCaseWithExecutions10", history_type = "~", history_user_id = 5}, {history_id = 81, history_date = 2022-12-05T15:05:57, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithExecutions09\n+ExclusiveCaseWithExecutions10\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 80, history_date = 2022-12-05T15:05:42, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 40
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-ExclusiveCaseWithExecutions11"
+notes = ""
+text = "Test case used by exactly one test plan.\nTest execution exists for default build exists."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [16]
+history = [{history_id = 184, history_date = 2022-12-08T14:30:02, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithExecutions11\n+SimpleIssai-ExclusiveCaseWithExecutions11", history_type = "~", history_user_id = 5}, {history_id = 83, history_date = 2022-12-05T15:06:21, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithExecutions10\n+ExclusiveCaseWithExecutions11\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 82, history_date = 2022-12-05T15:06:02, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 23
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-ExclusiveCaseWithoutExecutions06"
+notes = ""
+text = "Test case used by exactly one test plan.\nNo test executions exist."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+history = [{history_id = 200, history_date = 2022-12-08T14:30:05, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithoutExecutions06\n+SimpleIssai-ExclusiveCaseWithoutExecutions06", history_type = "~", history_user_id = 5}, {history_id = 49, history_date = 2022-12-05T14:56:15, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithoutExecutions05\n+ExclusiveCaseWithoutExecutions06\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 48, history_date = 2022-12-05T14:55:52, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 49
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-SharedCaseWithExecutions02"
+notes = ""
+text = "Test case used by more than one test plan.\nTest executions for default build exists."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = [12, 27, 42]
+history = [{history_id = 215, history_date = 2022-12-08T14:31:41, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-SharedCaseWithExecutions02\n+SimpleIssai-SharedCaseWithExecutions02", history_type = "~", history_user_id = 5}, {history_id = 101, history_date = 2022-12-05T15:21:37, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-SharedCaseWithExecutions01\n+SharedCaseWithExecutions02\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 100, history_date = 2022-12-05T15:21:23, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 26
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-ExclusiveCaseWithoutExecutions09"
+notes = ""
+text = "Test case used by exactly one test plan.\nNo test executions exist."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+history = [{history_id = 195, history_date = 2022-12-08T14:30:04, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithoutExecutions09\n+SimpleIssai-ExclusiveCaseWithoutExecutions09", history_type = "~", history_user_id = 5}, {history_id = 55, history_date = 2022-12-05T14:57:46, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithoutExecutions08\n+ExclusiveCaseWithoutExecutions09\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 54, history_date = 2022-12-05T14:57:29, history_type = "+", history_user_id = 5}]
+
+[[test-cases]]
+id = 24
+is_automated = true
+arguments = ""
+summary = "SimpleIssai-ExclusiveCaseWithoutExecutions07"
+notes = ""
+text = "Test case used by exactly one test plan.\nNo test executions exist."
+case_status = 2
+category = 19
+priority = 2
+author = 5
+setup_duration = 0.0
+testing_duration = 0.0
+expected_duration = 0.0
+attachments = []
+cc_notifications = []
+comments = []
+components = []
+properties = []
+tags = []
+executions = []
+history = [{history_id = 201, history_date = 2022-12-08T14:30:05, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithoutExecutions07\n+SimpleIssai-ExclusiveCaseWithoutExecutions07", history_type = "~", history_user_id = 5}, {history_id = 51, history_date = 2022-12-05T14:56:57, history_change_reason = "--- summary\n+++ summary\n@@ -1 +1 @@\n-ExclusiveCaseWithoutExecutions06\n+ExclusiveCaseWithoutExecutions07\n--- case_status_id\n+++ case_status_id\n@@ -1 +1 @@\n-1\n+2", history_type = "~", history_user_id = 5}, {history_id = 50, history_date = 2022-12-05T14:56:39, history_type = "+", history_user_id = 5}]
+
+[[test-executions]]
+id = 14
+assignee = 5
+run = 8
+case = 50
+build = 13
+status = 1
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+history = [{history_user__username = "frsommer", history_date = 2022-12-06T11:27:46}]
+
+[[test-executions]]
+id = 33
+assignee = 5
+tested_by = 6
+start_date = 2023-03-24T16:20:01
+stop_date = 2023-05-08T13:38:29
+run = 17
+case = 76
+build = 13
+status = 4
+expected_duration = 0.0
+actual_duration = 3874708.089808
+comments = [{id = 25, user_id = 5, comment = "well well", submit_date = 2023-05-08T13:38:29, is_public = true, is_removed = false}]
+properties = []
+links = []
+history = [{history_user__username = "frsommer", history_date = 2023-05-08T13:38:29}, {history_user__username = "frsommer", history_change_reason = "--- stop_date\n+++ stop_date\n@@ -1 +1 @@\n-2023-03-24 16:29:58\n+2023-05-08 13:38:29.089808", history_date = 2023-05-08T13:38:29}, {history_user__username = "frsommer", history_change_reason = "--- tested_by_id\n+++ tested_by_id\n@@ -1 +1 @@\n-None\n+6\n--- start_date\n+++ start_date\n@@ -1 +1 @@\n-None\n+2023-03-24 16:20:01\n--- stop_date\n+++ stop_date\n@@ -1 +1 @@\n-None\n+2023-03-24 16:29:58\n--- status_id\n+++ status_id\n@@ -1 +1 @@\n-1\n+4", history_date = 2023-05-08T13:38:29}, {history_user__username = "frsommer", history_date = 2022-12-09T17:45:57}]
+
+[[test-executions]]
+id = 26
+assignee = 5
+tested_by = 6
+start_date = 2023-03-24T15:00:01
+stop_date = 2023-05-08T13:38:24
+run = 15
+case = 48
+build = 13
+status = 4
+expected_duration = 0.0
+actual_duration = 3879503.560909
+comments = [{id = 18, user_id = 5, comment = "partially manual tested", submit_date = 2023-05-08T13:38:24, is_public = true, is_removed = false}]
+properties = []
+links = []
+history = [{history_user__username = "frsommer", history_date = 2023-05-08T13:38:24}, {history_user__username = "frsommer", history_change_reason = "--- stop_date\n+++ stop_date\n@@ -1 +1 @@\n-2023-03-24 15:14:59\n+2023-05-08 13:38:24.560909", history_date = 2023-05-08T13:38:24}, {history_user__username = "frsommer", history_change_reason = "--- tested_by_id\n+++ tested_by_id\n@@ -1 +1 @@\n-None\n+6\n--- start_date\n+++ start_date\n@@ -1 +1 @@\n-None\n+2023-03-24 15:00:01\n--- stop_date\n+++ stop_date\n@@ -1 +1 @@\n-None\n+2023-03-24 15:14:59\n--- status_id\n+++ status_id\n@@ -1 +1 @@\n-1\n+4", history_date = 2023-05-08T13:38:24}, {history_user__username = "frsommer", history_date = 2022-12-09T17:45:49}]
+
+[[test-executions]]
+id = 8
+assignee = 5
+run = 6
+case = 30
+build = 13
+status = 1
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+history = [{history_user__username = "frsommer", history_date = 2022-12-05T15:11:55}]
+
+[[test-executions]]
+id = 11
+assignee = 5
+tested_by = 5
+start_date = 2023-03-24T15:00:01
+stop_date = 2023-03-29T12:53:10
+run = 7
+case = 48
+build = 13
+status = 4
+expected_duration = 0.0
+actual_duration = 420789.41569
+comments = [{id = 4, user_id = 5, comment = "partially manual tested", submit_date = 2023-03-26T19:18:10, is_public = true, is_removed = false}, {id = 7, user_id = 5, comment = "partially manual tested", submit_date = 2023-03-29T12:53:10, is_public = true, is_removed = false}]
+properties = []
+links = []
+history = [{history_user__username = "frsommer", history_date = 2023-03-29T12:53:10}, {history_user__username = "frsommer", history_change_reason = "--- stop_date\n+++ stop_date\n@@ -1 +1 @@\n-2023-03-24 15:59:58\n+2023-03-29 12:53:10.415690", history_date = 2023-03-29T12:53:10}, {history_user__username = "frsommer", history_change_reason = "--- stop_date\n+++ stop_date\n@@ -1 +1 @@\n-2023-03-26 19:18:10.191823\n+2023-03-24 15:59:58", history_date = 2023-03-29T12:53:10}, {history_user__username = "frsommer", history_date = 2023-03-26T19:18:10}, {history_user__username = "frsommer", history_change_reason = "--- stop_date\n+++ stop_date\n@@ -1 +1 @@\n-2023-03-24 15:59:58\n+2023-03-26 19:18:10.191823", history_date = 2023-03-26T19:18:10}, {history_user__username = "frsommer", history_change_reason = "--- start_date\n+++ start_date\n@@ -1 +1 @@\n-None\n+2023-03-24 15:00:01\n--- stop_date\n+++ stop_date\n@@ -1 +1 @@\n-2022-12-06 13:36:03.959370\n+2023-03-24 15:59:58", history_date = 2023-03-26T19:18:10}, {history_user__username = "frsommer", history_change_reason = "--- stop_date\n+++ stop_date\n@@ -1 +1 @@\n-None\n+2022-12-06 13:36:03.959370", history_date = 2022-12-06T13:36:03}, {history_user__username = "frsommer", history_change_reason = "--- tested_by_id\n+++ tested_by_id\n@@ -1 +1 @@\n-None\n+5\n--- status_id\n+++ status_id\n@@ -1 +1 @@\n-1\n+4", history_date = 2022-12-06T13:36:03}, {history_user__username = "frsommer", history_date = 2022-12-06T11:26:13}]
+
+[[test-executions]]
+id = 38
+assignee = 5
+run = 21
+case = 74
+build = 13
+status = 1
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+history = [{history_user__username = "frsommer", history_date = 2022-12-09T17:46:05}]
+
+[[test-executions]]
+id = 13
+assignee = 5
+run = 8
+case = 39
+build = 13
+status = 1
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+history = [{history_user__username = "frsommer", history_date = 2022-12-06T11:27:46}]
+
+[[test-executions]]
+id = 10
+assignee = 5
+run = 6
+case = 32
+build = 13
+status = 1
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+history = [{history_user__username = "frsommer", history_date = 2022-12-05T15:11:55}]
+
+[[test-executions]]
+id = 35
+assignee = 5
+run = 20
+case = 51
+build = 13
+status = 1
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+history = [{history_user__username = "frsommer", history_date = 2022-12-09T17:46:02}]
+
+[[test-executions]]
+id = 9
+assignee = 5
+run = 6
+case = 31
+build = 13
+status = 1
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+history = [{history_user__username = "frsommer", history_date = 2022-12-05T15:11:55}]
+
+[[test-executions]]
+id = 30
+assignee = 5
+tested_by = 6
+start_date = 2023-03-24T15:50:01
+stop_date = 2023-05-08T13:38:27
+run = 16
+case = 75
+build = 13
+status = 4
+expected_duration = 0.0
+actual_duration = 3876506.152062
+comments = [{id = 22, user_id = 5, comment = "well well", submit_date = 2023-05-08T13:38:27, is_public = true, is_removed = false}]
+properties = []
+links = []
+history = [{history_user__username = "frsommer", history_date = 2023-05-08T13:38:27}, {history_user__username = "frsommer", history_change_reason = "--- stop_date\n+++ stop_date\n@@ -1 +1 @@\n-2023-03-24 15:59:58\n+2023-05-08 13:38:27.152062", history_date = 2023-05-08T13:38:27}, {history_user__username = "frsommer", history_change_reason = "--- tested_by_id\n+++ tested_by_id\n@@ -1 +1 @@\n-None\n+6\n--- start_date\n+++ start_date\n@@ -1 +1 @@\n-None\n+2023-03-24 15:50:01\n--- stop_date\n+++ stop_date\n@@ -1 +1 @@\n-None\n+2023-03-24 15:59:58\n--- status_id\n+++ status_id\n@@ -1 +1 @@\n-1\n+4", history_date = 2023-05-08T13:38:27}, {history_user__username = "frsommer", history_date = 2022-12-09T17:45:53}]
+
+[[test-executions]]
+id = 19
+assignee = 5
+run = 10
+case = 41
+build = 13
+status = 1
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+history = [{history_user__username = "frsommer", history_date = 2022-12-06T11:30:58}]
+
+[[test-executions]]
+id = 12
+assignee = 5
+tested_by = 5
+start_date = 2023-03-24T16:00:01
+stop_date = 2023-03-29T12:53:11
+run = 7
+case = 49
+build = 13
+status = 4
+expected_duration = 0.0
+actual_duration = 417190.010375
+comments = [{id = 5, user_id = 5, comment = "well well", submit_date = 2023-03-26T19:18:10, is_public = true, is_removed = false}, {id = 8, user_id = 5, comment = "well well", submit_date = 2023-03-29T12:53:11, is_public = true, is_removed = false}]
+properties = []
+links = []
+history = [{history_user__username = "frsommer", history_date = 2023-03-29T12:53:11}, {history_user__username = "frsommer", history_change_reason = "--- stop_date\n+++ stop_date\n@@ -1 +1 @@\n-2023-03-24 16:59:58\n+2023-03-29 12:53:11.010375", history_date = 2023-03-29T12:53:11}, {history_user__username = "frsommer", history_change_reason = "--- stop_date\n+++ stop_date\n@@ -1 +1 @@\n-2023-03-26 19:18:10.695931\n+2023-03-24 16:59:58", history_date = 2023-03-29T12:53:10}, {history_user__username = "frsommer", history_date = 2023-03-26T19:18:10}, {history_user__username = "frsommer", history_change_reason = "--- stop_date\n+++ stop_date\n@@ -1 +1 @@\n-2023-03-24 16:59:58\n+2023-03-26 19:18:10.695931", history_date = 2023-03-26T19:18:10}, {history_user__username = "frsommer", history_change_reason = "--- tested_by_id\n+++ tested_by_id\n@@ -1 +1 @@\n-None\n+5\n--- start_date\n+++ start_date\n@@ -1 +1 @@\n-None\n+2023-03-24 16:00:01\n--- stop_date\n+++ stop_date\n@@ -1 +1 @@\n-None\n+2023-03-24 16:59:58\n--- status_id\n+++ status_id\n@@ -1 +1 @@\n-1\n+4", history_date = 2023-03-26T19:18:10}, {history_user__username = "frsommer", history_date = 2022-12-06T11:26:13}]
+
+[[test-executions]]
+id = 42
+assignee = 4
+run = 25
+case = 49
+build = 13
+status = 1
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+history = [{history_user__username = "frsommer", history_date = 2022-12-21T16:48:44}]
+
+[[test-executions]]
+id = 29
+assignee = 5
+tested_by = 6
+start_date = 2023-03-24T15:40:01
+stop_date = 2023-05-08T13:38:26
+run = 16
+case = 51
+build = 13
+status = 4
+expected_duration = 0.0
+actual_duration = 3877105.516279
+comments = [{id = 21, user_id = 5, comment = "well well", submit_date = 2023-05-08T13:38:26, is_public = true, is_removed = false}]
+properties = []
+links = []
+history = [{history_user__username = "frsommer", history_date = 2023-05-08T13:38:26}, {history_user__username = "frsommer", history_change_reason = "--- stop_date\n+++ stop_date\n@@ -1 +1 @@\n-2023-03-24 15:49:59\n+2023-05-08 13:38:26.516279", history_date = 2023-05-08T13:38:26}, {history_user__username = "frsommer", history_change_reason = "--- tested_by_id\n+++ tested_by_id\n@@ -1 +1 @@\n-None\n+6\n--- start_date\n+++ start_date\n@@ -1 +1 @@\n-None\n+2023-03-24 15:40:01\n--- stop_date\n+++ stop_date\n@@ -1 +1 @@\n-None\n+2023-03-24 15:49:59\n--- status_id\n+++ status_id\n@@ -1 +1 @@\n-1\n+4", history_date = 2023-05-08T13:38:26}, {history_user__username = "frsommer", history_date = 2022-12-09T17:45:52}]
+
+[[test-executions]]
+id = 36
+assignee = 5
+run = 21
+case = 72
+build = 13
+status = 1
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+history = [{history_user__username = "frsommer", history_date = 2022-12-09T17:46:04}]
+
+[[test-executions]]
+id = 27
+assignee = 5
+tested_by = 6
+start_date = 2023-03-24T15:10:01
+stop_date = 2023-05-08T13:38:25
+run = 15
+case = 49
+build = 13
+status = 4
+expected_duration = 0.0
+actual_duration = 3878904.191984
+comments = [{id = 19, user_id = 5, comment = "well well", submit_date = 2023-05-08T13:38:25, is_public = true, is_removed = false}]
+properties = []
+links = []
+history = [{history_user__username = "frsommer", history_date = 2023-05-08T13:38:25}, {history_user__username = "frsommer", history_change_reason = "--- stop_date\n+++ stop_date\n@@ -1 +1 @@\n-2023-03-24 15:29:59\n+2023-05-08 13:38:25.191984", history_date = 2023-05-08T13:38:25}, {history_user__username = "frsommer", history_change_reason = "--- tested_by_id\n+++ tested_by_id\n@@ -1 +1 @@\n-None\n+6\n--- start_date\n+++ start_date\n@@ -1 +1 @@\n-None\n+2023-03-24 15:10:01\n--- stop_date\n+++ stop_date\n@@ -1 +1 @@\n-None\n+2023-03-24 15:29:59\n--- status_id\n+++ status_id\n@@ -1 +1 @@\n-1\n+4", history_date = 2023-05-08T13:38:25}, {history_user__username = "frsommer", history_date = 2022-12-09T17:45:49}]
+
+[[test-executions]]
+id = 15
+assignee = 5
+run = 8
+case = 51
+build = 13
+status = 1
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+history = [{history_user__username = "frsommer", history_date = 2022-12-06T11:27:47}]
+
+[[test-executions]]
+id = 17
+assignee = 5
+run = 9
+case = 52
+build = 13
+status = 1
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+history = [{history_user__username = "frsommer", history_date = 2022-12-06T11:28:37}]
+
+[[test-executions]]
+id = 16
+assignee = 5
+run = 9
+case = 40
+build = 13
+status = 1
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+history = [{history_user__username = "frsommer", history_date = 2022-12-06T11:28:37}]
+
+[[test-executions]]
+id = 31
+assignee = 5
+tested_by = 6
+start_date = 2023-03-24T16:00:01
+stop_date = 2023-05-08T13:38:27
+run = 17
+case = 52
+build = 13
+status = 4
+expected_duration = 0.0
+actual_duration = 3875906.851772
+comments = [{id = 23, user_id = 5, comment = "partially manual tested", submit_date = 2023-05-08T13:38:28, is_public = true, is_removed = false}]
+properties = []
+links = []
+history = [{history_user__username = "frsommer", history_date = 2023-05-08T13:38:28}, {history_user__username = "frsommer", history_change_reason = "--- stop_date\n+++ stop_date\n@@ -1 +1 @@\n-2023-03-24 16:09:59\n+2023-05-08 13:38:27.851772", history_date = 2023-05-08T13:38:27}, {history_user__username = "frsommer", history_change_reason = "--- tested_by_id\n+++ tested_by_id\n@@ -1 +1 @@\n-None\n+6\n--- start_date\n+++ start_date\n@@ -1 +1 @@\n-None\n+2023-03-24 16:00:01\n--- stop_date\n+++ stop_date\n@@ -1 +1 @@\n-None\n+2023-03-24 16:09:59\n--- status_id\n+++ status_id\n@@ -1 +1 @@\n-1\n+4", history_date = 2023-05-08T13:38:27}, {history_user__username = "frsommer", history_date = 2022-12-09T17:45:56}]
+
+[[test-executions]]
+id = 28
+assignee = 5
+tested_by = 6
+start_date = 2023-03-24T15:30:01
+stop_date = 2023-05-08T13:38:25
+run = 16
+case = 50
+build = 13
+status = 4
+expected_duration = 0.0
+actual_duration = 3877704.921703
+comments = [{id = 20, user_id = 5, comment = "partially manual tested", submit_date = 2023-05-08T13:38:26, is_public = true, is_removed = false}]
+properties = []
+links = []
+history = [{history_user__username = "frsommer", history_date = 2023-05-08T13:38:26}, {history_user__username = "frsommer", history_change_reason = "--- stop_date\n+++ stop_date\n@@ -1 +1 @@\n-2023-03-24 15:39:59\n+2023-05-08 13:38:25.921703", history_date = 2023-05-08T13:38:25}, {history_user__username = "frsommer", history_change_reason = "--- tested_by_id\n+++ tested_by_id\n@@ -1 +1 @@\n-None\n+6\n--- start_date\n+++ start_date\n@@ -1 +1 @@\n-None\n+2023-03-24 15:30:01\n--- stop_date\n+++ stop_date\n@@ -1 +1 @@\n-None\n+2023-03-24 15:39:59\n--- status_id\n+++ status_id\n@@ -1 +1 @@\n-1\n+4", history_date = 2023-05-08T13:38:25}, {history_user__username = "frsommer", history_date = 2022-12-09T17:45:52}]
+
+[[test-executions]]
+id = 37
+assignee = 5
+run = 21
+case = 73
+build = 13
+status = 1
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+history = [{history_user__username = "frsommer", history_date = 2022-12-09T17:46:05}]
+
+[[test-executions]]
+id = 32
+assignee = 5
+tested_by = 6
+start_date = 2023-03-24T16:10:01
+stop_date = 2023-05-08T13:38:28
+run = 17
+case = 53
+build = 13
+status = 4
+expected_duration = 0.0
+actual_duration = 3875307.468489
+comments = [{id = 24, user_id = 5, comment = "well well", submit_date = 2023-05-08T13:38:28, is_public = true, is_removed = false}]
+properties = []
+links = []
+history = [{history_user__username = "frsommer", history_date = 2023-05-08T13:38:28}, {history_user__username = "frsommer", history_change_reason = "--- stop_date\n+++ stop_date\n@@ -1 +1 @@\n-2023-03-24 16:19:59\n+2023-05-08 13:38:28.468489", history_date = 2023-05-08T13:38:28}, {history_user__username = "frsommer", history_change_reason = "--- tested_by_id\n+++ tested_by_id\n@@ -1 +1 @@\n-None\n+6\n--- start_date\n+++ start_date\n@@ -1 +1 @@\n-None\n+2023-03-24 16:10:01\n--- stop_date\n+++ stop_date\n@@ -1 +1 @@\n-None\n+2023-03-24 16:19:59\n--- status_id\n+++ status_id\n@@ -1 +1 @@\n-1\n+4", history_date = 2023-05-08T13:38:28}, {history_user__username = "frsommer", history_date = 2022-12-09T17:45:56}]
+
+[[test-executions]]
+id = 41
+assignee = 4
+run = 25
+case = 48
+build = 13
+status = 1
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+history = [{history_user__username = "frsommer", history_date = 2022-12-21T16:48:44}]
+
+[[test-executions]]
+id = 34
+assignee = 5
+tested_by = 6
+start_date = 2023-03-24T16:30:01
+stop_date = 2023-05-08T13:38:29
+run = 19
+case = 77
+build = 13
+status = 4
+expected_duration = 0.0
+actual_duration = 3874108.80738
+comments = [{id = 26, user_id = 5, comment = "well well", submit_date = 2023-05-08T13:38:30, is_public = true, is_removed = false}]
+properties = []
+links = []
+history = [{history_user__username = "frsommer", history_date = 2023-05-08T13:38:30}, {history_user__username = "frsommer", history_change_reason = "--- stop_date\n+++ stop_date\n@@ -1 +1 @@\n-2023-03-24 16:59:58\n+2023-05-08 13:38:29.807380", history_date = 2023-05-08T13:38:29}, {history_user__username = "frsommer", history_change_reason = "--- tested_by_id\n+++ tested_by_id\n@@ -1 +1 @@\n-None\n+6\n--- start_date\n+++ start_date\n@@ -1 +1 @@\n-None\n+2023-03-24 16:30:01\n--- stop_date\n+++ stop_date\n@@ -1 +1 @@\n-None\n+2023-03-24 16:59:58\n--- status_id\n+++ status_id\n@@ -1 +1 @@\n-1\n+4", history_date = 2023-05-08T13:38:29}, {history_user__username = "frsommer", history_date = 2022-12-09T17:45:59}]
+
+[[test-executions]]
+id = 20
+assignee = 5
+run = 11
+case = 48
+build = 13
+status = 1
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+history = [{history_user__username = "frsommer", history_date = 2022-12-06T11:32:10}]
+
+[[test-executions]]
+id = 18
+assignee = 5
+run = 9
+case = 53
+build = 13
+status = 1
+expected_duration = 0.0
+comments = []
+properties = []
+links = []
+history = [{history_user__username = "frsommer", history_date = 2022-12-06T11:28:37}]

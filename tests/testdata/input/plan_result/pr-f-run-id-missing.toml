@@ -1,0 +1,13 @@
+# test plan result with mandatory run_id missing
+entity-type = "test-plan-result"
+entity-id = 21
+entity-name = "ManagedSinglePlanWithRuns"
+
+[[test-plan-results]]
+plan-name = "ManagedSinglePlanWithRuns"
+start_date = 2023-03-24T15:00:00
+stop_date = 2023-03-24T16:59:59
+output-files = ['xissai.log']
+notes = ""
+summary = "ok"
+

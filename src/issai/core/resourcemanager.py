@@ -3,7 +3,7 @@
 # -----------------------------------------------------------------------------------------------
 # issai - Framework to run tests specified in Kiwi Test Case Management System
 #
-# Copyright (c) 2024, Frank Sommer.
+# Copyright (c) 2025, Frank Sommer.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -61,7 +61,7 @@ def container_status(toml_data):
     _top_level_desc = _HEADER_ATTRS.copy()
     _top_level_desc.update(_ENTITY_GROUPS[_entity_type])
     _check_toml_table(_status, toml_data, '', _top_level_desc)
-    if _entity_type in (ENTITY_TYPE_NAME_PRODUCT, ENTITY_TYPE_NAME_PLAN):
+    if _entity_type in (ENTITY_TYPE_PRODUCT, ENTITY_TYPE_PLAN):
         _check_toml_table(_status, toml_data.get(ATTR_PRODUCT), ATTR_PRODUCT, _GROUP_PRODUCT_ATTRS)
         _check_master_data(_status, toml_data.get(ATTR_MASTER_DATA))
         _check_toml_aot(_status, toml_data.get(ATTR_ENVIRONMENTS), ATTR_ENVIRONMENTS, _GROUP_ENV_ATTRS, True)
@@ -70,13 +70,13 @@ def container_status(toml_data):
         _check_toml_aot(_status, toml_data.get(ATTR_TEST_CASES), ATTR_TEST_CASES, _GROUP_CASE_ATTRS, True)
         _check_toml_aot(_status, toml_data.get(ATTR_TEST_EXECUTIONS), ATTR_TEST_EXECUTIONS,
                         _GROUP_EXECUTION_ATTRS, True)
-    elif _entity_type == ENTITY_TYPE_NAME_CASE:
+    elif _entity_type == ENTITY_TYPE_CASE:
         _check_toml_table(_status, toml_data.get(ATTR_PRODUCT), ATTR_PRODUCT, _GROUP_PRODUCT_ATTRS)
         _check_master_data(_status, toml_data.get(ATTR_MASTER_DATA))
         _check_toml_aot(_status, toml_data.get(ATTR_TEST_CASES), ATTR_TEST_CASES, _GROUP_CASE_ATTRS, True)
         _check_toml_aot(_status, toml_data.get(ATTR_TEST_EXECUTIONS), ATTR_TEST_EXECUTIONS,
                         _GROUP_EXECUTION_ATTRS, True)
-    elif _entity_type == ENTITY_TYPE_NAME_PLAN_RESULT:
+    elif _entity_type == ENTITY_TYPE_PLAN_RESULT:
         _check_toml_aot(_status, toml_data.get(ATTR_TEST_PLAN_RESULTS), ATTR_TEST_PLAN_RESULTS,
                         _GROUP_PLAN_RESULT_ATTRS, True)
         _check_toml_aot(_status, toml_data.get(ATTR_TEST_CASE_RESULTS), ATTR_TEST_CASE_RESULTS,
@@ -213,30 +213,29 @@ def _check_master_data(status, toml_data):
             _check_toml_table(status, _elem, _type_name, _type_desc, _elem_nr)
 
 
-_SUPPORTED_ENTITY_TYPES = (ENTITY_TYPE_NAME_PRODUCT, ENTITY_TYPE_NAME_CASE, ENTITY_TYPE_NAME_PLAN,
-                           ENTITY_TYPE_NAME_PLAN_RESULT)
+_SUPPORTED_ENTITY_TYPES = (ENTITY_TYPE_PRODUCT, ENTITY_TYPE_CASE, ENTITY_TYPE_PLAN, ENTITY_TYPE_PLAN_RESULT)
 
-_ENTITY_GROUPS = {ENTITY_TYPE_NAME_PRODUCT: {ATTR_MASTER_DATA: (True, Table, None),
-                                             ATTR_ENVIRONMENTS: (False, AoT, None),
-                                             ATTR_PRODUCT: (True, Table, None),
-                                             ATTR_TEST_CASES: (False, AoT, None),
-                                             ATTR_TEST_CASE_RESULTS: (False, AoT, None),
-                                             ATTR_TEST_EXECUTIONS: (True, AoT, None),
-                                             ATTR_TEST_PLANS: (False, AoT, None),
-                                             ATTR_TEST_PLAN_RESULTS: (False, AoT, None),
-                                             ATTR_TEST_RUNS: (True, AoT, None)},
-                  ENTITY_TYPE_NAME_CASE: {ATTR_MASTER_DATA: (True, Table, None),
-                                          ATTR_PRODUCT: (True, Table, None),
-                                          ATTR_TEST_CASES: (True, AoT, None)},
-                  ENTITY_TYPE_NAME_PLAN: {ATTR_MASTER_DATA: (True, Table, None),
-                                          ATTR_ENVIRONMENTS: (False, AoT, None),
-                                          ATTR_PRODUCT: (True, Table, None),
-                                          ATTR_TEST_CASES: (False, AoT, None),
-                                          ATTR_TEST_EXECUTIONS: (True, AoT, None),
-                                          ATTR_TEST_PLANS: (True, AoT, None),
-                                          ATTR_TEST_RUNS: (True, AoT, None)},
-                  ENTITY_TYPE_NAME_PLAN_RESULT: {ATTR_TEST_CASE_RESULTS: (False, AoT, None),
-                                                 ATTR_TEST_PLAN_RESULTS: (True, AoT, None)}
+_ENTITY_GROUPS = {ENTITY_TYPE_PRODUCT: {ATTR_MASTER_DATA: (True, Table, None),
+                                        ATTR_ENVIRONMENTS: (False, AoT, None),
+                                        ATTR_PRODUCT: (True, Table, None),
+                                        ATTR_TEST_CASES: (False, AoT, None),
+                                        ATTR_TEST_CASE_RESULTS: (False, AoT, None),
+                                        ATTR_TEST_EXECUTIONS: (True, AoT, None),
+                                        ATTR_TEST_PLANS: (False, AoT, None),
+                                        ATTR_TEST_PLAN_RESULTS: (False, AoT, None),
+                                        ATTR_TEST_RUNS: (True, AoT, None)},
+                  ENTITY_TYPE_CASE: {ATTR_MASTER_DATA: (True, Table, None),
+                                     ATTR_PRODUCT: (True, Table, None),
+                                     ATTR_TEST_CASES: (True, AoT, None)},
+                  ENTITY_TYPE_PLAN: {ATTR_MASTER_DATA: (True, Table, None),
+                                     ATTR_ENVIRONMENTS: (False, AoT, None),
+                                     ATTR_PRODUCT: (True, Table, None),
+                                     ATTR_TEST_CASES: (False, AoT, None),
+                                     ATTR_TEST_EXECUTIONS: (True, AoT, None),
+                                     ATTR_TEST_PLANS: (True, AoT, None),
+                                     ATTR_TEST_RUNS: (True, AoT, None)},
+                  ENTITY_TYPE_PLAN_RESULT: {ATTR_TEST_CASE_RESULTS: (False, AoT, None),
+                                            ATTR_TEST_PLAN_RESULTS: (True, AoT, None)}
                   }
 
 _HEADER_ATTRS = {ATTR_ENTITY_TYPE: (True, String, _SUPPORTED_ENTITY_TYPES),

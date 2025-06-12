@@ -3,7 +3,7 @@
 # -----------------------------------------------------------------------------------------------
 # issai - Framework to run tests specified in Kiwi Test Case Management System
 #
-# Copyright (c) 2024, Frank Sommer.
+# Copyright (c) 2025, Frank Sommer.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -102,19 +102,6 @@ class Entity(dict):
         :rtype: int
         """
         return self[ATTR_ENTITY_TYPE]
-
-    def entity_type_toml_name(self):
-        """
-        :returns: the entity type name used in TOML files
-        :rtype: str
-        """
-        if self[ATTR_ENTITY_TYPE] == ENTITY_TYPE_PRODUCT:
-            return ENTITY_TYPE_NAME_PRODUCT
-        elif self[ATTR_ENTITY_TYPE] == ENTITY_TYPE_CASE:
-            return ENTITY_TYPE_NAME_CASE
-        elif self[ATTR_ENTITY_TYPE] == ENTITY_TYPE_PLAN:
-            return ENTITY_TYPE_NAME_PLAN
-        return ENTITY_TYPE_NAME_PLAN_RESULT
 
     def attachments(self):
         """
@@ -242,7 +229,7 @@ class Entity(dict):
         :rtype: TOMLDocument
         """
         _toml_data = TOMLDocument()
-        _toml_data.append(ATTR_ENTITY_TYPE, self.entity_type_toml_name())
+        _toml_data.append(ATTR_ENTITY_TYPE, self.entity_type_id())
         _toml_data.append(ATTR_ENTITY_NAME, self.entity_name())
         _toml_data.append(ATTR_ENTITY_ID, integer(self.entity_id()))
         return _merge_toml(_toml_data, self.to_toml(True))
@@ -300,34 +287,16 @@ class Entity(dict):
         _entity_id = read_toml_value(toml_data, ATTR_ENTITY_ID, int, True)
         _entity_name = read_toml_value(toml_data, ATTR_ENTITY_NAME, str, True)
         _entity_type = read_toml_value(toml_data, ATTR_ENTITY_TYPE, str, True)
-        _entity_type_id = Entity.id_of_type_name(_entity_type)
-        if _entity_type_id == ENTITY_TYPE_PRODUCT:
+        #_entity_type_id = Entity.id_of_type_name(_entity_type)
+        if _entity_type == ENTITY_TYPE_PRODUCT:
             return ProductEntity.from_toml(_entity_id, _entity_name, toml_data)
-        elif _entity_type_id == ENTITY_TYPE_CASE:
+        elif _entity_type == ENTITY_TYPE_CASE:
             return TestCaseEntity.from_toml(_entity_id, _entity_name, toml_data)
-        elif _entity_type_id == ENTITY_TYPE_PLAN:
+        elif _entity_type == ENTITY_TYPE_PLAN:
             return TestPlanEntity.from_toml(_entity_id, _entity_name, toml_data)
         else:
             # test plan result
             return PlanResultEntity.from_toml(_entity_id, _entity_name, toml_data)
-
-    @staticmethod
-    def id_of_type_name(type_name):
-        """
-        :param str type_name: the entity type name
-        :returns: entity type ID
-        :rtype: int
-        :raises IssaiException: if the type name is invalid
-        """
-        if type_name == ENTITY_TYPE_NAME_PRODUCT:
-            return ENTITY_TYPE_PRODUCT
-        elif type_name == ENTITY_TYPE_NAME_CASE:
-            return ENTITY_TYPE_CASE
-        elif type_name == ENTITY_TYPE_NAME_PLAN:
-            return ENTITY_TYPE_PLAN
-        elif type_name == ENTITY_TYPE_NAME_PLAN_RESULT:
-            return ENTITY_TYPE_PLAN_RESULT
-        raise IssaiException(E_TOML_ENTITY_TYPE_INVALID, type_name)
 
     def fill_test_objects_data(self, test_object_type):
         _toml_data = aot()

@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------------------------------------
 # issai - test runner for tests managed by Kiwi test case management system
 #
-# Copyright (c) 2024, Frank Sommer.
+# Copyright (c) 2025, Frank Sommer.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
